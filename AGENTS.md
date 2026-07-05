@@ -3,3 +3,59 @@
 
 This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
 <!-- END:nextjs-agent-rules -->
+
+# Tatsuro Yamashita Player (rebuild)
+
+山下达郎歌迷向音乐播放器的**推倒重做**。旧站在 `../yamashita_tatsuro`:其 API/数据层契约原样保留(见旧仓库 `design/00-api-contract.md`,后端 `ys-tr.withyakul.me`),UI/UX 全部重新设计实现。本仓库当前处于逐屏重建阶段。
+
+**任何工作先看 [ROADMAP.md](./ROADMAP.md)** — 它是唯一的进度真相,做完一项勾一项。其余治理文档:
+
+| 文件 | 作用 |
+|---|---|
+| `ROADMAP.md` | 阶段计划 + 每屏完成标准。跟着它做 |
+| `PRODUCT.md` | 产品定位:用户、双主题范围、语言策略、可达性基线 |
+| `DESIGN.md` | 视觉规范(normative)。"The Noon Postcard" 系统:色板、命名规则、组件规格 |
+| `/demo` 路由 | 设计系统活体演示页(长期保留)。**改了 token/组件后打开它双主题核对** |
+| `design/` | 原始设计定稿(核心设计想法.md + Claude 视觉稿) |
+
+## Commands
+
+包管理器是 **bun**(bun.lock)。
+
+```bash
+bun run dev          # dev server (localhost:3000)
+bun run build        # production build
+bun run lint         # biome check(不是 eslint)
+bun run format       # biome format --write
+bunx biome check --write <file>   # 修单个文件的 lint/格式
+bunx shadcn add <component>       # 装 shadcn 组件
+```
+
+没有测试框架(尚未引入)。Next 16 的 dev 有锁文件机制:杀掉 bun 包装进程后 next-server 子进程可能存活,用 `lsof -ti:3000 | xargs kill` 清理。
+
+## Stack 陷阱(与训练数据不同的地方)
+
+- **Tailwind v4,CSS-first**:没有 tailwind.config;所有 token 在 `app/globals.css` 的 `@theme inline` 块里。**`@theme inline` 的品牌 token(如 `--color-ocean`)在运行时不存在对应 CSS 变量**——用工具类(`bg-ocean`)或字面 hex;但 `--gradient-*` 定义在 `:root`,是真运行时变量,可以 `var()` 引用。
+- **shadcn 是 base-maia 风格,底层是 @base-ui/react(不是 Radix)**;图标库是 @phosphor-icons/react(不是 lucide)。
+- 语义 token(`--primary` 等)已喂入海边色板:shadcn 组件默认长在系统上,`Button` default 变体天生 AA 达标,别自己发明按钮样式。
+- biome 有针对 `app/globals.css` 的 override(允许 reduced-motion 块的 `!important`);`.impeccable/hook.cache.json` 已 gitignore。
+- 设计检查 hook 会扫描 UI 文件的字面颜色:**色板外的颜色会被标记**。新增颜色必须先进 `DESIGN.md` frontmatter + `.impeccable/design.json`,再进代码。
+
+## 设计系统硬规则(写代码时会踩的)
+
+完整规范在 DESIGN.md,以下是写代码时最常触碰的:
+
+- **深水律**:文字/图标/状态指示永远不放在浅水原色上(`#1CA7C4` / `#2FBFA8` / `#FF8A5B` 对白字只有 2.3–2.9:1)。承载信息一律用深水形态:`ocean-deep #0C8097` / `turquoise-deep #0A8473` / `coral-ink #B04E23`(全部 ≥4.5:1),或 `--gradient-action`。浅水渐变(`--gradient-primary` / `--gradient-cta`)只做装饰。
+- **双主题**:`:root` = 正午(默认浅色),`.dark` = 黄昏暮蓝(不是黑夜)。每屏必须两个主题都成立。文字用语义 token(`text-foreground` / `text-muted-foreground`),别硬编码 navy。
+- **字体**:Quicksand(`font-display`,h1–h3 自动)/ Inter(`font-sans` 默认)/ 日文自动走 Zen Maru Gothic——给日文内容标 `lang="ja"` 即可(`:lang(ja)` 规则接管)。字重 700 禁用。
+- **语言**:UI chrome 一律英文;歌名/歌词等内容数据是日文。文案朴素功能性,禁止营销腔。
+- **动效**:交互 400–600ms `ease-lazy`;氛围动效用 `animate-breathe/glint/shimmer`(8–20s 周期)。全局 reduced-motion kill-switch 已存在,别绕过它。
+- **阴影**:只用 `shadow-postcard` / `shadow-lift-navy` / `shadow-lift-ocean` / `shadow-lift-coral`(带色、向下、收紧)。看到 `rgba(0,0,0,…)` 大糊影就是违规。
+- **材质**:照片背景上的内容用磨砂玻璃托底;平涂背景用实色;迷你播放条永远实色;玻璃不叠玻璃。
+
+## 架构(计划中的形态,阶段 1 落地)
+
+- `lib/api/`:集中 API client(albums/songs/lyrics/mv),统一 `Song` 领域模型——fetch 不散落在组件里(旧站的头号教训,见旧仓库 `design/01-ui-audit.md`)
+- 播放器状态:zustand store(队列状态机从旧站移植清理)
+- 流媒体直接拼 URL:`{API}/stream/new_play/{songId}`(音频)、`{API}/stream/img/{coverId}`(封面);封面域需加进 next.config remotePatterns
+- 界面类任务用 `/impeccable craft <屏>`;每屏完成标准见 ROADMAP.md 底部

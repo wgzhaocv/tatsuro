@@ -39,3 +39,11 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# impeccable local state (design.json and live/config.json stay tracked)
+.impeccable/hook.cache.json
+.impeccable/config.local.json
+.impeccable/live/sessions/
+
+# codex local hook config (machine-specific absolute paths)
+.codex/

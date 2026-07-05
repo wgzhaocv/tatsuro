@@ -1,0 +1,426 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-07-05T14:00:00Z",
+  "title": "Design System: Tatsuro — The Noon Postcard",
+  "extensions": {
+    "colorMeta": {
+      "ocean-cyan": {
+        "role": "primary",
+        "displayName": "Ocean Cyan 海洋青",
+        "canonical": "oklch(0.673 0.115 216.8)",
+        "tonalRamp": [
+          "oklch(0.20 0.062 216.8)",
+          "oklch(0.31 0.075 216.8)",
+          "oklch(0.41 0.089 216.8)",
+          "oklch(0.52 0.103 216.8)",
+          "oklch(0.63 0.114 216.8)",
+          "oklch(0.74 0.100 216.8)",
+          "oklch(0.84 0.087 216.8)",
+          "oklch(0.95 0.073 216.8)"
+        ]
+      },
+      "ocean-deep": {
+        "role": "primary",
+        "displayName": "Ocean Deep 深水青(承载文字/状态)",
+        "canonical": "oklch(0.555 0.097 216.8)"
+      },
+      "turquoise": {
+        "role": "secondary",
+        "displayName": "Turquoise 绿松",
+        "canonical": "oklch(0.726 0.122 179.2)",
+        "tonalRamp": [
+          "oklch(0.20 0.066 179.2)",
+          "oklch(0.31 0.080 179.2)",
+          "oklch(0.41 0.094 179.2)",
+          "oklch(0.52 0.109 179.2)",
+          "oklch(0.63 0.121 179.2)",
+          "oklch(0.74 0.106 179.2)",
+          "oklch(0.84 0.092 179.2)",
+          "oklch(0.95 0.078 179.2)"
+        ]
+      },
+      "turquoise-deep": {
+        "role": "secondary",
+        "displayName": "Turquoise Deep 深水绿松(深水渐变端点)",
+        "canonical": "oklch(0.55 0.098 179.2)"
+      },
+      "coral": {
+        "role": "tertiary",
+        "displayName": "Coral 落日珊瑚",
+        "canonical": "oklch(0.753 0.155 42.0)",
+        "tonalRamp": [
+          "oklch(0.20 0.083 42.0)",
+          "oklch(0.31 0.102 42.0)",
+          "oklch(0.41 0.120 42.0)",
+          "oklch(0.52 0.138 42.0)",
+          "oklch(0.63 0.154 42.0)",
+          "oklch(0.74 0.135 42.0)",
+          "oklch(0.84 0.117 42.0)",
+          "oklch(0.95 0.099 42.0)"
+        ]
+      },
+      "coral-ink": {
+        "role": "tertiary",
+        "displayName": "Coral Ink 焦糖珊瑚(浅底上的珊瑚文字/图标)",
+        "canonical": "oklch(0.543 0.14 42.0)"
+      },
+      "peach": {
+        "role": "tertiary",
+        "displayName": "Peach 蜜桃",
+        "canonical": "oklch(0.836 0.092 34.0)",
+        "tonalRamp": [
+          "oklch(0.20 0.049 34.0)",
+          "oklch(0.31 0.060 34.0)",
+          "oklch(0.41 0.071 34.0)",
+          "oklch(0.52 0.082 34.0)",
+          "oklch(0.63 0.091 34.0)",
+          "oklch(0.74 0.080 34.0)",
+          "oklch(0.84 0.069 34.0)",
+          "oklch(0.95 0.059 34.0)"
+        ]
+      },
+      "sun": {
+        "role": "tertiary",
+        "displayName": "Sun 阳光黄",
+        "canonical": "oklch(0.890 0.137 89.2)",
+        "tonalRamp": [
+          "oklch(0.20 0.074 89.2)",
+          "oklch(0.31 0.090 89.2)",
+          "oklch(0.41 0.106 89.2)",
+          "oklch(0.52 0.122 89.2)",
+          "oklch(0.63 0.136 89.2)",
+          "oklch(0.74 0.120 89.2)",
+          "oklch(0.84 0.103 89.2)",
+          "oklch(0.95 0.087 89.2)"
+        ]
+      },
+      "dawn-gold": {
+        "role": "tertiary",
+        "displayName": "Dawn Gold 暖金",
+        "canonical": "oklch(0.881 0.117 81.4)",
+        "tonalRamp": [
+          "oklch(0.20 0.063 81.4)",
+          "oklch(0.31 0.077 81.4)",
+          "oklch(0.41 0.091 81.4)",
+          "oklch(0.52 0.104 81.4)",
+          "oklch(0.63 0.116 81.4)",
+          "oklch(0.74 0.102 81.4)",
+          "oklch(0.84 0.088 81.4)",
+          "oklch(0.95 0.075 81.4)"
+        ]
+      },
+      "sky": {
+        "role": "neutral",
+        "displayName": "Sky 天青",
+        "canonical": "oklch(0.907 0.045 212.1)",
+        "tonalRamp": [
+          "oklch(0.20 0.024 212.1)",
+          "oklch(0.31 0.030 212.1)",
+          "oklch(0.41 0.035 212.1)",
+          "oklch(0.52 0.040 212.1)",
+          "oklch(0.63 0.045 212.1)",
+          "oklch(0.74 0.039 212.1)",
+          "oklch(0.84 0.034 212.1)",
+          "oklch(0.95 0.029 212.1)"
+        ]
+      },
+      "sky-bright": {
+        "role": "primary",
+        "displayName": "Sky Bright 亮天青(黄昏主题 primary)",
+        "canonical": "oklch(0.775 0.106 215.1)",
+        "tonalRamp": [
+          "oklch(0.20 0.057 215.1)",
+          "oklch(0.31 0.069 215.1)",
+          "oklch(0.41 0.082 215.1)",
+          "oklch(0.52 0.095 215.1)",
+          "oklch(0.63 0.105 215.1)",
+          "oklch(0.74 0.092 215.1)",
+          "oklch(0.84 0.080 215.1)",
+          "oklch(0.95 0.067 215.1)"
+        ]
+      },
+      "cobalt-deep": {
+        "role": "neutral",
+        "displayName": "Cobalt Deep 深钴蓝(深锚点)",
+        "canonical": "oklch(0.444 0.123 253.1)",
+        "tonalRamp": [
+          "oklch(0.20 0.066 253.1)",
+          "oklch(0.31 0.081 253.1)",
+          "oklch(0.41 0.095 253.1)",
+          "oklch(0.52 0.110 253.1)",
+          "oklch(0.63 0.122 253.1)",
+          "oklch(0.74 0.107 253.1)",
+          "oklch(0.84 0.093 253.1)",
+          "oklch(0.95 0.078 253.1)"
+        ]
+      },
+      "deep-navy": {
+        "role": "neutral",
+        "displayName": "Deep Navy 深海军蓝(文字)",
+        "canonical": "oklch(0.331 0.065 237.5)",
+        "tonalRamp": [
+          "oklch(0.20 0.035 237.5)",
+          "oklch(0.31 0.043 237.5)",
+          "oklch(0.41 0.050 237.5)",
+          "oklch(0.52 0.058 237.5)",
+          "oklch(0.63 0.064 237.5)",
+          "oklch(0.74 0.057 237.5)",
+          "oklch(0.84 0.049 237.5)",
+          "oklch(0.95 0.041 237.5)"
+        ]
+      },
+      "ink-mist": {
+        "role": "neutral",
+        "displayName": "Ink Mist 雾蓝(muted 文字下限)",
+        "canonical": "oklch(0.526 0.051 232.0)"
+      },
+      "sea-glass": {
+        "role": "neutral",
+        "displayName": "Sea Glass 海玻璃白",
+        "canonical": "oklch(0.964 0.016 172.6)"
+      },
+      "shell-white": {
+        "role": "neutral",
+        "displayName": "Shell White 贝壳白",
+        "canonical": "oklch(0.977 0.020 77.3)"
+      },
+      "dusk-navy": {
+        "role": "neutral",
+        "displayName": "Dusk Navy 暮夜蓝(黄昏背景)",
+        "canonical": "oklch(0.263 0.046 250.0)"
+      },
+      "dusk-deep": {
+        "role": "neutral",
+        "displayName": "Dusk Deep 暮海蓝(黄昏卡片/播放条底)",
+        "canonical": "oklch(0.317 0.053 261.6)"
+      },
+      "dusk-slate": {
+        "role": "neutral",
+        "displayName": "Dusk Slate 暮蓝灰",
+        "canonical": "oklch(0.410 0.059 264.1)"
+      },
+      "dusk-plum": {
+        "role": "tertiary",
+        "displayName": "Dusk Plum 暮色紫红(黄昏天际线)",
+        "canonical": "oklch(0.656 0.112 350.4)",
+        "tonalRamp": [
+          "oklch(0.20 0.060 350.4)",
+          "oklch(0.31 0.073 350.4)",
+          "oklch(0.41 0.087 350.4)",
+          "oklch(0.52 0.100 350.4)",
+          "oklch(0.63 0.111 350.4)",
+          "oklch(0.74 0.098 350.4)",
+          "oklch(0.84 0.085 350.4)",
+          "oklch(0.95 0.071 350.4)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "页面主标题、Gate 页艺术家名。600 字重仅此处与按钮允许。"
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "专辑名、全屏播放器歌名。"
+      },
+      "title": { "displayName": "Title", "purpose": "区块标题。" },
+      "body": {
+        "displayName": "Body",
+        "purpose": "曲目列表、正文;行长 ≤72ch。"
+      },
+      "label": { "displayName": "Label", "purpose": "时长、年份、辅助标签。" },
+      "japanese": {
+        "displayName": "Japanese 日文",
+        "purpose": "日文歌名/歌词专用 Zen Maru Gothic;行高 1.7,禁止拉丁字体伪回退。"
+      }
+    },
+    "shadows": [
+      {
+        "name": "lift-navy",
+        "value": "0 12px 26px -16px rgba(11,58,83,0.5)",
+        "purpose": "白卡片在浅背景上的默认抬升;安静、几乎不可见。"
+      },
+      {
+        "name": "lift-ocean",
+        "value": "0 10px 22px -8px rgba(28,167,196,0.7)",
+        "purpose": "青色系按钮/激活元素的悬停光晕。"
+      },
+      {
+        "name": "lift-coral",
+        "value": "0 10px 22px -8px rgba(255,138,91,0.7)",
+        "purpose": "CTA/收藏按钮的悬停光晕。"
+      },
+      {
+        "name": "postcard",
+        "value": "0 12px 22px -14px rgba(11,58,83,0.35)",
+        "purpose": "专辑封面明信片卡的常驻纸感投影。"
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-lazy",
+        "value": "cubic-bezier(0.22, 1, 0.36, 1)",
+        "purpose": "默认交互缓动(ease-out-quint 系),慵懒丝滑。"
+      },
+      {
+        "name": "duration-transition",
+        "value": "400ms–600ms",
+        "purpose": "交互过渡时长区间。"
+      },
+      {
+        "name": "duration-ambient",
+        "value": "8s–20s",
+        "purpose": "氛围动效(阳光呼吸、水面光斑)周期;幅度极小,reduced-motion 时静止。"
+      }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "768px" },
+      { "name": "lg", "value": "1024px" },
+      { "name": "xl", "value": "1280px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "主操作按钮:深水渐变(#0C8097→#0A8473)胶囊,白字 4.6:1,悬停上浮 + 青色光晕。",
+      "html": "<button class=\"ds-btn-primary\">Play all</button>",
+      "css": ".ds-btn-primary { background: linear-gradient(90deg, #0C8097, #0A8473); color: #fff; font-family: Quicksand, ui-rounded, sans-serif; font-size: 16px; font-weight: 600; padding: 12px 28px; border: none; border-radius: 999px; cursor: pointer; transition: transform 0.4s cubic-bezier(0.22,1,0.36,1), box-shadow 0.4s cubic-bezier(0.22,1,0.36,1); } .ds-btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 22px -8px rgba(28,167,196,0.7); } .ds-btn-primary:focus-visible { outline: 2px solid #0C8097; outline-offset: 2px; }"
+    },
+    {
+      "name": "CTA / Like Button",
+      "kind": "button",
+      "refersTo": "button-cta",
+      "description": "CTA / 收藏:Coral Ink 实色胶囊,白字 5.3:1;落日的暖意由悬停珊瑚光晕承担。",
+      "html": "<button class=\"ds-btn-cta\">♥ Like</button>",
+      "css": ".ds-btn-cta { background: #B04E23; color: #fff; font-family: Quicksand, ui-rounded, sans-serif; font-size: 16px; font-weight: 600; padding: 12px 28px; border: none; border-radius: 999px; cursor: pointer; transition: transform 0.4s cubic-bezier(0.22,1,0.36,1), box-shadow 0.4s cubic-bezier(0.22,1,0.36,1); } .ds-btn-cta:hover { transform: translateY(-2px); box-shadow: 0 10px 22px -8px rgba(255,138,91,0.7); } .ds-btn-cta:focus-visible { outline: 2px solid #B04E23; outline-offset: 2px; }"
+    },
+    {
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "次级操作:白底 + Sky 细边 + 深海军蓝文字。",
+      "html": "<button class=\"ds-btn-ghost\">Shuffle</button>",
+      "css": ".ds-btn-ghost { background: #fff; color: #0B3A53; font-family: Quicksand, ui-rounded, sans-serif; font-size: 16px; font-weight: 500; padding: 12px 28px; border: 1px solid #BFE9F2; border-radius: 999px; cursor: pointer; transition: border-color 0.4s cubic-bezier(0.22,1,0.36,1), box-shadow 0.4s cubic-bezier(0.22,1,0.36,1); } .ds-btn-ghost:hover { border-color: #0C8097; box-shadow: 0 12px 26px -16px rgba(11,58,83,0.5); } .ds-btn-ghost:focus-visible { outline: 2px solid #0C8097; outline-offset: 2px; }"
+    },
+    {
+      "name": "Filter Chip",
+      "kind": "chip",
+      "refersTo": "chip",
+      "description": "筛选标签(All · Studio · Live):Sky 浅底;选中转深水渐变白字。",
+      "html": "<span class=\"ds-chip\">Studio</span> <span class=\"ds-chip ds-chip-selected\">All</span>",
+      "css": ".ds-chip { display: inline-block; background: #BFE9F2; color: #0B3A53; font-family: Inter, system-ui, sans-serif; font-size: 13px; font-weight: 500; letter-spacing: 0.02em; padding: 6px 16px; border-radius: 999px; cursor: pointer; transition: background 0.4s cubic-bezier(0.22,1,0.36,1); } .ds-chip:hover { background: #A9DEEC; } .ds-chip-selected { background: linear-gradient(90deg, #0C8097, #0A8473); color: #fff; }"
+    },
+    {
+      "name": "Album Postcard Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "专辑明信片卡:白底、20px 圆角、纸感投影,悬停像拿起一张明信片。",
+      "html": "<div class=\"ds-card\"><div class=\"ds-card-cover\"></div><div class=\"ds-card-title\">For You</div><div class=\"ds-card-meta\">1982 · Studio</div></div>",
+      "css": ".ds-card { width: 180px; background: #fff; border-radius: 20px; padding: 16px; box-shadow: 0 12px 22px -14px rgba(11,58,83,0.35); transition: transform 0.4s cubic-bezier(0.22,1,0.36,1), box-shadow 0.4s cubic-bezier(0.22,1,0.36,1); cursor: pointer; } .ds-card:hover { transform: translateY(-4px); box-shadow: 0 16px 28px -14px rgba(11,58,83,0.45); } .ds-card-cover { width: 100%; aspect-ratio: 1; border-radius: 12px; background: linear-gradient(to bottom, #7FD0EC 0%, #A7E0EF 18%, #DFF4F1 46%, #FFF8EE 100%); margin-bottom: 12px; } .ds-card-title { font-family: Quicksand, ui-rounded, sans-serif; font-size: 16px; font-weight: 500; color: #0B3A53; } .ds-card-meta { font-family: Inter, system-ui, sans-serif; font-size: 13px; font-weight: 500; letter-spacing: 0.02em; color: #4C7083; margin-top: 2px; }"
+    },
+    {
+      "name": "Search Input",
+      "kind": "input",
+      "refersTo": "input-search",
+      "description": "搜索框:白底胶囊、Sky 描边、focus 转海洋青 ring。",
+      "html": "<input class=\"ds-input-search\" type=\"search\" placeholder=\"Search…\" />",
+      "css": ".ds-input-search { background: #fff; color: #0B3A53; font-family: Inter, system-ui, sans-serif; font-size: 16px; padding: 10px 20px; border: 1px solid #BFE9F2; border-radius: 999px; width: 220px; transition: border-color 0.4s cubic-bezier(0.22,1,0.36,1), box-shadow 0.4s cubic-bezier(0.22,1,0.36,1); } .ds-input-search::placeholder { color: #4C7083; } .ds-input-search:focus { outline: none; border-color: #0C8097; box-shadow: 0 0 0 2px rgba(12,128,151,0.35); }"
+    },
+    {
+      "name": "Progress Scrubber",
+      "kind": "custom",
+      "refersTo": "progress",
+      "description": "签名组件:Sky 轨道 + 深水渐变已播段(3.7:1 状态对比)+ 白色拖点带青色光晕。",
+      "html": "<div class=\"ds-scrubber\"><div class=\"ds-scrubber-track\"><div class=\"ds-scrubber-fill\"><div class=\"ds-scrubber-thumb\"></div></div></div><div class=\"ds-scrubber-time\"><span>1:24</span><span>4:14</span></div></div>",
+      "css": ".ds-scrubber { width: 260px; } .ds-scrubber-track { height: 4px; background: #BFE9F2; border-radius: 999px; } .ds-scrubber-fill { position: relative; width: 38%; height: 100%; background: linear-gradient(90deg, #0C8097, #0A8473); border-radius: 999px; } .ds-scrubber-thumb { position: absolute; right: -6px; top: 50%; transform: translateY(-50%); width: 12px; height: 12px; background: #fff; border-radius: 50%; box-shadow: 0 2px 8px rgba(28,167,196,0.7); } .ds-scrubber-time { display: flex; justify-content: space-between; margin-top: 6px; font-family: Inter, system-ui, sans-serif; font-size: 13px; letter-spacing: 0.02em; color: #4C7083; }"
+    },
+    {
+      "name": "Top Navigation",
+      "kind": "nav",
+      "refersTo": "nav",
+      "description": "顶部轻导航:Quicksand 字标 + 平铺链接;激活项 Ocean Deep 文字 + 下方浅水渐变短线(装饰)。",
+      "html": "<nav class=\"ds-nav\"><span class=\"ds-nav-brand\">TATSURO</span><a class=\"ds-nav-link ds-nav-active\" href=\"#\">Albums</a><a class=\"ds-nav-link\" href=\"#\">Songs</a><a class=\"ds-nav-link\" href=\"#\">MV</a><a class=\"ds-nav-link\" href=\"#\">Playlists</a></nav>",
+      "css": ".ds-nav { display: flex; align-items: center; gap: 28px; font-family: Quicksand, ui-rounded, sans-serif; } .ds-nav-brand { font-size: 18px; font-weight: 600; letter-spacing: 0.06em; color: #0B3A53; margin-right: 12px; } .ds-nav-link { position: relative; font-size: 15px; font-weight: 500; color: #4C7083; text-decoration: none; padding: 6px 2px; transition: color 0.4s cubic-bezier(0.22,1,0.36,1); } .ds-nav-link:hover { color: #0B3A53; } .ds-nav-link:focus-visible { outline: 2px solid #0C8097; outline-offset: 2px; border-radius: 4px; } .ds-nav-active { color: #0C8097; } .ds-nav-active::after { content: ''; position: absolute; left: 0; right: 0; bottom: -2px; height: 2px; border-radius: 999px; background: linear-gradient(90deg, #1CA7C4, #2FBFA8); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Noon Postcard",
+    "overview": "场景句(拍板原话):青蓝色的透明海,白色的沙滩,棕榈树,阳光。整个系统是一张正午海边寄出的明信片:高明度、低饱和、大面积留白、平涂色块和干净的边缘。通透感是第一目标,来自画面整体亮、颜色不铺满每一像素、平涂加利落边缘的叠加。视觉母题是永井博与铃木英人的 City Pop 封面美学。真实摄影是一等材质:界面质感靠真实海景照片承载,照片只要海、天、白沙、棕榈,平视视角;照片之上的 UI 层遵守磨砂玻璃纪律。明确拒绝深紫/品红霓虹夜店风、重阴影、玻璃叠玻璃、手绘装饰与营销腔文案。",
+    "keyCharacteristics": [
+      "高明度 + 低饱和 + 大留白 = 通透(不可妥协的第一原则)",
+      "平涂色块、干净边缘;渐变只用于环境层与品牌渐变(浅水装饰,深水按钮)",
+      "真实海景照片做质感底,浅色 overlay,磨砂玻璃托底内容",
+      "深钴蓝/深海军蓝做深锚点,亮的更亮、深的更深",
+      "动效像海边的光:8–20 秒极慢周期、几乎察觉不到",
+      "双主题:正午(默认浅色)与黄昏(暗色,暮蓝非黑夜)"
+    ],
+    "rules": [
+      {
+        "name": "The Transparency Rule(通透律)",
+        "body": "任何新增颜色/图层先问:它降低画面明度了吗?让边界发脏了吗?是,就重做。深色蒙版能不压就不压,要压也压到 14–28% 透明度的浅 navy 为止。",
+        "section": "colors"
+      },
+      {
+        "name": "The Deep Anchor Rule(深锚律)",
+        "body": "每一屏至少有一处 Deep Navy 或 Cobalt 的深色锚点。没有深锚点的画面会发平、发灰。",
+        "section": "colors"
+      },
+      {
+        "name": "The One Sunset Rule(一抹落日律)",
+        "body": "Coral 及其暖色家族在任一屏面积 ≤10%:它是落日,不是墙漆。",
+        "section": "colors"
+      },
+      {
+        "name": "The Deep Water Rule(深水律)",
+        "body": "浅水做氛围,深水载信息。Ocean/Turquoise/Coral 原色只做不承载信息的装饰;文字、图标、状态所在的彩色表面一律用深水形态(Ocean Deep #0C8097 / Turquoise Deep #0A8473 / Coral Ink #B04E23,全部 ≥4.5:1)。浅水对白字实测仅 2.3–2.9:1,任何字号都不达标。",
+        "section": "colors"
+      },
+      {
+        "name": "The Light-Weight Rule(轻字重律)",
+        "body": "层级靠大小和间距拉开,不靠加黑。400–500 是常态,600 只给 Display 和按钮,700 禁用。",
+        "section": "typography"
+      },
+      {
+        "name": "The Mixed-Script Rule(混排律)",
+        "body": "UI chrome 一律英文;日文内容用 Zen Maru Gothic,行高 1.7,禁止拉丁字体伪回退。",
+        "section": "typography"
+      },
+      {
+        "name": "The Warm Shadow Rule(暖影律)",
+        "body": "阴影必须带色(元素本色或暖色)、单方向向下、负 spread 收紧。看到 rgba(0,0,0,…) 的大糊影就是违规。",
+        "section": "elevation"
+      },
+      {
+        "name": "The Glass Discipline Rule(玻璃纪律)",
+        "body": "照片背景上的内容层用磨砂玻璃托底;平涂背景上用不透明实色;迷你播放条永远实色;玻璃叠玻璃绝对禁止。",
+        "section": "elevation"
+      },
+      {
+        "name": "The Light Overlay Rule(浅罩律)",
+        "body": "照片上压字用浅 navy 渐变 scrim(14–28%),绝不用深黑蒙版把照片压死。",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do 保持每屏的深色锚点:Deep Navy 文字或 Cobalt 元素至少一处。",
+      "Do 用真实精致的海景照片提升质感——只要海、天、白沙、棕榈树,平视视角。",
+      "Do 让动效像海边的光:8–20 秒周期缓慢呼吸,交互 400–600ms ease-out,全部配 prefers-reduced-motion 替代。",
+      "Do 文案朴素、功能性;UI 一律英文,日文内容用 Zen Maru Gothic。",
+      "Do 分层优先用细线或换平涂色;必须投影时带色、浅、单方向向下。"
+    ],
+    "donts": [
+      "Don't 使用深紫/品红霓虹夜店风及任何霓虹脉冲、一惊一乍的动画。",
+      "Don't 写做作、煽情、营销腔文案。",
+      "Don't 用手绘装饰元素;质感只来自真实照片与干净平涂。",
+      "Don't 玻璃叠玻璃;迷你播放条永远实色。",
+      "Don't 用重黑阴影、多方向糊影或深色蒙版压照片。",
+      "Don't 用纯黑文字(用 Deep Navy),muted 文字不淡过 Ink Mist(4.5:1 红线)。",
+      "Don't 把文字或必需图标放在浅水原色(Ocean/Turquoise/Coral/Sun)上;要么换深水形态,要么保持纯装饰(深水律)。",
+      "Don't 满屏加粗、渐变文字、侧色条、同尺寸卡片无限网格等 AI 模板痕迹。"
+    ]
+  }
+}

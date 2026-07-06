@@ -4,21 +4,14 @@ import beach from "./_assets/beach.jpg";
 import beachDusk from "./_assets/beach-dusk.jpg";
 import { GateForm } from "./gate-form";
 
-// Sea-light glints: slow, tiny, nearly imperceptible (8–20s ambient cycles).
-const GLINTS = [
-  { top: "22%", left: "16%", size: 9, duration: "10s", delay: "0s" },
-  { top: "16%", left: "72%", size: 7, duration: "13s", delay: "1s" },
-  { top: "38%", left: "84%", size: 6, duration: "15s", delay: "2s" },
-  { top: "56%", left: "10%", size: 5, duration: "11s", delay: "0.5s" },
-];
-
 export default function GatePage() {
   return (
     <main className="relative flex min-h-dvh w-full flex-col items-center justify-center overflow-hidden px-6 py-16">
       <ThemeToggle className="absolute top-5 right-5 z-10" />
       {/* environment layer: real photo per theme + pale navy scrim (Light Overlay Rule) */}
       <div aria-hidden="true" className="absolute inset-0">
-        {/* Noon — bright palm + sky, graded into the ocean family */}
+        {/* Noon — aerial turquoise sea, white sand, a single palm. Already in the
+            ocean family, so it carries the wordmark raw (no colour grade). */}
         <div className="absolute inset-0 dark:hidden">
           <Image
             src={beach}
@@ -27,12 +20,8 @@ export default function GatePage() {
             priority
             placeholder="blur"
             sizes="100vw"
-            className="object-cover object-[50%_0%]"
+            className="object-cover object-[50%_30%]"
           />
-          {/* ocean color grade — pulls the palm's browns into the sea family */}
-          <div className="absolute inset-0 bg-ocean opacity-45 mix-blend-color" />
-          {/* highlight tamer — blown-out sun flare multiplies down to pale sky, never glaring white */}
-          <div className="absolute inset-0 bg-sky opacity-85 mix-blend-multiply" />
           <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(11,58,83,0.14),rgba(11,58,83,0)_40%,rgba(11,58,83,0.10)_72%,rgba(11,58,83,0.32))]" />
         </div>
         {/* Dusk — twilight palm, its own violet→coral→blue sky (a cinematic sunset scrim) */}
@@ -50,20 +39,6 @@ export default function GatePage() {
         </div>
         {/* soft pool of shade behind the wordmark so white type never sits on bare glare/glow */}
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_56%_22%_at_50%_44%,rgba(11,58,83,0.28),transparent_72%)] dark:bg-[radial-gradient(ellipse_60%_24%_at_50%_44%,rgba(18,38,58,0.42),transparent_74%)]" />
-        {GLINTS.map((glint) => (
-          <span
-            key={glint.left}
-            className="absolute animate-glint rounded-full bg-white blur-[1px]"
-            style={{
-              top: glint.top,
-              left: glint.left,
-              width: glint.size,
-              height: glint.size,
-              animationDuration: glint.duration,
-              animationDelay: glint.delay,
-            }}
-          />
-        ))}
       </div>
 
       <div className="relative flex w-full flex-col items-center">

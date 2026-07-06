@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowRight, CircleNotch, LockSimple } from "@phosphor-icons/react";
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { type GateState, verifyArgot } from "./actions";
@@ -14,13 +14,23 @@ export function GateForm() {
   );
   const { rateLimited, cooldownTime, checkRateLimit, recordAttempt } =
     useRateLimit();
+  const inputRef = useRef<HTMLInputElement>(null);
 
   // each failed round-trip returns a fresh state object, so this fires per attempt
   useEffect(() => {
     if (state?.error) recordAttempt();
   }, [state, recordAttempt]);
 
+  // Focus the field on load and again after a failed attempt: React resets the
+  // form on a completed action, so without this the visitor lands on an empty,
+  // unfocused field and has to click back in to retry.
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, [state]);
+
   const showError = Boolean(state?.error) && !pending && !rateLimited;
+  const feedbackId = "gate-feedback";
+  const describedBy = rateLimited || showError ? feedbackId : undefined;
 
   return (
     <form
@@ -44,6 +54,7 @@ export function GateForm() {
           className="shrink-0 text-muted-foreground"
         />
         <input
+          ref={inputRef}
           type="password"
           name="password"
           required
@@ -51,6 +62,7 @@ export function GateForm() {
           placeholder="Password"
           aria-label="Password"
           aria-invalid={showError || undefined}
+          aria-describedby={describedBy}
           disabled={pending}
           className="h-11 min-w-0 flex-1 bg-transparent text-base text-foreground outline-none placeholder:text-muted-foreground disabled:opacity-50"
         />
@@ -69,7 +81,11 @@ export function GateForm() {
       </div>
 
       {/* feedback slot — fixed height so the postcard never jumps */}
-      <div aria-live="polite" className="mt-4 flex min-h-9 justify-center">
+      <div
+        id={feedbackId}
+        aria-live="polite"
+        className="mt-4 flex min-h-9 justify-center"
+      >
         {rateLimited ? (
           <p className="rounded-full bg-card/85 px-4 py-1.5 text-sm text-coral-ink backdrop-blur-xl dark:text-coral">
             Too many attempts. Try again in {cooldownTime}s.

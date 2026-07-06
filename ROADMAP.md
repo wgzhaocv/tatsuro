@@ -20,10 +20,10 @@
 
 ## 阶段 1 — 数据层(先于所有屏,或与 Gate 并行)
 
-- [ ] `lib/api/`:集中 API client(`albums.ts` / `songs.ts` / `lyrics.ts` / `mv.ts`),统一缓存策略——不再让 fetch 散落在组件里
-- [ ] 统一 `Song` 领域模型 + `lib/api/types.ts`(消除旧站 `AlbumSong{id,originalName}` / `SongType{songId,songName}` 双套字段)
+- [~] `lib/api/`:集中 API client——**已做 `albums.ts`(`getAlbums`/`getAlbum`)+ `songs.ts`(`getAlbumSongs`/`getSong`)+ `urls.ts`(封面/流媒体/MV 直链构造)**;`lyrics.ts` / `mv.ts` 待建。缓存策略统一到 Next 16 Cache Components:`next.config.ts` 开 `cacheComponents: true`,每个 client 函数 `'use cache'` + `cacheLife('max')` + `cacheTag`(`albums`/`songs` + 细粒度 `album:{id}`/`song:{id}` 等),将来 `revalidateTag('albums'|'songs')` 一键刷新
+- [x] 统一 `Song` 领域模型 + `lib/api/types.ts`(消除旧站 `AlbumSong{id,originalName}` / `SongType{songId,songName}` 双套字段——在数据层边界归一:`Song{id,name,trackNumber,…}`,`name` 已剥离 "01 - " 前缀)
 - [x] `.env`:`NEXT_PUBLIC_API_URL` / `ARGOT` / `AUTH_SECRET`(已从旧仓库拷贝)
-- [ ] `next.config.ts` remotePatterns 加后端图片域(`/stream/img/*`、`/mv/thumbnail/*`)
+- [x] `next.config.ts` remotePatterns 加后端图片域(`/stream/img/**`、`/mv/thumbnail/**`,host 由 `NEXT_PUBLIC_API_URL` 推导)
 - [ ] 播放器内核:队列状态机 store(从旧 `usePlayerStore` 移植清理;替换 `seekFn` 注入这种 DOM 强耦合)
 - [x] Gate 鉴权逻辑移植(`proxy.ts` + `lib/auth.ts` + `lib/constants.ts`;去掉了 UA 设备分支,重定向目标限同源)
 - [ ] (后期)Service Worker 音频缓存移植(`sw/audio-cache` + LRU)

@@ -15,6 +15,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import photoSurface from "./_assets/photo-surface.jpg";
 
 /**
  * /demo — living reference for the Noon Postcard design system.
@@ -435,7 +436,7 @@ export default function DemoPage() {
       >
         <div className="relative h-[360px] overflow-hidden rounded-[28px] sm:h-[420px]">
           <Image
-            src="https://images.unsplash.com/photo-1506953823976-52e1fdc0149a?w=1800&q=80"
+            src={photoSurface}
             alt="Clear turquoise shallows, white sand and leaning palm trees"
             fill
             sizes="(max-width: 1024px) 100vw, 960px"

@@ -24,7 +24,7 @@ export default async function Home() {
             priority
             placeholder="blur"
             sizes="100vw"
-            className="object-cover object-[50%_56%]"
+            className="object-cover object-[50%_68%]"
           />
         </div>
         <div className="absolute inset-0 hidden dark:block">

@@ -28,7 +28,7 @@ export function AlbumCard({ album }: { album: Album }) {
       aria-label={album.year ? `${album.name}, ${album.year}` : album.name}
       className="group block rounded-2xl focus:outline-none"
     >
-      <div className="relative aspect-square overflow-hidden rounded-[14px] bg-secondary shadow-postcard transition duration-500 ease-lazy group-hover:-translate-y-1.5 group-hover:shadow-lift-ocean group-focus-visible:-translate-y-1.5 group-focus-visible:ring-2 group-focus-visible:ring-ring group-focus-visible:ring-offset-2 group-focus-visible:ring-offset-background">
+      <div className="relative aspect-square overflow-hidden rounded-[14px] bg-secondary shadow-postcard transition duration-500 ease-lazy group-hover:-translate-y-1.5 group-hover:shadow-lift-navy group-focus-visible:-translate-y-1.5 group-focus-visible:ring-2 group-focus-visible:ring-ring group-focus-visible:ring-offset-2 group-focus-visible:ring-offset-background">
         <Image
           src={coverUrl(album.coverFrontId)}
           alt=""

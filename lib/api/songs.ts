@@ -8,23 +8,24 @@ import {
 } from "./types";
 
 // Fixed catalog → 'max' cache profile + tags for one-shot revalidateTag('songs').
+// A "disc" (Disc.id from a release) is the unit songs are fetched by.
 
 const API = process.env.NEXT_PUBLIC_API_URL;
 
-/** An album's track list, in the order the backend returns it. */
-export async function getAlbumSongs(albumId: string): Promise<Song[]> {
+/** A disc's track list, in the order the backend returns it. */
+export async function getDiscSongs(discId: string): Promise<Song[]> {
   "use cache";
   cacheLife("max");
-  cacheTag("songs", `album-songs:${albumId}`);
+  cacheTag("songs", `disc:${discId}`);
 
-  const res = await fetch(`${API}/music/album_songs/${albumId}`);
+  const res = await fetch(`${API}/music/album_songs/${discId}`);
   if (!res.ok) {
     throw new Error(
-      `Failed to load songs for album ${albumId}: ${res.status} ${res.statusText}`,
+      `Failed to load songs for disc ${discId}: ${res.status} ${res.statusText}`,
     );
   }
   const list = (await res.json()) as ApiAlbumSong[];
-  return list.map((s) => toSongFromAlbumSong(s, albumId));
+  return list.map((s) => toSongFromAlbumSong(s, discId));
 }
 
 /** Full details for a single song (album context, duration, mv link). */

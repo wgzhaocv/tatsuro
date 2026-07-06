@@ -1,30 +1,68 @@
-// Domain model + wire shapes for the ys-tr.withyakul.me music API.
+// Domain model for the ys-tr.withyakul.me music API.
 //
-// The old site carried two inconsistent song shapes — AlbumSong { id, originalName }
-// (track lists) and SongType { songId, songName } (player/queue) — glued together by
-// ad-hoc mapping scattered across components. Here we normalize both, and every raw
-// endpoint payload, into ONE canonical `Song` domain model at the API boundary so the
-// rest of the app never sees `originalName` / `songId` again.
+// Albums are modeled server-side as *releases*: one logical album can carry
+// multiple editions (reissues, e.g. Ride on Time 1986/2002) and multiple discs
+// (multi-CD sets, e.g. Opus). The backend collapses the flat album rows into this
+// shape (see ../../yamashita-api); the frontend just consumes it. Songs are still
+// fetched per disc (a disc == one backend source album).
+
+export type AlbumCategory = "studio" | "live" | "compilation";
+export type Recording = "studio" | "live";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Domain model — what the app consumes. Use these everywhere outside lib/api.
+// Domain — what the app consumes.
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** An album. */
+/** Grid list item: one logical release. */
 export type Album = {
   id: string;
   name: string;
-  /** Cover art ids → coverUrl() (see ./urls). */
+  year?: number;
+  category?: AlbumCategory;
+  /** Cover of the default (latest) edition → coverUrl() (see ./urls). */
+  coverFrontId: string;
+  coverBackId: string;
+  /** >1 when the release has reissue editions. */
+  editionCount: number;
+  /** Disc count of the default edition. */
+  discCount: number;
+};
+
+/** One disc within an edition. Maps to a backend source album; fetch its songs by `id`. */
+export type Disc = {
+  id: string;
+  number: number;
+  title?: string;
+  recording: Recording;
   coverFrontId: string;
   coverBackId: string;
 };
 
-/** A track. The single canonical song shape across grid, detail, player and queue. */
+/** A physical edition/pressing of a release. */
+export type Edition = {
+  id: string;
+  label: string;
+  year?: number;
+  coverFrontId: string;
+  coverBackId: string;
+  discs: Disc[];
+};
+
+/** Full release detail (editions + discs), for the album screen + edition switch. */
+export type AlbumDetail = {
+  id: string;
+  name: string;
+  year?: number;
+  category?: AlbumCategory;
+  defaultEditionId: string;
+  editions: Edition[];
+};
+
+/** A track. */
 export type Song = {
   id: string;
   /** Display-ready title with the "01 - " track prefix stripped. */
   name: string;
-  /** Track position within its album, parsed from the "01 - " prefix when present. */
   trackNumber?: number;
   albumId?: string;
   albumName?: string;
@@ -32,26 +70,50 @@ export type Song = {
   coverBackId?: string;
   /** Length in seconds. */
   duration?: number;
-  /** Present when the song has an associated music video. */
   mvId?: string;
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Wire shapes — exactly what the backend returns. Internal to lib/api; map to the
-// domain model with the helpers below and don't leak these outward.
+// Wire shapes — exactly what the backend returns. Internal to lib/api.
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type ApiAlbum = {
-  albumId: string;
-  albumName: string;
+export type ApiReleaseListItem = {
+  releaseId: string;
+  name: string;
+  year: number | null;
+  category: string | null;
   coverFrontId: string;
   coverBackId: string;
+  editionCount: number;
+  discCount: number;
 };
 
-/** Track-list item from /music/album_songs/{albumId} — intentionally minimal. */
+export type ApiReleaseDetail = {
+  releaseId: string;
+  name: string;
+  year: number | null;
+  category: string | null;
+  defaultEditionId: string;
+  editions: {
+    editionId: string;
+    label: string;
+    year: number | null;
+    coverFrontId: string;
+    coverBackId: string;
+    discs: {
+      discId: string;
+      number: number;
+      title?: string;
+      recording: string;
+      coverFrontId: string;
+      coverBackId: string;
+    }[];
+  }[];
+};
+
+/** Track-list item from /music/album_songs/{discId}. */
 export type ApiAlbumSong = {
   id: string;
-  /** e.g. "01 - Sparkle" — carries the track number as a prefix. */
   originalName: string;
 };
 
@@ -71,12 +133,45 @@ export type ApiSongInfo = {
 // Mappers — the one place wire → domain translation lives.
 // ─────────────────────────────────────────────────────────────────────────────
 
-export function toAlbum(a: ApiAlbum): Album {
+function asCategory(c: string | null): AlbumCategory | undefined {
+  return c === "studio" || c === "live" || c === "compilation" ? c : undefined;
+}
+
+export function toAlbum(r: ApiReleaseListItem): Album {
   return {
-    id: a.albumId,
-    name: a.albumName,
-    coverFrontId: a.coverFrontId,
-    coverBackId: a.coverBackId,
+    id: r.releaseId,
+    name: r.name,
+    year: r.year ?? undefined,
+    category: asCategory(r.category),
+    coverFrontId: r.coverFrontId,
+    coverBackId: r.coverBackId,
+    editionCount: r.editionCount,
+    discCount: r.discCount,
+  };
+}
+
+export function toAlbumDetail(r: ApiReleaseDetail): AlbumDetail {
+  return {
+    id: r.releaseId,
+    name: r.name,
+    year: r.year ?? undefined,
+    category: asCategory(r.category),
+    defaultEditionId: r.defaultEditionId,
+    editions: r.editions.map((e) => ({
+      id: e.editionId,
+      label: e.label,
+      year: e.year ?? undefined,
+      coverFrontId: e.coverFrontId,
+      coverBackId: e.coverBackId,
+      discs: e.discs.map((d) => ({
+        id: d.discId,
+        number: d.number,
+        title: d.title,
+        recording: d.recording === "live" ? "live" : "studio",
+        coverFrontId: d.coverFrontId,
+        coverBackId: d.coverBackId,
+      })),
+    })),
   };
 }
 
@@ -87,10 +182,10 @@ function parseTrackTitle(raw: string): { trackNumber?: number; name: string } {
   return { name: raw.trim() };
 }
 
-/** album_songs item → Song. albumId comes from the request that produced the list. */
-export function toSongFromAlbumSong(s: ApiAlbumSong, albumId: string): Song {
+/** album_songs item → Song. discId is the disc the list was fetched for. */
+export function toSongFromAlbumSong(s: ApiAlbumSong, discId: string): Song {
   const { trackNumber, name } = parseTrackTitle(s.originalName ?? "");
-  return { id: s.id, name, trackNumber, albumId };
+  return { id: s.id, name, trackNumber, albumId: discId };
 }
 
 /** Full /music/{id} payload → Song. */

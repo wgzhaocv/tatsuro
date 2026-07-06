@@ -15,7 +15,7 @@ export function AlbumGrid({
   const narrowed = filter !== "all" || query.trim() !== "";
 
   return (
-    <div className="mt-1 flex-1 rounded-t-[28px] border border-b-0 border-white/55 bg-white/45 px-4 pb-28 pt-6 shadow-[0_-24px_60px_-34px_rgba(11,58,83,0.5)] backdrop-blur-xl sm:mx-5 sm:px-6 dark:border-white/15 dark:bg-[rgba(18,38,58,0.62)]">
+    <div className="mt-1 flex-1 rounded-t-[28px] border border-b-0 border-white/55 bg-white/45 px-4 pb-28 pt-6 shadow-[0_-24px_60px_-34px_rgba(11,58,83,0.5)] backdrop-blur-sm sm:mx-5 sm:px-6 dark:border-white/15 dark:bg-[rgba(18,38,58,0.62)]">
       {narrowed && (
         <p
           className="mb-5 text-[13px] text-muted-foreground"

@@ -215,6 +215,11 @@ components:
 - **Style:** 顶部轻导航(TATSURO 字标 + Albums / Songs / MV / Playlists),Quicksand 500,Deep Navy;激活项文字用 Ocean Deep (#0C8097,≥4.5:1),下方 2px 浅水渐变短线做装饰。移动端收纳为底部标签栏(Home / Search / Library),图标 + 13px 标签,触控 ≥44px。
 - 照片背景上的导航条用磨砂玻璃托底;平涂背景上直接透明或实色。
 
+### Glass chrome(照片上的浮层:首页 hero 的 nav / 筛选 chips / 搜索)
+当 chrome 浮在**整幅照片**上(如首页 hero),不用上面「平涂底」的 chip/input 规格,改用**白磨砂玻璃 + 白发光描边 + 白字**——照片本身就是深锚点,配浅 navy scrim + `text-shadow` 保证白字可读。
+- **落地为 variant(别再手搓 class):** `Button` 的 `glass`(白玻璃:`bg-white/15` + `border-white/40` + 白字)/ `glass-active`(选中态:实白底 + navy 文字,清晰表达"当前");`Input` 的 `glass`(同款玻璃搜索框)。`backdrop-blur` 用**轻**(~4px `backdrop-blur-xs`),让照片颜色/形状透出,别糊成一片。
+- **黄昏(dark):** 玻璃填充换成 **dusk-navy 暮蓝**(`bg-dusk-navy/40`,hover `/55`),白发光边 + 白字保留,选中态仍实白;和暮色照片一个气质。承载**内容文字**的面板(专辑网格)才用语义 token(`--card`/`bg-dusk-navy/60`)分主题——over-photo 的 chrome 两主题共用白字。
+
 ### Progress / Scrubber(签名组件)
 - 轨道:Sky 浅底 4px;已播:深水渐变(状态指示,对 Sky 轨道 3.7:1);拖点:白色圆点 + lift-ocean 光晕。时间码 Label 级、Ink Mist、Geist Mono 可选。全屏播放器可在已播段加缓慢的波光 shimmer(8s+ 周期,reduced-motion 时静止)。
 

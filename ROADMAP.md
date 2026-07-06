@@ -21,7 +21,7 @@
 ## 阶段 1 — 数据层(先于所有屏,或与 Gate 并行)
 
 - [~] `lib/api/`:集中 API client——**已做 `albums.ts`(`getAlbums`/`getAlbum`)+ `songs.ts`(`getAlbumSongs`/`getSong`)+ `urls.ts`(封面/流媒体/MV 直链构造)**;`lyrics.ts` / `mv.ts` 待建。缓存策略统一到 Next 16 Cache Components:`next.config.ts` 开 `cacheComponents: true`,每个 client 函数 `'use cache'` + `cacheLife('max')` + `cacheTag`(`albums`/`songs` + 细粒度 `album:{id}`/`song:{id}` 等),将来 `revalidateTag('albums'|'songs')` 一键刷新
-- [x] 统一 `Song` 领域模型 + `lib/api/types.ts`(消除旧站 `AlbumSong{id,originalName}` / `SongType{songId,songName}` 双套字段——在数据层边界归一:`Song{id,name,trackNumber,…}`,`name` 已剥离 "01 - " 前缀)
+- [x] 领域模型 `lib/api/types.ts`——**演进为「Release → Edition → Disc」(后端建模,见 `../yamashita-api`)**:`Album`(发行)/ `Edition`(版本)/ `Disc`(碟)+ 曲目 `Song{id,name,trackNumber,…}`(`name` 已剥 "01 - " 前缀)。既消除了旧站 `AlbumSong` / `SongType` 双套字段,又顺带解决多碟被拆成多专辑、无年份、无 studio/live 的问题(JOY 1.5 归为 Ray of Hope 第 2 碟等)
 - [x] `.env`:`NEXT_PUBLIC_API_URL` / `ARGOT` / `AUTH_SECRET`(已从旧仓库拷贝)
 - [x] `next.config.ts` remotePatterns 加后端图片域(`/stream/img/**`、`/mv/thumbnail/**`,host 由 `NEXT_PUBLIC_API_URL` 推导)
 - [ ] 播放器内核:队列状态机 store(从旧 `usePlayerStore` 移植清理;替换 `seekFn` 注入这种 DOM 强耦合)
@@ -34,7 +34,7 @@
 > 播放器改到网格/详情之后:播放器需要真实歌曲喂养 + 一个点歌入口才能验透队列/播放流程;首页网格 + 专辑详情正好把数据层(albums/songs API + 统一 Song 模型)跑通。孤立地拿假数据做播放器验不透。
 
 - [x] **1. Gate 登录页** — 真实海景照片 + 磨砂玻璃表单;第一屏定调。字标 + 密码表单居中锁版(**去掉了黑胶唱片**——空转的唱片=假 affordance,违反动效传达状态的原则)。双主题各用一张真实照片(正午=航拍青绿海+白沙+单棵棕榈 Unsplash,本身在海蓝系,不调色、`object-[50%_30%]`;黄昏=暮色紫红棕榈剪影 Unsplash);白字标后加浅 navy 椭圆遮罩(`at 50% 44%`)防止压在高光/glow 上。无障碍:登录框自动聚焦 + 输错后重新聚焦、`aria-describedby` 关联错误提示
-- [x] **2. 首页专辑网格** — 沉浸式:整屏固定海景照片(正午/黄昏各一张,本地 `app/_assets`,深水律 scrim)+ 磨砂玻璃网格面板浮起在照片上;25 张 release 明信片卡(`getAlbums()`→`/music/releases`),封面 `auto-fill minmax(190px)`(手机 2 列、宽屏 6 列、恒定 ~210px),**All · Studio · Live · Compilations** 筛选(chips 靠右同标题行)+ 顶栏通用搜索;`2 CD`/`3 CD`/`2 versions` 徽标、`· Live`(coral-ink)/`· Compilation` 标签;按年代排;双主题成立、移动无溢出、44px、`w-screen` 固定照片消除滚动条抖动。**后端数据模型重塑**:多碟(Opus/Joy/Rarities/Poppin'/Softly)与再版(Ride on Time/Pocket Music)合并为「release→edition→disc」,JOY 1.5 归为 Ray of Hope 第 2 碟(live);详见 `../yamashita-api` migrations + 新接口 `/music/releases`、`/music/release/:id`(旧接口不变)
+- [x] **2. 首页专辑网格** — 沉浸式:整屏固定海景照片(正午/黄昏各一张,本地 `app/_assets`,深水律 scrim)+ 磨砂玻璃网格面板浮起在照片上;25 张 release 明信片卡(`getAlbums()`→`/music/releases`),封面 `auto-fill minmax(190px)`(手机 2 列、宽屏 6 列、恒定 ~210px),**All · Studio · Live · Compilations** 筛选(chips 靠右同标题行)+ 顶栏通用搜索;`2 CD`/`3 CD`/`2 versions` 徽标、`· Live`(coral-ink)/`· Compilation` 标签;按年代排;双主题成立、移动无溢出、44px、`w-screen` 固定照片消除滚动条抖动。**后端数据模型重塑**:多碟(Opus/Joy/Rarities/Poppin'/Softly)与再版(Ride on Time/Pocket Music)合并为「release→edition→disc」,JOY 1.5 归为 Ray of Hope 第 2 碟(live);详见 `../yamashita-api` migrations + 新接口 `/music/releases`、`/music/release/:id`(旧接口不变)。页面已收进 `app/(main)/` 路由组;over-photo 的 glass chrome(nav/chips/搜索)做成了 `Button`/`Input` 的 `glass`/`glass-active` variant(暗色走 dusk-navy 暮蓝玻璃)
 - [ ] **3. 专辑详情** — 大封面 + 曲目列表(序号/歌名/时长/操作)(**歌曲显示先到这里为止;依赖 songs API + 统一 Song 模型**)
 - [ ] **4. 全屏播放器**(桌面 + 移动)+ **迷你播放条**(永远实色)(**此时已有真实歌曲 + 点歌入口**;需要阶段 1 的队列状态机 store)
 - [ ] **5. 歌单** — 列表 / 详情 / 创建弹窗 / 固定的 Liked Songs

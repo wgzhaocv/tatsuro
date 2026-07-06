@@ -24,7 +24,9 @@ export function AlbumBrowser({ albums }: { albums: Album[] }) {
     );
   }, [albums, filter, query]);
 
-  const years = albums
+  // Subtitle reflects the current view (count + span), so the one count stays
+  // consistent whether or not a filter/search is active.
+  const years = shown
     .map((a) => a.year)
     .filter((y): y is number => typeof y === "number");
   const range = years.length
@@ -41,8 +43,12 @@ export function AlbumBrowser({ albums }: { albums: Album[] }) {
             <h1 className="font-display text-5xl font-semibold leading-none text-white [text-shadow:0_4px_24px_rgba(11,58,83,0.5)] sm:text-6xl">
               Albums
             </h1>
-            <p className="mt-2.5 text-sm text-white/90 [text-shadow:0_2px_10px_rgba(11,58,83,0.5)]">
-              {albums.length} albums · {range}
+            <p
+              aria-live="polite"
+              className="mt-2.5 text-sm text-white/90 [text-shadow:0_2px_10px_rgba(11,58,83,0.5)]"
+            >
+              {shown.length} {shown.length === 1 ? "album" : "albums"}
+              {range && ` · ${range}`}
             </p>
           </div>
           <AlbumFilters value={filter} onChange={setFilter} />
@@ -55,7 +61,7 @@ export function AlbumBrowser({ albums }: { albums: Album[] }) {
         />
       </div>
 
-      <AlbumGrid albums={shown} query={query} filter={filter} />
+      <AlbumGrid albums={shown} query={query} />
     </div>
   );
 }

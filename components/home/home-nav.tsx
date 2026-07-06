@@ -39,7 +39,7 @@ export function HomeNav({
       </Link>
 
       <nav aria-label="Sections" className="hidden lg:block">
-        <div className="flex gap-1 rounded-full border border-white/40 bg-white/15 p-1 backdrop-blur-sm">
+        <div className="flex gap-1 rounded-full border border-white/40 bg-white/15 p-1 backdrop-blur-xs">
           <Link
             href="/"
             aria-current="page"

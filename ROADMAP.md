@@ -22,17 +22,17 @@
 
 - [ ] `lib/api/`:集中 API client(`albums.ts` / `songs.ts` / `lyrics.ts` / `mv.ts`),统一缓存策略——不再让 fetch 散落在组件里
 - [ ] 统一 `Song` 领域模型 + `lib/api/types.ts`(消除旧站 `AlbumSong{id,originalName}` / `SongType{songId,songName}` 双套字段)
-- [ ] `.env`:`NEXT_PUBLIC_API_URL` / `ARGOT` / `AUTH_SECRET`(参考旧仓库 .env)
+- [x] `.env`:`NEXT_PUBLIC_API_URL` / `ARGOT` / `AUTH_SECRET`(已从旧仓库拷贝)
 - [ ] `next.config.ts` remotePatterns 加后端图片域(`/stream/img/*`、`/mv/thumbnail/*`)
 - [ ] 播放器内核:队列状态机 store(从旧 `usePlayerStore` 移植清理;替换 `seekFn` 注入这种 DOM 强耦合)
-- [ ] Gate 鉴权逻辑移植(`proxy.ts` + `auth.ts`)
+- [x] Gate 鉴权逻辑移植(`proxy.ts` + `lib/auth.ts` + `lib/constants.ts`;去掉了 UA 设备分支,重定向目标限同源)
 - [ ] (后期)Service Worker 音频缓存移植(`sw/audio-cache` + LRU)
 
 ## 阶段 2 — 逐屏重做(每屏 = 一次 `/impeccable craft`)
 
 按定调 → 核心体验 → 外围的顺序:
 
-- [ ] **1. Gate 登录页** — 黑胶意象 + 真实海景照片 + 磨砂玻璃;第一屏定调
+- [x] **1. Gate 登录页** — 真实海景照片 + 磨砂玻璃表单;第一屏定调。字标 + 密码表单居中锁版(**去掉了黑胶唱片**——空转的唱片=假 affordance,违反动效传达状态的原则)。双主题各用一张真实照片(正午=仰拍棕榈,压 `bg-ocean mix-blend-color` 45% 调入海蓝 + `bg-sky mix-blend-multiply` 85% 压过曝白;黄昏=暮色紫红棕榈剪影 Unsplash);白字标后加浅 navy 椭圆遮罩(`at 50% 44%`)防止压在高光/glow 上
 - [ ] **2. 全屏播放器**(桌面 + 移动)+ **迷你播放条**(永远实色)
 - [ ] **3. 首页专辑网格** — ~34 张明信片卡,All/Studio/Live 筛选,hover 翻面看背封
 - [ ] **4. 专辑详情** — 大封面 + 曲目列表(序号/歌名/时长/操作)
@@ -45,7 +45,7 @@
 
 ## 阶段 3 — 主题与打磨
 
-- [ ] next-themes 接入(正午默认;黄昏=暗色;把 /demo 的 localStorage 切换升级过去)
+- [x] next-themes 接入(`ThemeProvider` in `app/layout.tsx`,`attribute="class"` / `defaultTheme="system"` / `enableSystem` / `storageKey="tatsuro-theme"`——首访跟随系统深色,手动切换后记住;`components/theme-toggle.tsx` 磨砂玻璃日月切换钮,图标随 `.dark` 纯 CSS 交叉淡入,套 shadcn(base-ui)`tooltip` 做 a11y——聚焦/悬停出上下文文案「Switch to noon/dusk」,tooltip 用 `bg-foreground/text-background` 天然 AA;`/demo` 已从手写 localStorage 升级到共享 `useTheme`)
 - [ ] 动效统一 pass(`/impeccable animate`):氛围光斑、页面过渡,慵懒丝滑 400–600ms
 - [ ] a11y pass(`/impeccable audit`):键盘可达、44px 触控、input 边界对比、reduced-motion 全覆盖
 - [ ] 响应式 pass(`/impeccable adapt`):`100dvh`、CSS 断点(不依赖 UA 分支)

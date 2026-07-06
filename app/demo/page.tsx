@@ -10,7 +10,8 @@ import {
   SunDim,
 } from "@phosphor-icons/react";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useTheme } from "next-themes";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -136,18 +137,10 @@ function Section({
 }
 
 export default function DemoPage() {
-  const [dusk, setDusk] = useState(false);
+  const { resolvedTheme, setTheme } = useTheme();
+  const dusk = resolvedTheme === "dark";
   const [filter, setFilter] = useState("All");
   const [liked, setLiked] = useState(false);
-
-  useEffect(() => {
-    setDusk(localStorage.getItem("tatsuro-theme") === "dusk");
-  }, []);
-
-  useEffect(() => {
-    document.documentElement.classList.toggle("dark", dusk);
-    localStorage.setItem("tatsuro-theme", dusk ? "dusk" : "noon");
-  }, [dusk]);
 
   return (
     <div className="mx-auto w-full max-w-5xl px-5 pb-24 pt-10 sm:px-8">
@@ -169,7 +162,7 @@ export default function DemoPage() {
         <button
           type="button"
           aria-pressed={dusk}
-          onClick={() => setDusk(!dusk)}
+          onClick={() => setTheme(dusk ? "light" : "dark")}
           className={cn(
             pill,
             "border border-border bg-card px-5 text-card-foreground hover:border-ring hover:shadow-lift-navy",

@@ -18,6 +18,12 @@ const buttonVariants = cva(
         destructive:
           "bg-destructive/10 text-destructive hover:bg-destructive/20 focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:hover:bg-destructive/30 dark:focus-visible:ring-destructive/40",
         link: "text-primary underline-offset-4 hover:underline",
+        // Over-photo chrome (home hero): frosted white glass with a glowing edge.
+        glass:
+          "border-white/40 bg-white/15 text-white backdrop-blur-md [text-shadow:0_1px_6px_rgba(11,58,83,0.55)] hover:bg-white/25 focus-visible:border-white/70 focus-visible:ring-white/50",
+        // Its selected/active counterpart — solid white, ink text.
+        "glass-active":
+          "bg-white text-navy shadow-[0_4px_18px_-6px_rgba(255,255,255,0.55)] hover:bg-white focus-visible:border-white focus-visible:ring-white/60",
       },
       size: {
         default:

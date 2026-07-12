@@ -23,7 +23,7 @@ export function EditionSwitch({
 
   return (
     <nav aria-label="Editions" className="mt-6 w-full">
-      <p className="mb-2 text-[13px] font-medium text-foreground/75">Edition</p>
+      <p className="mb-2 text-[13px] font-medium text-foreground/85">Edition</p>
       <div className="flex flex-wrap gap-2">
         {chips.map((e) => {
           const selected = e.id === currentEditionId;

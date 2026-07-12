@@ -83,7 +83,7 @@ export function EditionView({
             <p className="mt-2 text-[15px] font-medium text-foreground">
               {ARTIST}
             </p>
-            <p className="mt-1.5 text-sm text-foreground/75">{metaLine}</p>
+            <p className="mt-1.5 text-sm text-foreground/85">{metaLine}</p>
 
             <div className="mt-5 sm:mt-6">
               <Tooltip>

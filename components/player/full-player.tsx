@@ -18,6 +18,7 @@ import { useEffect, useRef, useState } from "react";
 import { AlbumAmbient } from "@/components/album/album-ambient";
 import { FadeImage } from "@/components/album/fade-image";
 import { Button } from "@/components/ui/button";
+import type { Song } from "@/lib/api/types";
 import { coverUrl } from "@/lib/api/urls";
 import { ARTIST } from "@/lib/constants";
 import { formatDuration } from "@/lib/format";
@@ -117,103 +118,72 @@ export function FullPlayer() {
               "lg:grid lg:max-w-6xl lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)] lg:grid-rows-[minmax(0,1fr)_auto] lg:gap-x-16 lg:gap-y-6",
             )}
           >
+            {/* Left cell / phone flip area. Only the phone presentation
+                differs between the two modes — on lg both render the same
+                cover + caption. */}
             {showLyrics ? (
-              <>
-                {/* Identity: thumbnail row on phones; a proper cover +
-                    centered caption filling the upper-left cell on desktop. */}
-                <div className="flex w-full max-w-xl shrink-0 items-center gap-3.5 lg:col-start-1 lg:row-start-1 lg:max-w-none lg:flex-col lg:items-center lg:justify-center lg:gap-6 lg:self-stretch">
-                  <div className="relative aspect-square w-12 shrink-0 overflow-hidden rounded-[10px] bg-secondary shadow-postcard lg:w-[min(18rem,30vh)] lg:rounded-[20px]">
-                    {cover && (
-                      <FadeImage
-                        src={coverUrl(cover)}
-                        sizes="(min-width: 1024px) 288px, 48px"
-                      />
-                    )}
-                  </div>
-                  <div className="min-w-0 lg:w-full lg:text-center">
-                    <h2
-                      lang={isJapanese(song.name) ? "ja" : undefined}
-                      className="truncate font-display text-[17px] leading-snug font-medium text-foreground lg:text-[1.375rem] lg:leading-[1.25]"
-                    >
-                      {song.name}
-                    </h2>
-                    <p
-                      lang={
-                        albumName && isJapanese(albumName) ? "ja" : undefined
-                      }
-                      className="truncate text-[13px] text-foreground/80 lg:mt-1 lg:text-sm"
-                    >
-                      {ARTIST}
-                      {albumName ? ` — ${albumName}` : ""}
-                    </p>
-                  </div>
+              <div className="flex w-full max-w-xl shrink-0 items-center gap-3.5 lg:col-start-1 lg:row-start-1 lg:max-w-none lg:flex-col lg:items-center lg:justify-center lg:gap-6 lg:self-stretch">
+                <div className="relative aspect-square w-12 shrink-0 overflow-hidden rounded-[10px] bg-secondary shadow-postcard lg:w-[min(18rem,30vh)] lg:rounded-[20px]">
+                  {cover && (
+                    <FadeImage
+                      src={coverUrl(cover)}
+                      sizes="(min-width: 1024px) 288px, 48px"
+                    />
+                  )}
                 </div>
-                <LyricsPanel
-                  songId={song.id}
-                  className="min-h-0 w-full max-w-xl flex-1 lg:col-start-2 lg:row-start-1 lg:max-w-none lg:self-stretch"
+                <Caption
+                  song={song}
+                  albumName={albumName}
+                  className="min-w-0 lg:w-full lg:text-center"
+                  titleClassName="truncate text-[17px] leading-snug lg:text-[1.375rem] lg:leading-[1.25]"
+                  subClassName="text-[13px] lg:mt-1 lg:text-sm"
                 />
-              </>
+              </div>
             ) : (
-              <>
-                {/* `contents` keeps the phone flex layout flat; on lg this
-                    becomes the left cell: artwork with its caption beneath. */}
-                <div className="contents lg:col-start-1 lg:row-start-1 lg:flex lg:min-h-0 lg:flex-col lg:items-center lg:justify-center lg:gap-6 lg:self-stretch">
-                  <div className="relative aspect-square w-[min(78vw,38vh)] shrink-0 overflow-hidden rounded-[20px] bg-secondary shadow-postcard sm:w-[min(52vw,44vh)] lg:w-[min(18rem,30vh)]">
-                    {cover && (
-                      <FadeImage
-                        src={coverUrl(cover)}
-                        priority
-                        sizes="(max-width: 640px) 78vw, 44vh"
-                      />
-                    )}
-                  </div>
-                  <div className="hidden text-center lg:block">
-                    <h2
-                      lang={isJapanese(song.name) ? "ja" : undefined}
-                      className="font-display text-[1.375rem] leading-[1.25] font-medium text-foreground [text-wrap:balance]"
-                    >
-                      {song.name}
-                    </h2>
-                    <p
-                      lang={
-                        albumName && isJapanese(albumName) ? "ja" : undefined
-                      }
-                      className="mt-1 truncate text-sm text-foreground/80"
-                    >
-                      {ARTIST}
-                      {albumName ? ` — ${albumName}` : ""}
-                    </p>
-                  </div>
+              // `contents` keeps the phone flex layout flat; on lg this
+              // becomes the left cell: artwork with its caption beneath.
+              <div className="contents lg:col-start-1 lg:row-start-1 lg:flex lg:min-h-0 lg:flex-col lg:items-center lg:justify-center lg:gap-6 lg:self-stretch">
+                <div className="relative aspect-square w-[min(78vw,38vh)] shrink-0 overflow-hidden rounded-[20px] bg-secondary shadow-postcard sm:w-[min(52vw,44vh)] lg:w-[min(18rem,30vh)]">
+                  {cover && (
+                    <FadeImage
+                      src={coverUrl(cover)}
+                      priority
+                      sizes="(max-width: 640px) 78vw, 44vh"
+                    />
+                  )}
                 </div>
-                {/* Desktop always keeps the words beside the cover.
-                    max-lg:hidden (not `hidden lg:block`) so each panel state
-                    keeps its own display type — the empty state is a grid. */}
-                <LyricsPanel
-                  songId={song.id}
-                  className="max-lg:hidden lg:col-start-2 lg:row-start-1 lg:min-h-0 lg:self-stretch"
+                <Caption
+                  song={song}
+                  albumName={albumName}
+                  className="hidden text-center lg:block"
+                  titleClassName="text-[1.375rem] leading-[1.25] [text-wrap:balance]"
+                  subClassName="mt-1 text-sm"
                 />
-              </>
+              </div>
             )}
+
+            {/* The words themselves: the flipped-to view on phones, always
+                beside the cover on lg. max-lg:hidden (not `hidden lg:block`)
+                so each panel state keeps its own display type. */}
+            <LyricsPanel
+              songId={song.id}
+              className={cn(
+                showLyrics ? "min-h-0 w-full max-w-xl flex-1" : "max-lg:hidden",
+                "lg:col-start-2 lg:row-start-1 lg:min-h-0 lg:max-w-none lg:self-stretch",
+              )}
+            />
 
             {/* Control strip: on lg it always spans the stage bottom, with
                 the spectrum breathing just above the scrubber. */}
             <div className="w-full max-w-xl shrink-0 lg:col-span-full lg:col-start-1 lg:row-start-2 lg:max-w-none">
               {!showLyrics && (
-                <div className="text-center lg:hidden">
-                  <h2
-                    lang={isJapanese(song.name) ? "ja" : undefined}
-                    className="font-display text-2xl leading-[1.2] font-medium text-foreground sm:text-[1.75rem] [text-wrap:balance]"
-                  >
-                    {song.name}
-                  </h2>
-                  <p
-                    lang={albumName && isJapanese(albumName) ? "ja" : undefined}
-                    className="mt-1.5 truncate text-[15px] text-foreground/85"
-                  >
-                    {ARTIST}
-                    {albumName ? ` — ${albumName}` : ""}
-                  </p>
-                </div>
+                <Caption
+                  song={song}
+                  albumName={albumName}
+                  className="text-center lg:hidden"
+                  titleClassName="text-2xl leading-[1.2] sm:text-[1.75rem] [text-wrap:balance]"
+                  subClassName="mt-1.5 text-[15px] text-foreground/85"
+                />
               )}
 
               <Spectrum className="hidden h-12 lg:block" />
@@ -225,6 +195,43 @@ export function FullPlayer() {
         </DialogPrimitive.Popup>
       </DialogPrimitive.Portal>
     </DialogPrimitive.Root>
+  );
+}
+
+/** Song title + artist/album line — the one place this pair is composed
+ *  (it appears in three spots with different type scales). */
+function Caption({
+  song,
+  albumName,
+  className,
+  titleClassName,
+  subClassName,
+}: {
+  song: Song;
+  albumName?: string;
+  className?: string;
+  titleClassName?: string;
+  subClassName?: string;
+}) {
+  return (
+    <div className={className}>
+      <h2
+        lang={isJapanese(song.name) ? "ja" : undefined}
+        className={cn(
+          "font-display font-medium text-foreground",
+          titleClassName,
+        )}
+      >
+        {song.name}
+      </h2>
+      <p
+        lang={albumName && isJapanese(albumName) ? "ja" : undefined}
+        className={cn("truncate text-foreground/80", subClassName)}
+      >
+        {ARTIST}
+        {albumName ? ` — ${albumName}` : ""}
+      </p>
+    </div>
   );
 }
 
@@ -286,6 +293,19 @@ function SeekBar() {
   );
 }
 
+// Active mode state (shuffle/repeat): tinted fill + a dot under the icon,
+// not just a colour shift — which read as nothing at a glance.
+const MODE_ACTIVE = "bg-primary/12 text-primary hover:bg-primary/20";
+
+function ModeDot() {
+  return (
+    <span
+      aria-hidden
+      className="absolute bottom-1 left-1/2 size-1 -translate-x-1/2 rounded-full bg-primary"
+    />
+  );
+}
+
 function TransportControls() {
   const isPlaying = usePlayerStore((s) => s.isPlaying);
   const shuffle = usePlayerStore((s) => s.shuffle);
@@ -313,20 +333,11 @@ function TransportControls() {
         onClick={() => toggleShuffle()}
         className={cn(
           "relative size-11 rounded-full",
-          // Active mode state: tinted fill + a dot under the icon, not just
-          // a colour shift (which read as nothing at a glance).
-          shuffle
-            ? "bg-primary/12 text-primary hover:bg-primary/20"
-            : "text-foreground/70",
+          shuffle ? MODE_ACTIVE : "text-foreground/70",
         )}
       >
         <Shuffle size={22} aria-hidden />
-        {shuffle && (
-          <span
-            aria-hidden
-            className="absolute bottom-1 left-1/2 size-1 -translate-x-1/2 rounded-full bg-primary"
-          />
-        )}
+        {shuffle && <ModeDot />}
       </Button>
       <Button
         variant="ghost"
@@ -366,9 +377,7 @@ function TransportControls() {
         onClick={() => cycleRepeat()}
         className={cn(
           "relative size-11 rounded-full",
-          repeat !== "off"
-            ? "bg-primary/12 text-primary hover:bg-primary/20"
-            : "text-foreground/70",
+          repeat !== "off" ? MODE_ACTIVE : "text-foreground/70",
         )}
       >
         {repeat === "one" ? (
@@ -376,12 +385,7 @@ function TransportControls() {
         ) : (
           <Repeat size={22} aria-hidden />
         )}
-        {repeat !== "off" && (
-          <span
-            aria-hidden
-            className="absolute bottom-1 left-1/2 size-1 -translate-x-1/2 rounded-full bg-primary"
-          />
-        )}
+        {repeat !== "off" && <ModeDot />}
       </Button>
     </div>
   );

@@ -1,11 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useRef } from "react";
+import { memo, useCallback, useEffect, useRef } from "react";
 import { currentLineIndex, isTimed, type LyricLine } from "@/lib/api/lyrics";
 import { usePlayerStore, useProgressStore } from "@/lib/player/store";
 import { useLyrics } from "@/lib/queries/lyrics";
 import { isJapanese } from "@/lib/text";
-import { cn } from "@/lib/utils";
+import { cn, prefersReducedMotion } from "@/lib/utils";
 
 /**
  * Lyrics inside the full player, floating directly on the cover-ambient wash
@@ -80,8 +80,11 @@ function SyncedLyrics({
   lines: LyricLine[];
   className?: string;
 }) {
-  const currentTime = useProgressStore((s) => s.currentTime);
-  const current = currentLineIndex(lines, currentTime);
+  // Selector returns the *index*, so the ~4Hz timeupdate ticks only
+  // re-render this list at line boundaries, not on every tick.
+  const current = useProgressStore((s) =>
+    currentLineIndex(lines, s.currentTime),
+  );
   const currentRef = useRef(current);
   currentRef.current = current;
 
@@ -94,12 +97,9 @@ function SyncedLyrics({
     const list = listRef.current;
     const row = rowRefs.current[currentRef.current];
     if (!list || !row) return;
-    const reduceMotion = window.matchMedia(
-      "(prefers-reduced-motion: reduce)",
-    ).matches;
     list.scrollTo({
       top: row.offsetTop - list.clientHeight / 2 + row.clientHeight / 2,
-      behavior: reduceMotion ? "auto" : behavior,
+      behavior: prefersReducedMotion() ? "auto" : behavior,
     });
   }, []);
 
@@ -168,8 +168,15 @@ function SyncedLyrics({
 
 type LineState = "current" | "passed" | "plain";
 
-/** One clickable timed line: click = sing from here. */
-function LyricRow({ line, state }: { line: LyricLine; state: LineState }) {
+/** One clickable timed line: click = sing from here. Memoized so a line
+ *  boundary only re-renders the two rows whose state actually changed. */
+const LyricRow = memo(function LyricRow({
+  line,
+  state,
+}: {
+  line: LyricLine;
+  state: LineState;
+}) {
   const seek = usePlayerStore((s) => s.seek);
   const play = usePlayerStore((s) => s.play);
 
@@ -186,7 +193,7 @@ function LyricRow({ line, state }: { line: LyricLine; state: LineState }) {
       <LineText line={line} state={state} />
     </button>
   );
-}
+});
 
 function LineText({ line, state }: { line: LyricLine; state: LineState }) {
   return (

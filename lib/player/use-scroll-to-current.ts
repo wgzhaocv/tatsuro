@@ -1,6 +1,7 @@
 "use client";
 
 import { type RefObject, useEffect, useRef } from "react";
+import { prefersReducedMotion } from "@/lib/utils";
 
 // How long after entering the page a scroll may still fire. Covers a hard
 // reload too, where the persisted queue rehydrates just after first paint.
@@ -41,12 +42,9 @@ export function useScrollToCurrentOnEnter(
       const margin = 96;
       if (rect.top >= margin && rect.bottom <= window.innerHeight - margin)
         return;
-      const reduceMotion = window.matchMedia(
-        "(prefers-reduced-motion: reduce)",
-      ).matches;
       el.scrollIntoView({
         block: "center",
-        behavior: reduceMotion ? "auto" : "smooth",
+        behavior: prefersReducedMotion() ? "auto" : "smooth",
       });
     }, 150);
     return () => clearTimeout(timer);

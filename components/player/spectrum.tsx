@@ -1,34 +1,42 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { getAnalyser } from "@/lib/player/analyser";
 import { usePlayerStore } from "@/lib/player/store";
-import { cn } from "@/lib/utils";
+import { cn, prefersReducedMotion } from "@/lib/utils";
 
 // Shallow-water palette (decorative only — Deep Water Rule): the bars carry
-// no information beyond "the sea is moving".
+// no information beyond "the sea is moving". Literal hex is the documented
+// pattern here: @theme inline brand tokens have no runtime CSS variable, and
+// canvas fillStyle needs a real color string.
 const BAR_FROM = "#1CA7C4"; // ocean
 const BAR_TO = "#2FBFA8"; // turquoise
+const BARS = 96;
 
 /**
  * A frequency spectrum that breathes with the music: rounded bars fed by the
  * engine's AnalyserNode, drawn on canvas at display resolution. Purely
- * decorative — it fades out (CSS) when paused and renders nothing at all
- * under prefers-reduced-motion or when Web Audio is unavailable.
+ * decorative — it fades out (CSS) when paused and doesn't run at all under
+ * prefers-reduced-motion, below the lg breakpoint (where it's also hidden by
+ * CSS), or when Web Audio is unavailable.
  */
-export function Spectrum({
-  className,
-  bars = 96,
-}: {
-  className?: string;
-  bars?: number;
-}) {
+export function Spectrum({ className }: { className?: string }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const isPlaying = usePlayerStore((s) => s.isPlaying);
 
+  // The strip is desktop-only; the draw loop must know that too, or phones
+  // would spin an invisible 60fps rAF behind the display:none.
+  const [isDesktop, setIsDesktop] = useState(false);
   useEffect(() => {
-    if (!isPlaying) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const mq = window.matchMedia("(min-width: 1024px)");
+    const update = () => setIsDesktop(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
+
+  useEffect(() => {
+    if (!isPlaying || !isDesktop || prefersReducedMotion()) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
@@ -36,9 +44,12 @@ export function Spectrum({
 
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     let data: Uint8Array<ArrayBuffer> | null = null;
+    // Per-frame constants, built once (and the gradient again on resize).
+    let gradient: CanvasGradient | null = null;
+    let binRanges: [number, number][] | null = null;
     // Displayed level per bar, eased between frames (fast attack, slow
     // release) so the strip pulses with the beat instead of flickering.
-    const shown = new Float32Array(bars);
+    const shown = new Float32Array(BARS);
     let raf = 0;
 
     const draw = () => {
@@ -55,31 +66,39 @@ export function Spectrum({
       if (canvas.width !== width * dpr || canvas.height !== height * dpr) {
         canvas.width = width * dpr;
         canvas.height = height * dpr;
+        gradient = null;
+      }
+      if (!gradient) {
+        gradient = ctx.createLinearGradient(0, 0, width, 0);
+        gradient.addColorStop(0, BAR_FROM);
+        gradient.addColorStop(1, BAR_TO);
+      }
+      // Log-spaced bins: linear mapping parks the whole bassline in the
+      // first few bars (which then just sit at full height). Skip the
+      // always-hot lowest bins and stop before the hissy top.
+      if (!binRanges) {
+        const minBin = 3;
+        const maxBin = Math.floor(data.length * 0.72);
+        const ratio = maxBin / minBin;
+        binRanges = Array.from({ length: BARS }, (_, i) => {
+          const from = Math.floor(minBin * ratio ** (i / BARS));
+          const to = Math.max(
+            from + 1,
+            Math.floor(minBin * ratio ** ((i + 1) / BARS)),
+          );
+          return [from, to];
+        });
       }
       analyser.getByteFrequencyData(data);
 
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.clearRect(0, 0, width, height);
-      const gradient = ctx.createLinearGradient(0, 0, width, 0);
-      gradient.addColorStop(0, BAR_FROM);
-      gradient.addColorStop(1, BAR_TO);
       ctx.fillStyle = gradient;
 
       const gap = 4;
-      const barWidth = (width - gap * (bars - 1)) / bars;
-      // Log-spaced bins: linear mapping parks the whole bassline in the
-      // first few bars (which then just sit at full height). Skip the
-      // always-hot lowest bins, stop before the hissy top, and give each
-      // bar the loudest bin in its log-spaced slice.
-      const minBin = 3;
-      const maxBin = Math.floor(data.length * 0.72);
-      const ratio = maxBin / minBin;
-      for (let i = 0; i < bars; i++) {
-        const from = Math.floor(minBin * ratio ** (i / bars));
-        const to = Math.max(
-          from + 1,
-          Math.floor(minBin * ratio ** ((i + 1) / bars)),
-        );
+      const barWidth = (width - gap * (BARS - 1)) / BARS;
+      for (let i = 0; i < BARS; i++) {
+        const [from, to] = binRanges[i];
         let peak = 0;
         for (let b = from; b < to; b++) peak = Math.max(peak, data[b]);
         // A touch of gamma keeps quiet passages visibly alive without
@@ -96,7 +115,7 @@ export function Spectrum({
     };
     draw();
     return () => cancelAnimationFrame(raf);
-  }, [isPlaying, bars]);
+  }, [isPlaying, isDesktop]);
 
   return (
     <canvas

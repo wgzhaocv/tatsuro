@@ -80,11 +80,25 @@ components:
     textColor: "{colors.deep-navy}"
     rounded: "{rounded.pill}"
     padding: "12px 28px"
+  button-glass:
+    backgroundColor: "#FFFFFF26"
+    textColor: "#FFFFFF"
+    rounded: "{rounded.pill}"
+    padding: "12px 16px"
+  button-glass-ink:
+    backgroundColor: "#FFFFFF8C"
+    textColor: "{colors.deep-navy}"
+    rounded: "{rounded.pill}"
+    padding: "12px 16px"
   chip:
     backgroundColor: "{colors.sky}"
     textColor: "{colors.deep-navy}"
     rounded: "{rounded.pill}"
     padding: "6px 16px"
+  panel-glass:
+    backgroundColor: "#FFFFFF73"
+    rounded: "28px"
+    padding: "24px"
   card:
     backgroundColor: "#FFFFFF"
     textColor: "{colors.deep-navy}"
@@ -183,7 +197,7 @@ components:
 ### Named Rules
 **The Warm Shadow Rule(暖影律)。** 阴影必须带色(元素本色或暖色)、单方向向下、负 spread 收紧。看到 `rgba(0,0,0,…)` 的大糊影就是违规。
 
-**The Glass Discipline Rule(玻璃纪律)。** 照片背景上的内容层 → 半透明磨砂玻璃托底(`rgba(255,255,255,0.88)` + backdrop-blur,压住照片的杂乱、让海景透出来);平涂背景上 → 不透明实色,不需要玻璃。常驻迷你播放条**永远是不透明实色**。玻璃叠玻璃 = 发糊、层级不清,绝对禁止。
+**The Glass Discipline Rule(玻璃纪律)。** 照片/环境层上的内容层 → 半透明磨砂玻璃托底;平涂背景上 → 不透明实色,不需要玻璃。常驻迷你播放条**永远是不透明实色**。玻璃叠玻璃 = 发糊、层级不清,绝对禁止。**标准 sheet 配方已固化为 `GlassPanel` 组件**(`components/glass-panel.tsx`):正午 `rgba(255,255,255,0.45)` + `border-white/55`,黄昏 `dusk-navy/60` + `border-white/15`,统一**微模糊** `backdrop-blur-xs`(~4px,让底下的颜色/形状透出,别糊成一片);圆角/阴影/间距留在调用处。首页专辑网格与专辑页曲目 sheet 都是它。
 
 **The Light Overlay Rule(浅罩律)。** 照片上需要压字时,用浅 navy 渐变 scrim(`rgba(11,58,83,0.14)` 到 `0.28`),绝不用深黑蒙版把照片压死。
 
@@ -195,6 +209,7 @@ components:
 - **CTA / Like:** Coral Ink (#B04E23) 实色,白字(5.3:1);悬停 lift-coral 光晕。落日渐变只做该按钮的装饰(光晕、点亮心形的浅水填充),不做文字底。
 - **Ghost:** 白/半透明白底,Deep Navy 文字,1px Sky 边框;照片上则为磨砂玻璃底。
 - **对比度守则(深水律的按钮版):** 白字只坐深水表面(Ocean Deep / Turquoise Deep / Coral Ink / Cobalt #145495,全部 ≥4.5:1);浅水渐变上**永远不放文字或必需图标**——实测 2.3–2.9:1,任何字号都不达标。
+- **实现即规范(绝不手搓按钮):** 所有按钮一律走 `components/ui/button.tsx` 的 variant——`default`(primary 实色)/ `action`(深水渐变,Play/选中态)/ `cta`(Coral Ink 珊瑚,Like/收藏;黄昏自动换浅水珊瑚+navy 字)/ `glass` / `glass-active`(暗照片 chrome)/ `glass-ink`(亮洗 chrome)。缺形态先加 variant 再用;链接长得像按钮用 `buttonVariants()`。
 
 ### Chips(筛选/标签:All · Studio · Live)
 - **Style:** Sky (#BFE9F2) 浅底,Deep Navy 文字,pill,6px 16px。
@@ -219,6 +234,7 @@ components:
 当 chrome 浮在**整幅照片**上(如首页 hero),不用上面「平涂底」的 chip/input 规格,改用**白磨砂玻璃 + 白发光描边 + 白字**——照片本身就是深锚点,配浅 navy scrim + `text-shadow` 保证白字可读。
 - **落地为 variant(别再手搓 class):** `Button` 的 `glass`(白玻璃:`bg-white/15` + `border-white/40` + 白字)/ `glass-active`(选中态:实白底 + navy 文字,清晰表达"当前");`Input` 的 `glass`(同款玻璃搜索框)。`backdrop-blur` 用**轻**(~4px `backdrop-blur-xs`),让照片颜色/形状透出,别糊成一片。
 - **黄昏(dark):** 玻璃填充换成 **dusk-navy 暮蓝**(`bg-dusk-navy/40`,hover `/55`),白发光边 + 白字保留,选中态仍实白;和暮色照片一个气质。承载**内容文字**的面板(专辑网格)才用语义 token(`--card`/`bg-dusk-navy/60`)分主题——over-photo 的 chrome 两主题共用白字。
+- **亮洗上的 chrome 用 `glass-ink`(白字 glass 的姊妹形态):** 专辑页的环境层是白光亮洗(不是暗 scrim 照片),白字压不住——chrome 改用**亮玻璃 + 墨字**:`bg-white/55` + `border-white/70` + Deep Navy 文字,黄昏 `dusk-navy/50` + foreground。返回 pill、未选中 Edition chip 都是它;选中态用 `action` 深水渐变白字。
 
 ### Progress / Scrubber(签名组件)
 - 轨道:Sky 浅底 4px;已播:深水渐变(状态指示,对 Sky 轨道 3.7:1);拖点:白色圆点 + lift-ocean 光晕。时间码 Label 级、Ink Mist、Geist Mono 可选。全屏播放器可在已播段加缓慢的波光 shimmer(8s+ 周期,reduced-motion 时静止)。
@@ -227,8 +243,12 @@ components:
 - 常驻底部,**不透明实色**(浅色主题:白/贝壳白;黄昏:Dusk Deep #23324D)——玻璃纪律的明文豁免区之外。封面缩略 44px 圆角 8px、歌名 Body、播放/暂停主色圆钮、细进度线贴顶。
 
 ### Photo Surface(签名材质)
-- 照片只出现在**环境层**(页面背景、Gate 全屏、专辑详情头图):海、天、白沙、棕榈,平视,无人物/建筑/船。
+- 照片只出现在**环境层**(页面背景、Gate 全屏):海、天、白沙、棕榈,平视,无人物/建筑/船。
 - 处理链:照片 → (需要压字时)浅 navy 渐变 scrim 14–28% → 磨砂玻璃内容板 → 实色交互件。层级永远清晰,一眼能数出材质层数。
+
+### Cover Ambient(签名材质:专辑页封面环境光)
+- 专辑详情不用海景照片——**每张专辑自己的封面**模糊放大(`blur` ~24px + `saturate 1.35`)铺满视口做环境色,再**溶进正午白光**:白渐变罩 `rgba(255,255,255,0.84 → 0.6 → sea-glass 0.92)`(黄昏 = dusk-navy 同构),文字全程墨色/前景 token——不压深 scrim,深水律与浅罩律天然成立。
+- 每张专辑以自己的颜色浸染整页;环境层带 `animate-breathe` 极慢呼吸,reduced-motion 走全局开关。其上的 chrome 用 `glass-ink`,内容 sheet 用 `GlassPanel`。
 
 ## 6. Do's and Don'ts
 

@@ -3,8 +3,9 @@
 // Albums are modeled server-side as *releases*: one logical album can carry
 // multiple editions (reissues, e.g. Ride on Time 1986/2002) and multiple discs
 // (multi-CD sets, e.g. Opus). The backend collapses the flat album rows into this
-// shape (see ../../yamashita-api); the frontend just consumes it. Songs are still
-// fetched per disc (a disc == one backend source album).
+// shape (see ../../yamashita-api); the frontend just consumes it. The release
+// detail embeds each disc's tracks (with duration); getDiscSongs/getSong remain
+// for other callers (a disc == one backend source album).
 
 export type AlbumCategory = "studio" | "live" | "compilation";
 export type Recording = "studio" | "live";
@@ -28,7 +29,8 @@ export type Album = {
   discCount: number;
 };
 
-/** One disc within an edition. Maps to a backend source album; fetch its songs by `id`. */
+/** One disc within an edition. Maps to a backend source album; its tracks come
+ *  embedded in the release detail (no per-disc fetch needed for the album screen). */
 export type Disc = {
   id: string;
   number: number;
@@ -36,6 +38,7 @@ export type Disc = {
   recording: Recording;
   coverFrontId: string;
   coverBackId: string;
+  tracks: Song[];
 };
 
 /** A physical edition/pressing of a release. */
@@ -57,6 +60,28 @@ export type AlbumDetail = {
   defaultEditionId: string;
   editions: Edition[];
 };
+
+/** URL segment for an edition (/album/:id/2002) — the year reads naturally;
+ *  the edition id is the fallback for the rare year-less pressing. */
+export function editionSlug(edition: Edition): string {
+  return edition.year != null ? String(edition.year) : edition.id;
+}
+
+/** The edition shown at /album/:id — the backend-declared default (latest). */
+export function defaultEdition(album: AlbumDetail): Edition {
+  return (
+    album.editions.find((e) => e.id === album.defaultEditionId) ??
+    album.editions[0]
+  );
+}
+
+/** Resolve an /album/:id/:edition segment back to an edition. */
+export function findEdition(
+  album: AlbumDetail,
+  slug: string,
+): Edition | undefined {
+  return album.editions.find((e) => editionSlug(e) === slug || e.id === slug);
+}
 
 /** A track. */
 export type Song = {
@@ -107,6 +132,7 @@ export type ApiReleaseDetail = {
       recording: string;
       coverFrontId: string;
       coverBackId: string;
+      tracks: { id: string; originalName: string; duration?: number }[];
     }[];
   }[];
 };
@@ -170,6 +196,16 @@ export function toAlbumDetail(r: ApiReleaseDetail): AlbumDetail {
         recording: d.recording === "live" ? "live" : "studio",
         coverFrontId: d.coverFrontId,
         coverBackId: d.coverBackId,
+        tracks: d.tracks.map((t) => {
+          const { trackNumber, name } = parseTrackTitle(t.originalName ?? "");
+          return {
+            id: t.id,
+            name,
+            trackNumber,
+            albumId: d.discId,
+            duration: t.duration,
+          };
+        }),
       })),
     })),
   };

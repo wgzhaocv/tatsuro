@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-07-05T14:00:00Z",
+  "generatedAt": "2026-07-12T12:00:00Z",
   "title": "Design System: Tatsuro — The Noon Postcard",
   "extensions": {
     "colorMeta": {
@@ -339,6 +339,30 @@
       "css": ".ds-scrubber { width: 260px; } .ds-scrubber-track { height: 4px; background: #BFE9F2; border-radius: 999px; } .ds-scrubber-fill { position: relative; width: 38%; height: 100%; background: linear-gradient(90deg, #0C8097, #0A8473); border-radius: 999px; } .ds-scrubber-thumb { position: absolute; right: -6px; top: 50%; transform: translateY(-50%); width: 12px; height: 12px; background: #fff; border-radius: 50%; box-shadow: 0 2px 8px rgba(28,167,196,0.7); } .ds-scrubber-time { display: flex; justify-content: space-between; margin-top: 6px; font-family: Inter, system-ui, sans-serif; font-size: 13px; letter-spacing: 0.02em; color: #4C7083; }"
     },
     {
+      "name": "Glass Button (over photo)",
+      "kind": "button",
+      "refersTo": "button-glass",
+      "description": "暗照片 chrome:白磨砂玻璃 + 白发光描边 + 白字(配浅 navy scrim 使用);选中态 glass-active = 实白底 + navy 字。",
+      "html": "<button class=\"ds-btn-glass\">Albums</button> <button class=\"ds-btn-glass ds-btn-glass-active\">All</button>",
+      "css": ".ds-btn-glass { background: rgba(255,255,255,0.15); color: #fff; text-shadow: 0 1px 6px rgba(11,58,83,0.55); font-family: Inter, system-ui, sans-serif; font-size: 14px; font-weight: 500; padding: 12px 16px; border: 1px solid rgba(255,255,255,0.4); border-radius: 999px; backdrop-filter: blur(4px); cursor: pointer; transition: background 0.4s cubic-bezier(0.22,1,0.36,1); } .ds-btn-glass:hover { background: rgba(255,255,255,0.25); } .ds-btn-glass:focus-visible { outline: 2px solid rgba(255,255,255,0.7); outline-offset: 2px; } .ds-btn-glass-active { background: #fff; color: #0B3A53; text-shadow: none; box-shadow: 0 4px 18px -6px rgba(255,255,255,0.55); }"
+    },
+    {
+      "name": "Glass Ink Button (over bright wash)",
+      "kind": "button",
+      "refersTo": "button-glass-ink",
+      "description": "亮洗 chrome(专辑页封面环境光):亮玻璃 + 墨字——白字 glass 的姊妹形态。返回 pill、未选中 Edition chip 用它。",
+      "html": "<button class=\"ds-btn-glass-ink\">1986 · Air</button>",
+      "css": ".ds-btn-glass-ink { background: rgba(255,255,255,0.55); color: #0B3A53; font-family: Inter, system-ui, sans-serif; font-size: 14px; font-weight: 500; padding: 12px 16px; border: 1px solid rgba(255,255,255,0.7); border-radius: 999px; backdrop-filter: blur(4px); cursor: pointer; transition: background 0.4s cubic-bezier(0.22,1,0.36,1); } .ds-btn-glass-ink:hover { background: rgba(255,255,255,0.75); } .ds-btn-glass-ink:focus-visible { outline: 2px solid #0C8097; outline-offset: 2px; }"
+    },
+    {
+      "name": "Frosted Sheet (GlassPanel)",
+      "kind": "custom",
+      "refersTo": "panel-glass",
+      "description": "照片/环境层上的标准内容 sheet(components/glass-panel.tsx):微模糊白玻璃,黄昏换 dusk-navy/60;圆角/阴影留在调用处。首页网格与专辑曲目列表共用。",
+      "html": "<div class=\"ds-glass-panel\"><p class=\"ds-glass-panel-line\">1&nbsp;&nbsp;Sparkle&nbsp;&nbsp;&nbsp;4:17</p><p class=\"ds-glass-panel-line\">2&nbsp;&nbsp;Music Book&nbsp;&nbsp;&nbsp;5:10</p></div>",
+      "css": ".ds-glass-panel { background: rgba(255,255,255,0.45); border: 1px solid rgba(255,255,255,0.55); border-radius: 28px; padding: 24px; backdrop-filter: blur(4px); box-shadow: 0 12px 22px -14px rgba(11,58,83,0.35); width: 260px; } .ds-glass-panel-line { font-family: Inter, system-ui, sans-serif; font-size: 15px; color: #0B3A53; padding: 8px 4px; }"
+    },
+    {
       "name": "Top Navigation",
       "kind": "nav",
       "refersTo": "nav",
@@ -396,7 +420,7 @@
       },
       {
         "name": "The Glass Discipline Rule(玻璃纪律)",
-        "body": "照片背景上的内容层用磨砂玻璃托底;平涂背景上用不透明实色;迷你播放条永远实色;玻璃叠玻璃绝对禁止。",
+        "body": "照片/环境层上的内容层用磨砂玻璃托底;平涂背景上用不透明实色;迷你播放条永远实色;玻璃叠玻璃绝对禁止。标准 sheet 配方 = GlassPanel 组件:正午 rgba(255,255,255,0.45)+border-white/55,黄昏 dusk-navy/60+border-white/15,统一微模糊 backdrop-blur-xs(~4px)。",
         "section": "elevation"
       },
       {

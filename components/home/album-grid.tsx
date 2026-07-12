@@ -1,3 +1,4 @@
+import { GlassPanel } from "@/components/glass-panel";
 import type { Album } from "@/lib/api/types";
 import { AlbumCard } from "./album-card";
 
@@ -10,7 +11,7 @@ export function AlbumGrid({
   query: string;
 }) {
   return (
-    <div className="mt-1 flex-1 rounded-t-[28px] border border-b-0 border-white/55 bg-white/45 px-4 pb-28 pt-6 shadow-[0_-24px_60px_-34px_rgba(11,58,83,0.5)] backdrop-blur-xs sm:mx-5 sm:px-6 dark:border-white/15 dark:bg-dusk-navy/60">
+    <GlassPanel className="mt-1 flex-1 rounded-t-[28px] border-b-0 px-4 pb-28 pt-6 shadow-[0_-24px_60px_-34px_rgba(11,58,83,0.5)] sm:mx-5 sm:px-6">
       {albums.length > 0 ? (
         <ul className="grid gap-x-5 gap-y-8 [grid-template-columns:repeat(auto-fill,minmax(150px,1fr))] md:[grid-template-columns:repeat(auto-fill,minmax(190px,1fr))]">
           {albums.map((album) => (
@@ -31,6 +32,6 @@ export function AlbumGrid({
           </p>
         </div>
       )}
-    </div>
+    </GlassPanel>
   );
 }

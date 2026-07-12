@@ -9,6 +9,13 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default: "bg-primary text-primary-foreground hover:bg-primary/80",
+        // Warm CTA — sunset coral (One Sunset Rule: small areas only). Light:
+        // coral-ink + white (5.3:1); dusk: shallow coral + navy ink (6.6:1).
+        cta: "bg-coral-ink text-white hover:bg-coral-ink/90 dark:bg-coral dark:text-dusk-navy dark:hover:bg-coral/90",
+        // Deep-water action — the ocean→turquoise gradient (--gradient-action),
+        // white text 4.6:1 across the run. Play / selected-state fills.
+        action:
+          "bg-[image:var(--gradient-action)] text-white hover:brightness-105",
         outline:
           "border-border bg-input/30 hover:bg-input/50 hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground",
         secondary:
@@ -24,6 +31,10 @@ const buttonVariants = cva(
         // Its selected/active counterpart — solid white, ink text.
         "glass-active":
           "bg-white text-navy shadow-[0_4px_18px_-6px_rgba(255,255,255,0.55)] hover:bg-white focus-visible:border-white focus-visible:ring-white/60",
+        // Over *bright* ambient washes (album page): light glass, ink text —
+        // white-text `glass` is for dark scrimmed photos only (Deep Water Rule).
+        "glass-ink":
+          "border-white/70 bg-white/55 text-navy backdrop-blur-xs hover:bg-white/75 dark:border-white/20 dark:bg-dusk-navy/50 dark:text-foreground dark:hover:bg-dusk-navy/70",
       },
       size: {
         default:

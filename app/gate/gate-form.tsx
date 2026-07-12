@@ -24,6 +24,7 @@ export function GateForm() {
   // Focus the field on load and again after a failed attempt: React resets the
   // form on a completed action, so without this the visitor lands on an empty,
   // unfocused field and has to click back in to retry.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `state` is the refocus trigger, not a read dependency
   useEffect(() => {
     inputRef.current?.focus();
   }, [state]);

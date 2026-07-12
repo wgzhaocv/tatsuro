@@ -1,17 +1,11 @@
-import { Play } from "@phosphor-icons/react/dist/ssr";
 import { GlassPanel } from "@/components/glass-panel";
-import { Button } from "@/components/ui/button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import type { AlbumCategory, AlbumDetail, Edition } from "@/lib/api/types";
 import { coverUrl } from "@/lib/api/urls";
 import { formatTotalDuration } from "@/lib/format";
 import { isJapanese } from "@/lib/text";
 import { AlbumAmbient } from "./album-ambient";
 import { DiscSection } from "./disc-section";
+import { EditionPlaybackProvider, PlayEditionButton } from "./edition-playback";
 import { EditionSwitch } from "./edition-switch";
 import { FadeImage } from "./fade-image";
 
@@ -56,8 +50,28 @@ export function EditionView({
     .filter(Boolean)
     .join(" · ");
 
+  // Queue-ready songs: the release payload keeps tracks lean, so denormalize
+  // the cover + album name in here — the mini bar and lock screen need them.
+  const queueSongs = edition.discs.flatMap((disc) =>
+    disc.tracks.map((track) => ({
+      ...track,
+      albumName: album.name,
+      coverFrontId: disc.coverFrontId || edition.coverFrontId,
+      coverBackId: disc.coverBackId || edition.coverBackId,
+    })),
+  );
+  const discStarts: number[] = [];
+  edition.discs.reduce((offset, disc) => {
+    discStarts.push(offset);
+    return offset + disc.tracks.length;
+  }, 0);
+  const queueLabel =
+    hasEditions && edition.year != null
+      ? `${album.name} (${edition.year})`
+      : album.name;
+
   return (
-    <>
+    <EditionPlaybackProvider songs={queueSongs} label={queueLabel}>
       <AlbumAmbient cover={cover} />
 
       <div className="mx-auto w-full max-w-6xl px-5 pt-2 pb-20 sm:px-8 lg:grid lg:grid-cols-[18.5rem_1fr] lg:items-start lg:gap-12 lg:pt-6">
@@ -86,25 +100,7 @@ export function EditionView({
             <p className="mt-1.5 text-sm text-foreground/85">{metaLine}</p>
 
             <div className="mt-5 sm:mt-6">
-              <Tooltip>
-                <TooltipTrigger
-                  render={
-                    <Button
-                      type="button"
-                      variant="action"
-                      aria-disabled="true"
-                      aria-label="Play — the player is coming soon"
-                      className="h-12 cursor-not-allowed gap-2 rounded-full pr-6 pl-5 text-[15px] font-semibold shadow-lift-ocean"
-                    >
-                      <Play className="size-5" weight="fill" aria-hidden />
-                      Play
-                    </Button>
-                  }
-                />
-                <TooltipContent sideOffset={8}>
-                  Player coming soon
-                </TooltipContent>
-              </Tooltip>
+              <PlayEditionButton />
             </div>
           </div>
 
@@ -121,8 +117,13 @@ export function EditionView({
           as="main"
           className="mt-10 rounded-[28px] px-3 py-6 shadow-postcard sm:px-6 lg:mt-0"
         >
-          {edition.discs.map((disc) => (
-            <DiscSection key={disc.id} disc={disc} showHeading={multiDisc} />
+          {edition.discs.map((disc, d) => (
+            <DiscSection
+              key={disc.id}
+              disc={disc}
+              showHeading={multiDisc}
+              startIndex={discStarts[d]}
+            />
           ))}
 
           <p className="mt-8 border-t border-border/70 px-3 pt-5 text-[13px] text-muted-foreground">
@@ -136,6 +137,6 @@ export function EditionView({
           </p>
         </GlassPanel>
       </div>
-    </>
+    </EditionPlaybackProvider>
   );
 }

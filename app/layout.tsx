@@ -6,6 +6,8 @@ import {
   Zen_Maru_Gothic,
 } from "next/font/google";
 import "./globals.css";
+import { QueryProvider } from "@/components/query-provider";
+import { ServiceWorkerProvider } from "@/components/sw-provider";
 import { ThemeProvider } from "@/components/theme-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
@@ -61,7 +63,10 @@ export default function RootLayout({
           enableSystem
           storageKey="tatsuro-theme"
         >
-          <TooltipProvider>{children}</TooltipProvider>
+          <QueryProvider>
+            <TooltipProvider>{children}</TooltipProvider>
+          </QueryProvider>
+          <ServiceWorkerProvider />
         </ThemeProvider>
       </body>
     </html>

@@ -12,9 +12,12 @@ import { TrackRow } from "./track-row";
 export function DiscSection({
   disc,
   showHeading,
+  startIndex,
 }: {
   disc: Disc;
   showHeading: boolean;
+  /** This disc's offset in the edition-wide queue (across discs). */
+  startIndex: number;
 }) {
   const seconds = disc.tracks.reduce((t, tr) => t + (tr.duration ?? 0), 0);
   // Untitled discs use "Disc N" as their heading — don't repeat it below.
@@ -55,7 +58,12 @@ export function DiscSection({
       )}
       <ol>
         {disc.tracks.map((track, i) => (
-          <TrackRow key={track.id} track={track} index={i} />
+          <TrackRow
+            key={track.id}
+            track={track}
+            index={i}
+            queueIndex={startIndex + i}
+          />
         ))}
       </ol>
     </section>

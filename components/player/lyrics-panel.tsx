@@ -56,7 +56,8 @@ export function LyricsPanel({
   ) : (
     <div
       className={cn(
-        "overflow-y-auto py-6 [mask-image:linear-gradient(to_bottom,transparent,black_2.5rem,black_calc(100%-2.5rem),transparent)]",
+        // no-scrollbar: the fade mask would clip a native scrollbar mid-track
+        "no-scrollbar overflow-y-auto py-6 [mask-image:linear-gradient(to_bottom,transparent,black_2.5rem,black_calc(100%-2.5rem),transparent)]",
         className,
       )}
     >
@@ -112,8 +113,9 @@ function SyncedLyrics({
       onWheel={markUserScroll}
       onTouchMove={markUserScroll}
       className={cn(
-        // relative so row offsetTop is measured within this list (scroll math)
-        "relative overflow-y-auto py-[38%] [mask-image:linear-gradient(to_bottom,transparent,black_3rem,black_calc(100%-3rem),transparent)] sm:py-[26%]",
+        // relative so row offsetTop is measured within this list (scroll math);
+        // no-scrollbar because the fade mask would clip a native scrollbar
+        "no-scrollbar relative overflow-y-auto py-[38%] [mask-image:linear-gradient(to_bottom,transparent,black_3rem,black_calc(100%-3rem),transparent)] sm:py-[26%]",
         className,
       )}
     >

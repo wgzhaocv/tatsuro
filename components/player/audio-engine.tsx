@@ -22,14 +22,24 @@ import { usePlayerStore, useProgressStore } from "@/lib/player/store";
 // The two are told apart by the pause↔visibilitychange time gap; when unsure
 // the playing intent is suspended for 400ms before the verdict, and after a
 // yield the element stays muted for a 3s guard window.
+//
+// The auto-pause being fought is a WebKit-on-iOS behavior — on other
+// platforms an external pause is legitimate (headphones out, another app),
+// so there the engine simply honors it.
 // ─────────────────────────────────────────────────────────────────────────────
+
+const isIOSWebKit =
+  typeof navigator !== "undefined" &&
+  (/iP(hone|ad|od)/.test(navigator.userAgent) ||
+    // iPadOS reports itself as MacIntel; the touch points give it away.
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1));
 
 export function AudioEngine() {
   const audioRef = useRef<HTMLAudioElement>(null);
   const loadedSongId = useRef<string | null>(null);
   const consumedSeekNonce = useRef<number>(0);
-  // Guards the error handler from advancing in a loop when every track fails.
-  const erroredSongId = useRef<string | null>(null);
+  // Consecutive-failure count; stops error-skipping from looping forever.
+  const errorStreak = useRef(0);
 
   // Persisted state is skipped during SSR/hydration; restore it once mounted.
   useEffect(() => {
@@ -105,6 +115,13 @@ export function AudioEngine() {
     if (el.duration > 0 && el.duration - el.currentTime < 0.5) return;
     if (Date.now() - lastSrcChangeRef.current < 500) return;
 
+    // Outside iOS WebKit there is no auto-pause to fight — an external pause
+    // is real; just sync the store to it.
+    if (!isIOSWebKit) {
+      usePlayerStore.getState().pause();
+      return;
+    }
+
     const pausedAt = Date.now();
     const hiddenAt = hiddenAtRef.current;
     if (hiddenAt !== null && pausedAt - hiddenAt < 2000) {
@@ -171,7 +188,9 @@ export function AudioEngine() {
   }, [isPlaying, isSuspended, song]);
 
   // isPlaying says play but the element is still paused after 300ms (silent
-  // play() failure, stale stream) → actively recover.
+  // play() failure, stale stream) → actively recover. Re-armed on every song
+  // change too — a track-boundary stall happens while isPlaying never flips.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `song` re-arms the watchdog, it isn't read
   useEffect(() => {
     if (!isPlaying) return;
     const el = audioRef.current;
@@ -182,7 +201,7 @@ export function AudioEngine() {
       attemptRecovery(el);
     }, 300);
     return () => clearTimeout(timer);
-  }, [isPlaying, attemptRecovery]);
+  }, [isPlaying, song, attemptRecovery]);
 
   // ── volume / mute (guard windows stay silent) ──
   useEffect(() => {
@@ -277,23 +296,23 @@ export function AudioEngine() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, []);
 
-  // ── cross-tab exclusivity: last tab to start playing wins ──
+  // ── cross-tab exclusivity: the tab whose audio actually starts wins.
+  // Claims are broadcast from the element's onPlay (confirmed playback), not
+  // from store intent — an intent whose play() then fails must not silence
+  // the tab that is really playing.
+  const channelRef = useRef<BroadcastChannel | null>(null);
+  const tabIdRef = useRef(Math.random().toString(36).slice(2));
   useEffect(() => {
     if (typeof BroadcastChannel === "undefined") return;
-    const tabId = Math.random().toString(36).slice(2);
     const channel = new BroadcastChannel("tatsuro-player");
+    channelRef.current = channel;
     channel.onmessage = (e) => {
-      if (e.data?.type === "claim" && e.data.id !== tabId) {
+      if (e.data?.type === "claim" && e.data.id !== tabIdRef.current) {
         usePlayerStore.getState().pause();
       }
     };
-    const unsub = usePlayerStore.subscribe((state, prev) => {
-      if (state.isPlaying && !prev.isPlaying) {
-        channel.postMessage({ type: "claim", id: tabId });
-      }
-    });
     return () => {
-      unsub();
+      channelRef.current = null;
       channel.close();
     };
   }, []);
@@ -346,16 +365,29 @@ export function AudioEngine() {
           return;
         }
         usePlayerStore.getState().play();
+        // Confirmed playback — silence any other tab.
+        channelRef.current?.postMessage({
+          type: "claim",
+          id: tabIdRef.current,
+        });
+      }}
+      onPlaying={() => {
+        // Real audio is flowing: the error guard only covers a *consecutive*
+        // failure chain, it never blacklists a song for the session.
+        errorStreak.current = 0;
       }}
       onEnded={() => usePlayerStore.getState().next(true)}
       onError={() => {
-        const current = usePlayerStore.getState().current;
-        if (!current || erroredSongId.current === current.id) {
-          usePlayerStore.getState().pause();
+        const state = usePlayerStore.getState();
+        if (!state.current) return;
+        // Skip the broken track, but once a whole queue has failed in a row
+        // (network gone, repeat-all would spin forever) stop knocking.
+        errorStreak.current += 1;
+        if (errorStreak.current > Math.max(state.context.length, 1)) {
+          state.pause();
           return;
         }
-        erroredSongId.current = current.id;
-        usePlayerStore.getState().next(true);
+        state.next(true);
       }}
     />
   );

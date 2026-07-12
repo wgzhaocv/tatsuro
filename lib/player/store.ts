@@ -230,7 +230,12 @@ export const usePlayerStore = create<PlayerState>()(
           const { shuffle } = get();
           let newOrder = order;
           if (shuffle && context.length > 1) {
-            newOrder = shuffledOrder(context.length, 0);
+            // Fresh permutation with a random opener (pinning 0 would bias
+            // every round toward track 1) — but never the track that just ended.
+            newOrder = shuffledOrder(
+              context.length,
+              Math.floor(Math.random() * context.length),
+            );
             if (newOrder[0] === order[position]) {
               const swap =
                 1 + Math.floor(Math.random() * (newOrder.length - 1));
@@ -272,7 +277,10 @@ export const usePlayerStore = create<PlayerState>()(
           set({ seekRequest: seekTo(0), isPlaying: true });
           return;
         }
-        if (position > 0) {
+        // On a userQueue detour `position` still points at the last *context*
+        // song — history, not the context, holds the actual previous song.
+        const fromContext = context[order[position]]?.id === current.id;
+        if (fromContext && position > 0) {
           const p = position - 1;
           set({
             position: p,

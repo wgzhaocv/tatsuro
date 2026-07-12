@@ -86,6 +86,7 @@
 
 :root {
   /* Noon — default light theme: sea-sky gradient, deep navy ink */
+  color-scheme: light;
   --background: oklch(0.964 0.016 172.6);
   --foreground: oklch(0.331 0.065 237.5);
   --card: oklch(1 0 0);
@@ -130,7 +131,9 @@
 }
 
 .dark {
-  /* Dusk — twilight blue, not night-black; cyan brightened one stop */
+  /* Dusk — twilight blue, not night-black; cyan brightened one stop.
+     color-scheme keeps native widgets (scrollbars, form controls) dark too. */
+  color-scheme: dark;
   --background: oklch(0.263 0.046 250);
   --foreground: oklch(0.95 0.015 210);
   --card: oklch(0.317 0.053 261.6);

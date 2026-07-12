@@ -1,5 +1,5 @@
-import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
+import { Link } from "@/components/ui/link";
 import { type AlbumDetail, defaultEdition, editionSlug } from "@/lib/api/types";
 import { cn } from "@/lib/utils";
 

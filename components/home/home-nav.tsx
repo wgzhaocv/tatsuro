@@ -1,5 +1,5 @@
-import Link from "next/link";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { Link } from "@/components/ui/link";
 import { HomeSearch } from "./home-search";
 
 // Only Albums exists today; the rest are drawn as placeholders (their screens

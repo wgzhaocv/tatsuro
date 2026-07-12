@@ -1,5 +1,5 @@
 import Image from "next/image";
-import Link from "next/link";
+import { Link } from "@/components/ui/link";
 import type { Album } from "@/lib/api/types";
 import { coverUrl } from "@/lib/api/urls";
 // Content data is often Japanese; tag it so :lang(ja) picks up the JP gothic stack.

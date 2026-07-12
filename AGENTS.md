@@ -58,6 +58,7 @@ bunx shadcn add <component>       # 装 shadcn 组件
 - **数据模型 = 「Release → Edition → Disc」,由后端建模**(后端在 `../yamashita-api`:Cloudflare Workers + Hono + D1 + R2)。后端把扁平的 album 行合并成逻辑发行:多 CD 归为多 Disc、再版归为多 Edition(默认展开最新版),另带 `year` / `category`(studio/live/compilation)。**新接口** `/music/releases`(网格列表)、`/music/release/:id`(嵌套 editions/discs);**旧接口**(`/music/albums`、`/music/album_songs/:id`、`/music/{id}`、`/stream/*`、`/mv/*`)原样保留——旧站还在用。契约看后端 `migrations/`(0001 DDL / 0002 seed / 0003 JOY1.5→Ray of Hope)+ `src/routes/music.ts`。
 - `lib/api/`(fetch 全部收拢在此,不散落进组件——旧站头号教训,见旧仓库 `design/01-ui-audit.md`):`albums.ts`(`getAlbums`→/releases、`getAlbum`→/release/:id)、`songs.ts`(`getDiscSongs`→/album_songs/:discId、`getSong`)、`urls.ts`(封面/流媒体/MV 直链)、`types.ts`(领域模型 `Album`/`Edition`/`Disc`/`Song` + wire→domain 映射)。每个 client 函数 `'use cache' + cacheLife('max') + cacheTag`(`albums`/`songs` + 细粒度);后端数据改了要 `revalidateTag` 才刷新。
 - 页面在 **`app/(main)/` 路由组**(gate/demo 在组外);首页 `app/(main)/page.tsx` = 专辑网格。新 section(album/[id]、songs、mv、playlists)都进 `app/(main)/`。
+- **站内链接一律用 `@/components/ui/link`(不要裸 `next/link`)**:滚动由 `components/page-scroll.tsx` 全权接管(基于 Activity 缓存的每路由滚动记忆),wrapper 默认 `scroll={false}`。新增会滚动的页面/作用域,挂一个 `<PageScroll />`(见 `album/[id]/layout.tsx` 的作用域范例)。
 - 播放器状态:zustand store(队列状态机从旧站移植清理)——**未做**。
 - 流媒体直接拼 URL:`{API}/stream/new_play/{songId}`(音频)、`{API}/stream/img/{coverId}`(封面);封面域已加进 next.config remotePatterns(`/stream/img/**`、`/mv/thumbnail/**`)。
 - 界面类任务用 `/impeccable craft <屏>`;每屏完成标准见 ROADMAP.md 底部。**本项目不开 branch,直接在 `main` 上改。**

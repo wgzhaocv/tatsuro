@@ -1,4 +1,5 @@
 import { AlbumBrowser } from "@/components/home/album-browser";
+import { PageScroll } from "@/components/page-scroll";
 import { ThemeImage } from "@/components/theme-image";
 import { getAlbums } from "@/lib/api/albums";
 import beachDusk from "./_assets/home-dusk.jpg";
@@ -9,6 +10,7 @@ export default async function Home() {
 
   return (
     <div className="relative flex min-h-dvh flex-col">
+      <PageScroll />
       {/* Immersive photo surface: one beach photo fills the viewport (fixed), the
           grid frosts over it. Per theme + a light navy scrim up top (Light Overlay
           Rule) so the white chrome stays legible. */}

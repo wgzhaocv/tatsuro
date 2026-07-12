@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "tsc --noEmit && next build",
     "start": "next start",
     "lint": "biome check",
     "format": "biome format --write"
@@ -34,7 +34,7 @@
     "@types/react-dom": "^19",
     "esbuild": "^0.28.1",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "7.0.2"
   },
   "ignoreScripts": [
     "sharp",

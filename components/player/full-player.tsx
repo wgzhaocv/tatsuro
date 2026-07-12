@@ -96,7 +96,9 @@ export function FullPlayer() {
               aria-label={showLyrics ? "Hide lyrics" : "Show lyrics"}
               aria-pressed={showLyrics}
               onClick={() => setShowLyrics((v) => !v)}
-              className="size-11 shrink-0 rounded-full"
+              // Desktop shows lyrics beside the cover permanently — the flip
+              // is a phone affordance.
+              className="size-11 shrink-0 rounded-full lg:hidden"
             >
               {/* Mic = lyrics/sing-along — the convention the old site used
                   too; a bare quote glyph read as nothing to actual users. */}
@@ -104,21 +106,15 @@ export function FullPlayer() {
             </Button>
           </header>
 
-          {/* ── Cover ⇄ lyrics · identity · transport. Lyrics mode makes the
-              words the star. Phones: the cover shrinks into a thumbnail row
-              and the list takes every pixel down to the scrubber. Desktop
-              (lg+) is not a stretched phone in either mode: a stage with the
-              control strip (spectrum · seek · transport) always spanning the
-              bottom of the same rail as the header; above it, cover mode
-              centers the artwork + caption, lyrics mode splits cover-left /
-              words-right. ── */}
+          {/* ── Cover ⇄ lyrics · identity · transport. Phones flip between a
+              big cover and a lyrics-first view (thumbnail row + full-height
+              list). Desktop (lg+) is ONE view: cover + caption left, lyrics
+              right, and the control strip (spectrum · seek · transport)
+              spanning the bottom of the same rail as the header. ── */}
           <div
             className={cn(
               "mx-auto flex min-h-0 w-full max-w-3xl flex-1 flex-col items-center justify-evenly gap-6 px-6 py-6 sm:gap-8 sm:px-8 sm:py-8",
-              "lg:grid lg:max-w-6xl lg:grid-rows-[minmax(0,1fr)_auto] lg:gap-y-6",
-              showLyrics
-                ? "lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)] lg:gap-x-16"
-                : "lg:grid-cols-1",
+              "lg:grid lg:max-w-6xl lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)] lg:grid-rows-[minmax(0,1fr)_auto] lg:gap-x-16 lg:gap-y-6",
             )}
           >
             {showLyrics ? (
@@ -158,34 +154,45 @@ export function FullPlayer() {
                 />
               </>
             ) : (
-              // `contents` keeps the phone flex layout flat; on lg this
-              // becomes the upper cell: artwork with its caption beneath.
-              <div className="contents lg:row-start-1 lg:flex lg:min-h-0 lg:flex-col lg:items-center lg:justify-center lg:gap-6 lg:self-stretch">
-                <div className="relative aspect-square w-[min(78vw,38vh)] shrink-0 overflow-hidden rounded-[20px] bg-secondary shadow-postcard sm:w-[min(52vw,44vh)] lg:w-[min(30vw,38vh)]">
-                  {cover && (
-                    <FadeImage
-                      src={coverUrl(cover)}
-                      priority
-                      sizes="(max-width: 640px) 78vw, 44vh"
-                    />
-                  )}
+              <>
+                {/* `contents` keeps the phone flex layout flat; on lg this
+                    becomes the left cell: artwork with its caption beneath. */}
+                <div className="contents lg:col-start-1 lg:row-start-1 lg:flex lg:min-h-0 lg:flex-col lg:items-center lg:justify-center lg:gap-6 lg:self-stretch">
+                  <div className="relative aspect-square w-[min(78vw,38vh)] shrink-0 overflow-hidden rounded-[20px] bg-secondary shadow-postcard sm:w-[min(52vw,44vh)] lg:w-[min(18rem,30vh)]">
+                    {cover && (
+                      <FadeImage
+                        src={coverUrl(cover)}
+                        priority
+                        sizes="(max-width: 640px) 78vw, 44vh"
+                      />
+                    )}
+                  </div>
+                  <div className="hidden text-center lg:block">
+                    <h2
+                      lang={isJapanese(song.name) ? "ja" : undefined}
+                      className="font-display text-[1.375rem] leading-[1.25] font-medium text-foreground [text-wrap:balance]"
+                    >
+                      {song.name}
+                    </h2>
+                    <p
+                      lang={
+                        albumName && isJapanese(albumName) ? "ja" : undefined
+                      }
+                      className="mt-1 truncate text-sm text-foreground/80"
+                    >
+                      {ARTIST}
+                      {albumName ? ` — ${albumName}` : ""}
+                    </p>
+                  </div>
                 </div>
-                <div className="hidden text-center lg:block">
-                  <h2
-                    lang={isJapanese(song.name) ? "ja" : undefined}
-                    className="font-display text-2xl leading-[1.2] font-medium text-foreground [text-wrap:balance]"
-                  >
-                    {song.name}
-                  </h2>
-                  <p
-                    lang={albumName && isJapanese(albumName) ? "ja" : undefined}
-                    className="mt-1.5 truncate text-[15px] text-foreground/85"
-                  >
-                    {ARTIST}
-                    {albumName ? ` — ${albumName}` : ""}
-                  </p>
-                </div>
-              </div>
+                {/* Desktop always keeps the words beside the cover.
+                    max-lg:hidden (not `hidden lg:block`) so each panel state
+                    keeps its own display type — the empty state is a grid. */}
+                <LyricsPanel
+                  songId={song.id}
+                  className="max-lg:hidden lg:col-start-2 lg:row-start-1 lg:min-h-0 lg:self-stretch"
+                />
+              </>
             )}
 
             {/* Control strip: on lg it always spans the stage bottom, with
@@ -305,11 +312,21 @@ function TransportControls() {
         aria-pressed={shuffle}
         onClick={() => toggleShuffle()}
         className={cn(
-          "size-11 rounded-full",
-          shuffle ? "text-primary" : "text-foreground/70",
+          "relative size-11 rounded-full",
+          // Active mode state: tinted fill + a dot under the icon, not just
+          // a colour shift (which read as nothing at a glance).
+          shuffle
+            ? "bg-primary/12 text-primary hover:bg-primary/20"
+            : "text-foreground/70",
         )}
       >
         <Shuffle size={22} aria-hidden />
+        {shuffle && (
+          <span
+            aria-hidden
+            className="absolute bottom-1 left-1/2 size-1 -translate-x-1/2 rounded-full bg-primary"
+          />
+        )}
       </Button>
       <Button
         variant="ghost"
@@ -348,14 +365,22 @@ function TransportControls() {
         aria-pressed={repeat !== "off"}
         onClick={() => cycleRepeat()}
         className={cn(
-          "size-11 rounded-full",
-          repeat !== "off" ? "text-primary" : "text-foreground/70",
+          "relative size-11 rounded-full",
+          repeat !== "off"
+            ? "bg-primary/12 text-primary hover:bg-primary/20"
+            : "text-foreground/70",
         )}
       >
         {repeat === "one" ? (
           <RepeatOnce size={22} aria-hidden />
         ) : (
           <Repeat size={22} aria-hidden />
+        )}
+        {repeat !== "off" && (
+          <span
+            aria-hidden
+            className="absolute bottom-1 left-1/2 size-1 -translate-x-1/2 rounded-full bg-primary"
+          />
         )}
       </Button>
     </div>

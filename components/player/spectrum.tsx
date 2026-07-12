@@ -30,17 +30,25 @@ export function Spectrum({
     if (!isPlaying) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const canvas = canvasRef.current;
-    const analyser = getAnalyser();
-    if (!canvas || !analyser) return;
+    if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    const data = new Uint8Array(analyser.frequencyBinCount);
+    let data: Uint8Array<ArrayBuffer> | null = null;
+    // Displayed level per bar, eased between frames (fast attack, slow
+    // release) so the strip pulses with the beat instead of flickering.
+    const shown = new Float32Array(bars);
     let raf = 0;
 
     const draw = () => {
       raf = requestAnimationFrame(draw);
+      // The analyser is built inside the engine's onPlay gesture, which can
+      // land *after* this effect runs (always, in production — dev's strict
+      // double-effects masked it). Keep polling until it exists.
+      const analyser = getAnalyser();
+      if (!analyser) return;
+      data ??= new Uint8Array(analyser.frequencyBinCount);
       const width = canvas.clientWidth;
       const height = canvas.clientHeight;
       if (width === 0 || height === 0) return;
@@ -77,7 +85,9 @@ export function Spectrum({
         // A touch of gamma keeps quiet passages visibly alive without
         // letting loud ones flatline at the ceiling.
         const level = (peak / 255) ** 1.6;
-        const barHeight = Math.max(2, level * height);
+        // Fast attack, slow release: beats still land, micro-jitter doesn't.
+        shown[i] += (level - shown[i]) * (level > shown[i] ? 0.45 : 0.12);
+        const barHeight = Math.max(2, shown[i] * height);
         const x = i * (barWidth + gap);
         ctx.beginPath();
         ctx.roundRect(x, height - barHeight, barWidth, barHeight, barWidth / 2);

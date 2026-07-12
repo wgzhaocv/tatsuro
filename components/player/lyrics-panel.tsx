@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { currentLineIndex, isTimed, type LyricLine } from "@/lib/api/lyrics";
 import { usePlayerStore, useProgressStore } from "@/lib/player/store";
 import { useLyrics } from "@/lib/queries/lyrics";
@@ -82,30 +82,56 @@ function SyncedLyrics({
 }) {
   const currentTime = useProgressStore((s) => s.currentTime);
   const current = currentLineIndex(lines, currentTime);
+  const currentRef = useRef(current);
+  currentRef.current = current;
 
   const listRef = useRef<HTMLOListElement>(null);
   const rowRefs = useRef<(HTMLLIElement | null)[]>([]);
-  // The listener's own scrolling wins over follow-along for 3 seconds.
-  const userScrollUntil = useRef(0);
-  const markUserScroll = () => {
-    userScrollUntil.current = Date.now() + 3000;
-  };
+  const firstCenter = useRef(true);
 
-  useEffect(() => {
-    if (current < 0) return;
-    if (Date.now() < userScrollUntil.current) return;
+  // Scroll the list only (scrollIntoView could also drag the dialog page).
+  const centerOnCurrent = useCallback((behavior: ScrollBehavior) => {
     const list = listRef.current;
-    const row = rowRefs.current[current];
+    const row = rowRefs.current[currentRef.current];
     if (!list || !row) return;
     const reduceMotion = window.matchMedia(
       "(prefers-reduced-motion: reduce)",
     ).matches;
-    // Scroll the list only (scrollIntoView could also drag the dialog page).
     list.scrollTo({
       top: row.offsetTop - list.clientHeight / 2 + row.clientHeight / 2,
-      behavior: reduceMotion ? "auto" : "smooth",
+      behavior: reduceMotion ? "auto" : behavior,
     });
-  }, [current]);
+  }, []);
+
+  // The listener's own scrolling wins over follow-along for 3 seconds; once
+  // they let go, drift back to the current line instead of waiting for the
+  // next line change (which can be a whole instrumental away).
+  const userScrollUntil = useRef(0);
+  const resumeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const markUserScroll = () => {
+    userScrollUntil.current = Date.now() + 3000;
+    if (resumeTimer.current) clearTimeout(resumeTimer.current);
+    resumeTimer.current = setTimeout(() => {
+      if (usePlayerStore.getState().isPlaying && currentRef.current >= 0) {
+        centerOnCurrent("smooth");
+      }
+    }, 3200);
+  };
+  useEffect(
+    () => () => {
+      if (resumeTimer.current) clearTimeout(resumeTimer.current);
+    },
+    [],
+  );
+
+  useEffect(() => {
+    if (current < 0) return;
+    if (Date.now() < userScrollUntil.current) return;
+    // The first centering jumps into place — a long smooth swoosh from the
+    // top of the list on open reads as noise, not orientation.
+    centerOnCurrent(firstCenter.current ? "auto" : "smooth");
+    firstCenter.current = false;
+  }, [current, centerOnCurrent]);
 
   return (
     <ol

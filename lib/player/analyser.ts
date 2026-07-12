@@ -20,7 +20,7 @@ export function ensureAnalyser(el: HTMLAudioElement): AnalyserNode | null {
       const source = context.createMediaElementSource(el);
       analyser = context.createAnalyser();
       analyser.fftSize = 512; // 256 bins — room for log-spaced slicing
-      analyser.smoothingTimeConstant = 0.75;
+      analyser.smoothingTimeConstant = 0.8;
       source.connect(analyser);
       analyser.connect(context.destination);
       attachedTo = el;

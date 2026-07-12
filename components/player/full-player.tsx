@@ -285,7 +285,7 @@ function SeekBar() {
           commitTimeout.current = setTimeout(() => setCommitted(null), 2000);
         }}
       />
-      <div className="mt-1.5 flex justify-between font-mono text-xs text-muted-foreground tabular-nums">
+      <div className="mt-1.5 flex justify-between text-xs text-muted-foreground tabular-nums">
         <span>{formatDuration(shown)}</span>
         <span>{duration > 0 ? formatDuration(duration) : "–:––"}</span>
       </div>

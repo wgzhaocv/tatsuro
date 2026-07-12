@@ -1,10 +1,5 @@
 import type { Metadata } from "next";
-import {
-  Geist_Mono,
-  Inter,
-  Quicksand,
-  Zen_Maru_Gothic,
-} from "next/font/google";
+import { Inter, Quicksand, Zen_Maru_Gothic } from "next/font/google";
 import "./globals.css";
 import { QueryProvider } from "@/components/query-provider";
 import { ServiceWorkerProvider } from "@/components/sw-provider";
@@ -29,11 +24,6 @@ const zenMaruGothic = Zen_Maru_Gothic({
   preload: false,
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
 export const metadata: Metadata = {
   title: "Tatsuro Yamashita",
   description: "The complete discography of Tatsuro Yamashita.",
@@ -53,7 +43,6 @@ export default function RootLayout({
         quicksand.variable,
         inter.variable,
         zenMaruGothic.variable,
-        geistMono.variable,
       )}
     >
       <body className="min-h-full flex flex-col">

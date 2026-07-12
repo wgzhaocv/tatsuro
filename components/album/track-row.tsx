@@ -92,7 +92,7 @@ export function TrackRow({
         >
           {track.name}
         </span>
-        <span className="font-mono text-[13px] text-muted-foreground tabular-nums">
+        <span className="text-[13px] text-muted-foreground tabular-nums">
           {typeof track.duration === "number"
             ? formatDuration(track.duration)
             : "—"}

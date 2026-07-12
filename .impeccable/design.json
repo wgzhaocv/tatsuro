@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-07-12T12:00:00Z",
+  "generatedAt": "2026-07-12T07:28:42Z",
   "title": "Design System: Tatsuro — The Noon Postcard",
   "extensions": {
     "colorMeta": {
@@ -224,15 +224,21 @@
         "displayName": "Headline",
         "purpose": "专辑名、全屏播放器歌名。"
       },
-      "title": { "displayName": "Title", "purpose": "区块标题。" },
+      "title": {
+        "displayName": "Title",
+        "purpose": "区块标题。"
+      },
       "body": {
         "displayName": "Body",
         "purpose": "曲目列表、正文;行长 ≤72ch。"
       },
-      "label": { "displayName": "Label", "purpose": "时长、年份、辅助标签。" },
+      "label": {
+        "displayName": "Label",
+        "purpose": "时长、年份、辅助标签。"
+      },
       "japanese": {
         "displayName": "Japanese 日文",
-        "purpose": "日文歌名/歌词专用 Zen Maru Gothic;行高 1.7,禁止拉丁字体伪回退。"
+        "purpose": "日文歌名/标题专用圆体;歌词等日文长文改用 --font-jp-gothic 标准黑体(2026-07 拍板)。"
       }
     },
     "shadows": [
@@ -275,10 +281,22 @@
       }
     ],
     "breakpoints": [
-      { "name": "sm", "value": "640px" },
-      { "name": "md", "value": "768px" },
-      { "name": "lg", "value": "1024px" },
-      { "name": "xl", "value": "1280px" }
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "md",
+        "value": "768px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      },
+      {
+        "name": "xl",
+        "value": "1280px"
+      }
     ]
   },
   "components": [
@@ -410,7 +428,7 @@
       },
       {
         "name": "The Mixed-Script Rule(混排律)",
-        "body": "UI chrome 一律英文;日文内容用 Zen Maru Gothic,行高 1.7,禁止拉丁字体伪回退。",
+        "body": "UI chrome 一律英文;歌名/专辑名等日文标题用 Zen Maru Gothic,歌词等日文长文用 --font-jp-gothic 标准黑体(Hiragino Sans/Yu Gothic/Noto Sans JP 系统栈,font-jp-gothic 工具类覆盖 :lang(ja));行高 1.7,禁止拉丁字体伪回退。",
         "section": "typography"
       },
       {

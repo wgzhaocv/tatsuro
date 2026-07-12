@@ -10,6 +10,12 @@
   --font-sans: var(--font-inter);
   --font-display: var(--font-quicksand);
   --font-jp: var(--font-zen-maru);
+  /* Long-form Japanese text (lyrics): a plain gothic — the rounded Zen Maru
+     is for titles/song names; paragraphs of it read cutesy. System stacks
+     keep it crisp with zero download. */
+  --font-jp-gothic:
+    "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic Medium",
+    "Noto Sans JP", var(--font-inter), sans-serif;
   --font-mono: var(--font-geist-mono);
   --font-heading: var(--font-quicksand);
   --color-sidebar-ring: var(--sidebar-ring);

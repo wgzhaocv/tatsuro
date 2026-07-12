@@ -3,9 +3,9 @@
 import { Dialog as DialogPrimitive } from "@base-ui/react/dialog";
 import {
   CaretDown,
+  MicrophoneStage,
   Pause,
   Play,
-  Quotes,
   Repeat,
   RepeatOnce,
   Shuffle,
@@ -97,17 +97,45 @@ export function FullPlayer() {
               onClick={() => setShowLyrics((v) => !v)}
               className="size-11 shrink-0 rounded-full"
             >
-              <Quotes size={20} weight="fill" aria-hidden />
+              {/* Mic = lyrics/sing-along — the convention the old site used
+                  too; a bare quote glyph read as nothing to actual users. */}
+              <MicrophoneStage size={20} weight="fill" aria-hidden />
             </Button>
           </header>
 
-          {/* ── Cover ⇄ lyrics · identity · transport ── */}
-          <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col items-center justify-evenly gap-8 px-6 py-8 sm:px-8">
+          {/* ── Cover ⇄ lyrics · identity · transport. Lyrics mode makes the
+              words the star: the cover shrinks into a thumbnail identity row
+              and the list takes every pixel between it and the scrubber. ── */}
+          <div className="mx-auto flex min-h-0 w-full max-w-3xl flex-1 flex-col items-center justify-evenly gap-6 px-6 py-6 sm:gap-8 sm:px-8 sm:py-8">
             {showLyrics ? (
-              <LyricsPanel
-                songId={song.id}
-                className="h-[38vh] w-full max-w-xl shrink-0 sm:h-[40vh]"
-              />
+              <>
+                <div className="flex w-full max-w-xl shrink-0 items-center gap-3.5">
+                  <div className="relative size-12 shrink-0 overflow-hidden rounded-[10px] bg-secondary shadow-postcard">
+                    {cover && <FadeImage src={coverUrl(cover)} sizes="48px" />}
+                  </div>
+                  <div className="min-w-0">
+                    <h2
+                      lang={isJapanese(song.name) ? "ja" : undefined}
+                      className="truncate font-display text-[17px] leading-snug font-medium text-foreground"
+                    >
+                      {song.name}
+                    </h2>
+                    <p
+                      lang={
+                        albumName && isJapanese(albumName) ? "ja" : undefined
+                      }
+                      className="truncate text-[13px] text-foreground/80"
+                    >
+                      {ARTIST}
+                      {albumName ? ` — ${albumName}` : ""}
+                    </p>
+                  </div>
+                </div>
+                <LyricsPanel
+                  songId={song.id}
+                  className="min-h-0 w-full max-w-xl flex-1"
+                />
+              </>
             ) : (
               <div className="relative aspect-square w-[min(78vw,38vh)] shrink-0 overflow-hidden rounded-[20px] bg-secondary shadow-postcard sm:w-[min(52vw,44vh)]">
                 {cover && (
@@ -120,22 +148,24 @@ export function FullPlayer() {
               </div>
             )}
 
-            <div className="w-full max-w-xl">
-              <div className="text-center">
-                <h2
-                  lang={isJapanese(song.name) ? "ja" : undefined}
-                  className="font-display text-2xl leading-[1.2] font-medium text-foreground sm:text-[1.75rem] [text-wrap:balance]"
-                >
-                  {song.name}
-                </h2>
-                <p
-                  lang={albumName && isJapanese(albumName) ? "ja" : undefined}
-                  className="mt-1.5 truncate text-[15px] text-foreground/85"
-                >
-                  {ARTIST}
-                  {albumName ? ` — ${albumName}` : ""}
-                </p>
-              </div>
+            <div className="w-full max-w-xl shrink-0">
+              {!showLyrics && (
+                <div className="text-center">
+                  <h2
+                    lang={isJapanese(song.name) ? "ja" : undefined}
+                    className="font-display text-2xl leading-[1.2] font-medium text-foreground sm:text-[1.75rem] [text-wrap:balance]"
+                  >
+                    {song.name}
+                  </h2>
+                  <p
+                    lang={albumName && isJapanese(albumName) ? "ja" : undefined}
+                    className="mt-1.5 truncate text-[15px] text-foreground/85"
+                  >
+                    {ARTIST}
+                    {albumName ? ` — ${albumName}` : ""}
+                  </p>
+                </div>
+              )}
 
               <SeekBar />
               <TransportControls />

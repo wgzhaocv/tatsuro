@@ -301,9 +301,11 @@ export function AudioEngine() {
   // from store intent — an intent whose play() then fails must not silence
   // the tab that is really playing.
   const channelRef = useRef<BroadcastChannel | null>(null);
-  const tabIdRef = useRef(Math.random().toString(36).slice(2));
+  // Assigned in the effect — Math.random() must not run during render.
+  const tabIdRef = useRef<string | null>(null);
   useEffect(() => {
     if (typeof BroadcastChannel === "undefined") return;
+    tabIdRef.current ??= Math.random().toString(36).slice(2);
     const channel = new BroadcastChannel("tatsuro-player");
     channelRef.current = channel;
     channel.onmessage = (e) => {

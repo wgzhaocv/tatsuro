@@ -114,8 +114,11 @@ function SyncedLyrics({
       onTouchMove={markUserScroll}
       className={cn(
         // relative so row offsetTop is measured within this list (scroll math);
-        // no-scrollbar because the fade mask would clip a native scrollbar
-        "no-scrollbar relative overflow-y-auto py-[38%] [mask-image:linear-gradient(to_bottom,transparent,black_3rem,black_calc(100%-3rem),transparent)] sm:py-[26%]",
+        // no-scrollbar because the fade mask would clip a native scrollbar.
+        // Modest fixed padding: enough for near-edge lines to sit away from
+        // the fade, small enough that flex can shrink the list when space is
+        // tight (percentage padding can't compress).
+        "no-scrollbar relative overflow-y-auto py-14 [mask-image:linear-gradient(to_bottom,transparent,black_3rem,black_calc(100%-3rem),transparent)] sm:py-16",
         className,
       )}
     >
@@ -162,10 +165,12 @@ function LyricRow({ line, state }: { line: LyricLine; state: LineState }) {
 function LineText({ line, state }: { line: LyricLine; state: LineState }) {
   return (
     <>
+      {/* font-jp-gothic: lyrics run long — plain gothic instead of the
+          rounded Zen Maru that :lang(ja) would apply (titles keep it). */}
       <p
         lang={isJapanese(line.origin) ? "ja" : undefined}
         className={cn(
-          "text-[17px] leading-relaxed transition-colors duration-400 ease-lazy",
+          "font-jp-gothic text-[17px] leading-relaxed transition-colors duration-400 ease-lazy",
           state === "current" && "font-medium text-coral-ink dark:text-coral",
           state === "passed" && "text-muted-foreground/80",
           state === "plain" && "text-foreground/80",
@@ -174,7 +179,10 @@ function LineText({ line, state }: { line: LyricLine; state: LineState }) {
         {line.origin}
       </p>
       {line.ja && (
-        <p lang="ja" className="mt-1 text-[13px] text-muted-foreground">
+        <p
+          lang="ja"
+          className="mt-1 font-jp-gothic text-[13px] text-muted-foreground"
+        >
           {line.ja}
         </p>
       )}

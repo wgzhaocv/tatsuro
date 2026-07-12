@@ -1,9 +1,11 @@
 "use client";
 
 import { Pause, Play } from "@phosphor-icons/react";
+import { useRef } from "react";
 import type { Song } from "@/lib/api/types";
 import { formatDuration } from "@/lib/format";
 import { usePlayerStore } from "@/lib/player/store";
+import { useScrollToCurrentOnEnter } from "@/lib/player/use-scroll-to-current";
 import { isJapanese } from "@/lib/text";
 import { cn } from "@/lib/utils";
 import { useEditionPlayback } from "./edition-playback";
@@ -32,10 +34,14 @@ export function TrackRow({
   const playQueue = usePlayerStore((s) => s.playQueue);
   const toggle = usePlayerStore((s) => s.toggle);
 
+  // Arriving on an album that holds the playing song lands you on its row.
+  const rowRef = useRef<HTMLLIElement>(null);
+  useScrollToCurrentOnEnter(rowRef, isCurrent);
+
   const number = track.trackNumber ?? index + 1;
 
   return (
-    <li>
+    <li ref={rowRef}>
       <button
         type="button"
         aria-label={isPlaying ? `Pause ${track.name}` : `Play ${track.name}`}

@@ -166,7 +166,7 @@ components:
 
 **Display Font:** Quicksand(圆润几何无衬线,fallback: ui-rounded, sans-serif)
 **Body Font:** Inter(正文与数据,fallback: system-ui)
-**Japanese Font:** Zen Maru Gothic(日文歌名/歌词专用圆体,fallback: Quicksand)
+**Japanese Font:** Zen Maru Gothic(日文**歌名/标题**专用圆体,fallback: Quicksand);**日文长文(歌词正文)用标准黑体** `--font-jp-gothic`(Hiragino Sans / Yu Gothic / Noto Sans JP 系统栈)——圆体成段读起来发腻、与整体氛围不符(站主拍板 2026-07)
 **Mono Font:** Geist Mono(时间码等对齐数据,可选)
 
 **Character:** 圆润、轻盈、松弛。Quicksand 的圆几何呼应海边的柔和,Inter 保证数据可读,Zen Maru Gothic 让日文歌名带着与拉丁字形一致的圆润气质。
@@ -182,7 +182,7 @@ components:
 ### Named Rules
 **The Light-Weight Rule(轻字重律)。** 层级靠大小和间距拉开,不靠加黑。400–500 是常态,600 只给 Display 和按钮,700 禁用。满屏加粗 = 重、闷,是通透感的敌人。
 
-**The Mixed-Script Rule(混排律)。** UI chrome 一律英文;歌名/歌词等日文内容用 Zen Maru Gothic 渲染,禁止用拉丁字体的伪日文回退。日英同行混排时对齐基线、日文行高 1.7。
+**The Mixed-Script Rule(混排律)。** UI chrome 一律英文;歌名/专辑名等日文**标题性内容**用 Zen Maru Gothic 渲染,**歌词等日文长文**用 `--font-jp-gothic` 标准黑体(`font-jp-gothic` 工具类覆盖 `:lang(ja)` 基础规则);禁止用拉丁字体的伪日文回退。日英同行混排时对齐基线、日文行高 1.7。
 
 ## 4. Elevation
 

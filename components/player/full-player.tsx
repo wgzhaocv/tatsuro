@@ -31,6 +31,7 @@ import { isJapanese } from "@/lib/text";
 import { cn } from "@/lib/utils";
 import { LyricsPanel } from "./lyrics-panel";
 import { Scrubber } from "./scrubber";
+import { Spectrum } from "./spectrum";
 
 /**
  * The full-screen player the mini bar expands into. Same material story as
@@ -68,12 +69,7 @@ export function FullPlayer() {
           {cover && <AlbumAmbient cover={coverUrl(cover)} />}
 
           {/* ── Chrome: collapse + context ── */}
-          <header
-            className={cn(
-              "mx-auto flex w-full max-w-3xl items-center gap-3 px-5 pt-[max(1.25rem,env(safe-area-inset-top))] sm:px-8",
-              showLyrics && "lg:max-w-6xl",
-            )}
-          >
+          <header className="mx-auto flex w-full max-w-3xl items-center gap-3 px-5 pt-[max(1.25rem,env(safe-area-inset-top))] sm:px-8 lg:max-w-6xl">
             <DialogPrimitive.Close
               render={
                 <Button
@@ -111,15 +107,18 @@ export function FullPlayer() {
           {/* ── Cover ⇄ lyrics · identity · transport. Lyrics mode makes the
               words the star. Phones: the cover shrinks into a thumbnail row
               and the list takes every pixel down to the scrubber. Desktop
-              (lg+) is not a stretched phone: the classic player stage —
-              cover + identity upper-left, lyrics upper-right, the control
-              strip across the bottom, all three regions sharing one width
-              with the header. ── */}
+              (lg+) is not a stretched phone in either mode: a stage with the
+              control strip (spectrum · seek · transport) always spanning the
+              bottom of the same rail as the header; above it, cover mode
+              centers the artwork + caption, lyrics mode splits cover-left /
+              words-right. ── */}
           <div
             className={cn(
               "mx-auto flex min-h-0 w-full max-w-3xl flex-1 flex-col items-center justify-evenly gap-6 px-6 py-6 sm:gap-8 sm:px-8 sm:py-8",
-              showLyrics &&
-                "lg:grid lg:max-w-6xl lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)] lg:grid-rows-[minmax(0,1fr)_auto] lg:gap-x-16 lg:gap-y-6",
+              "lg:grid lg:max-w-6xl lg:grid-rows-[minmax(0,1fr)_auto] lg:gap-y-6",
+              showLyrics
+                ? "lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)] lg:gap-x-16"
+                : "lg:grid-cols-1",
             )}
           >
             {showLyrics ? (
@@ -159,28 +158,41 @@ export function FullPlayer() {
                 />
               </>
             ) : (
-              <div className="relative aspect-square w-[min(78vw,38vh)] shrink-0 overflow-hidden rounded-[20px] bg-secondary shadow-postcard sm:w-[min(52vw,44vh)]">
-                {cover && (
-                  <FadeImage
-                    src={coverUrl(cover)}
-                    priority
-                    sizes="(max-width: 640px) 78vw, 44vh"
-                  />
-                )}
+              // `contents` keeps the phone flex layout flat; on lg this
+              // becomes the upper cell: artwork with its caption beneath.
+              <div className="contents lg:row-start-1 lg:flex lg:min-h-0 lg:flex-col lg:items-center lg:justify-center lg:gap-6 lg:self-stretch">
+                <div className="relative aspect-square w-[min(78vw,38vh)] shrink-0 overflow-hidden rounded-[20px] bg-secondary shadow-postcard sm:w-[min(52vw,44vh)] lg:w-[min(30vw,38vh)]">
+                  {cover && (
+                    <FadeImage
+                      src={coverUrl(cover)}
+                      priority
+                      sizes="(max-width: 640px) 78vw, 44vh"
+                    />
+                  )}
+                </div>
+                <div className="hidden text-center lg:block">
+                  <h2
+                    lang={isJapanese(song.name) ? "ja" : undefined}
+                    className="font-display text-2xl leading-[1.2] font-medium text-foreground [text-wrap:balance]"
+                  >
+                    {song.name}
+                  </h2>
+                  <p
+                    lang={albumName && isJapanese(albumName) ? "ja" : undefined}
+                    className="mt-1.5 truncate text-[15px] text-foreground/85"
+                  >
+                    {ARTIST}
+                    {albumName ? ` — ${albumName}` : ""}
+                  </p>
+                </div>
               </div>
             )}
 
-            <div
-              className={cn(
-                "w-full max-w-xl shrink-0",
-                // Desktop lyrics mode: the control strip spans the bottom,
-                // full stage width (same rail as header and the two panes).
-                showLyrics &&
-                  "lg:col-span-2 lg:col-start-1 lg:row-start-2 lg:max-w-none",
-              )}
-            >
+            {/* Control strip: on lg it always spans the stage bottom, with
+                the spectrum breathing just above the scrubber. */}
+            <div className="w-full max-w-xl shrink-0 lg:col-span-full lg:col-start-1 lg:row-start-2 lg:max-w-none">
               {!showLyrics && (
-                <div className="text-center">
+                <div className="text-center lg:hidden">
                   <h2
                     lang={isJapanese(song.name) ? "ja" : undefined}
                     className="font-display text-2xl leading-[1.2] font-medium text-foreground sm:text-[1.75rem] [text-wrap:balance]"
@@ -197,6 +209,7 @@ export function FullPlayer() {
                 </div>
               )}
 
+              <Spectrum className="hidden h-12 lg:block" />
               <SeekBar />
               <TransportControls />
               <VolumeControl />

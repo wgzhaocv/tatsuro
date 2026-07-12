@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { coverUrl, songStreamUrl } from "@/lib/api/urls";
 import { ARTIST } from "@/lib/constants";
+import { ensureAnalyser } from "@/lib/player/analyser";
 import { usePlayerStore, useProgressStore } from "@/lib/player/store";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -324,6 +325,9 @@ export function AudioEngine() {
     <audio
       ref={audioRef}
       preload="metadata"
+      // CORS-clean media so the spectrum's AnalyserNode hears it (the stream
+      // API sends ACAO: *); without this Web Audio reads pure silence.
+      crossOrigin="anonymous"
       loop={repeat === "one"}
       onDurationChange={(e) => {
         const a = e.currentTarget;
@@ -372,6 +376,9 @@ export function AudioEngine() {
           type: "claim",
           id: tabIdRef.current,
         });
+        // First real playback is a user gesture: safe to build the Web Audio
+        // graph for the spectrum (a no-op on later plays).
+        ensureAnalyser(el);
       }}
       onPlaying={() => {
         // Real audio is flowing: the error guard only covers a *consecutive*

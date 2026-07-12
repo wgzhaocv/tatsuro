@@ -1,6 +1,12 @@
 import { GlassPanel } from "@/components/glass-panel";
-import type { AlbumCategory, AlbumDetail, Edition } from "@/lib/api/types";
+import {
+  type AlbumCategory,
+  type AlbumDetail,
+  type Edition,
+  editionQueueSongs,
+} from "@/lib/api/types";
 import { coverUrl } from "@/lib/api/urls";
+import { ARTIST } from "@/lib/constants";
 import { formatTotalDuration } from "@/lib/format";
 import { isJapanese } from "@/lib/text";
 import { AlbumAmbient } from "./album-ambient";
@@ -9,7 +15,6 @@ import { EditionPlaybackProvider, PlayEditionButton } from "./edition-playback";
 import { EditionSwitch } from "./edition-switch";
 import { FadeImage } from "./fade-image";
 
-const ARTIST = "Tatsuro Yamashita";
 const CATEGORY_LABEL: Record<AlbumCategory, string> = {
   studio: "Studio",
   live: "Live",
@@ -50,21 +55,13 @@ export function EditionView({
     .filter(Boolean)
     .join(" · ");
 
-  // Queue-ready songs: the release payload keeps tracks lean, so denormalize
-  // the cover + album name in here — the mini bar and lock screen need them.
-  const queueSongs = edition.discs.flatMap((disc) =>
-    disc.tracks.map((track) => ({
-      ...track,
-      albumName: album.name,
-      coverFrontId: disc.coverFrontId || edition.coverFrontId,
-      coverBackId: disc.coverBackId || edition.coverBackId,
-    })),
-  );
-  const discStarts: number[] = [];
-  edition.discs.reduce((offset, disc) => {
-    discStarts.push(offset);
-    return offset + disc.tracks.length;
-  }, 0);
+  const queueSongs = editionQueueSongs(album, edition);
+  let offset = 0;
+  const discStarts = edition.discs.map((disc) => {
+    const start = offset;
+    offset += disc.tracks.length;
+    return start;
+  });
   const queueLabel =
     hasEditions && edition.year != null
       ? `${album.name} (${edition.year})`

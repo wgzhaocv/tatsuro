@@ -5,6 +5,7 @@ import {
   CaretDown,
   Pause,
   Play,
+  Quotes,
   Repeat,
   RepeatOnce,
   Shuffle,
@@ -13,11 +14,12 @@ import {
   SpeakerHigh,
   SpeakerSlash,
 } from "@phosphor-icons/react";
-import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
+import { AlbumAmbient } from "@/components/album/album-ambient";
 import { FadeImage } from "@/components/album/fade-image";
 import { Button } from "@/components/ui/button";
 import { coverUrl } from "@/lib/api/urls";
+import { ARTIST } from "@/lib/constants";
 import { formatDuration } from "@/lib/format";
 import {
   useDuration,
@@ -27,9 +29,8 @@ import {
 import { useSong } from "@/lib/queries/song";
 import { isJapanese } from "@/lib/text";
 import { cn } from "@/lib/utils";
+import { LyricsPanel } from "./lyrics-panel";
 import { Scrubber } from "./scrubber";
-
-const ARTIST = "Tatsuro Yamashita";
 
 /**
  * The full-screen player the mini bar expands into. Same material story as
@@ -43,6 +44,9 @@ export function FullPlayer() {
   const setExpanded = usePlayerStore((s) => s.setExpanded);
   const song = usePlayerStore((s) => s.current);
   const contextLabel = usePlayerStore((s) => s.contextLabel);
+  // Cover ⇄ lyrics flip; kept while the player stays open so a listener can
+  // follow along across an album.
+  const [showLyrics, setShowLyrics] = useState(false);
 
   // Queue entries carry cover/album from the release payload; for anything
   // missing (restored sessions, direct plays) the song query fills the gaps.
@@ -59,24 +63,9 @@ export function FullPlayer() {
           aria-label={`Now playing — ${song.name}`}
           className="fixed inset-0 isolate z-50 flex flex-col overflow-y-auto bg-background outline-none duration-500 ease-lazy data-closed:animate-out data-closed:fade-out-0 data-closed:slide-out-to-bottom-8 data-open:animate-in data-open:fade-in-0 data-open:slide-in-from-bottom-8"
         >
-          {/* ── Ambient: the cover's own colour fills the room ── */}
-          <div
-            aria-hidden
-            className="pointer-events-none fixed inset-0 -z-10 overflow-hidden"
-          >
-            {cover && (
-              <div className="absolute -inset-[12%] animate-breathe">
-                <Image
-                  src={coverUrl(cover)}
-                  alt=""
-                  fill
-                  sizes="100vw"
-                  className="object-cover blur-2xl saturate-[1.35]"
-                />
-              </div>
-            )}
-            <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(255,255,255,0.82),rgba(255,255,255,0.58)_46%,rgba(233,247,242,0.9))] dark:bg-[linear-gradient(to_bottom,rgba(18,38,58,0.84),rgba(18,38,58,0.62)_46%,rgba(18,38,58,0.92))]" />
-          </div>
+          {/* ── Ambient: the cover's own colour fills the room — the same
+              Cover Ambient material as the album screen, one recipe ── */}
+          {cover && <AlbumAmbient cover={coverUrl(cover)} />}
 
           {/* ── Chrome: collapse + context ── */}
           <header className="mx-auto flex w-full max-w-3xl items-center gap-3 px-5 pt-[max(1.25rem,env(safe-area-inset-top))] sm:px-8">
@@ -100,20 +89,36 @@ export function FullPlayer() {
                 </span>
               </p>
             )}
-            <span aria-hidden className="size-11 shrink-0" />
+            <Button
+              variant={showLyrics ? "action" : "glass-ink"}
+              size="icon-lg"
+              aria-label={showLyrics ? "Hide lyrics" : "Show lyrics"}
+              aria-pressed={showLyrics}
+              onClick={() => setShowLyrics((v) => !v)}
+              className="size-11 shrink-0 rounded-full"
+            >
+              <Quotes size={20} weight="fill" aria-hidden />
+            </Button>
           </header>
 
-          {/* ── Cover · identity · transport ── */}
+          {/* ── Cover ⇄ lyrics · identity · transport ── */}
           <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col items-center justify-evenly gap-8 px-6 py-8 sm:px-8">
-            <div className="relative aspect-square w-[min(78vw,38vh)] shrink-0 overflow-hidden rounded-[20px] bg-secondary shadow-postcard sm:w-[min(52vw,44vh)]">
-              {cover && (
-                <FadeImage
-                  src={coverUrl(cover)}
-                  priority
-                  sizes="(max-width: 640px) 78vw, 44vh"
-                />
-              )}
-            </div>
+            {showLyrics ? (
+              <LyricsPanel
+                songId={song.id}
+                className="h-[38vh] w-full max-w-xl shrink-0 sm:h-[40vh]"
+              />
+            ) : (
+              <div className="relative aspect-square w-[min(78vw,38vh)] shrink-0 overflow-hidden rounded-[20px] bg-secondary shadow-postcard sm:w-[min(52vw,44vh)]">
+                {cover && (
+                  <FadeImage
+                    src={coverUrl(cover)}
+                    priority
+                    sizes="(max-width: 640px) 78vw, 44vh"
+                  />
+                )}
+              </div>
+            )}
 
             <div className="w-full max-w-xl">
               <div className="text-center">

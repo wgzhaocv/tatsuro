@@ -83,6 +83,24 @@ export function findEdition(
   return album.editions.find((e) => editionSlug(e) === slug || e.id === slug);
 }
 
+/** An edition flattened into queue-ready songs: the release payload keeps
+ *  tracks lean, so the album name and a cover (disc's own, falling back to
+ *  the edition's) are denormalized in here — the shape the player, mini bar,
+ *  and MediaSession need. Every play surface should queue through this. */
+export function editionQueueSongs(
+  album: AlbumDetail,
+  edition: Edition,
+): Song[] {
+  return edition.discs.flatMap((disc) =>
+    disc.tracks.map((track) => ({
+      ...track,
+      albumName: album.name,
+      coverFrontId: disc.coverFrontId || edition.coverFrontId,
+      coverBackId: disc.coverBackId || edition.coverBackId,
+    })),
+  );
+}
+
 /** A track. */
 export type Song = {
   id: string;

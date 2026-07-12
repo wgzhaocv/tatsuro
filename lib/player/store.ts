@@ -18,7 +18,11 @@
 // - history: recently played, capped; also prev()'s fallback past the start
 
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import {
+  createJSONStorage,
+  persist,
+  type StateStorage,
+} from "zustand/middleware";
 import type { Song } from "@/lib/api/types";
 
 export type RepeatMode = "off" | "all" | "one";
@@ -50,8 +54,6 @@ export type PlayerState = {
 
   /** Play a list (album edition) starting at startIndex. */
   playQueue(songs: Song[], startIndex?: number, contextLabel?: string): void;
-  /** Play one song immediately (context becomes just that song). */
-  playNow(song: Song): void;
   addToQueue(songs: Song | Song[]): void;
   removeFromQueue(songId: string): void;
   clearUserQueue(): void;
@@ -69,7 +71,6 @@ export type PlayerState = {
   setVolume(volume: number): void;
   toggleMute(): void;
   setExpanded(expanded: boolean): void;
-  clear(): void;
 };
 
 /** Fisher–Yates over context indexes, with the given index pinned first. */
@@ -92,6 +93,28 @@ function pushHistory(history: Song[], song: Song | null): Song[] {
 let seekNonce = 0;
 function seekTo(time: number) {
   return { time: Math.max(0, time), nonce: ++seekNonce };
+}
+
+// Each persist write serializes the whole queue + history; high-frequency
+// setters (a volume drag fires per pointer move) would rewrite that blob
+// dozens of times a second. Trailing debounce caps it at one write per 300ms,
+// with a pagehide flush so the last state survives a quick tab close.
+let pendingWrite: (() => void) | null = null;
+let writeTimer: ReturnType<typeof setTimeout> | null = null;
+const debouncedLocalStorage: StateStorage = {
+  getItem: (name) => localStorage.getItem(name),
+  removeItem: (name) => localStorage.removeItem(name),
+  setItem: (name, value) => {
+    pendingWrite = () => {
+      localStorage.setItem(name, value);
+      pendingWrite = null;
+    };
+    if (writeTimer) clearTimeout(writeTimer);
+    writeTimer = setTimeout(() => pendingWrite?.(), 300);
+  },
+};
+if (typeof window !== "undefined") {
+  window.addEventListener("pagehide", () => pendingWrite?.());
 }
 
 export const usePlayerStore = create<PlayerState>()(
@@ -131,10 +154,6 @@ export const usePlayerStore = create<PlayerState>()(
           isPlaying: true,
           seekRequest: seekTo(0),
         });
-      },
-
-      playNow(song) {
-        get().playQueue([song], 0);
       },
 
       addToQueue(songs) {
@@ -205,15 +224,7 @@ export const usePlayerStore = create<PlayerState>()(
         }
 
         const last = order.length - 1;
-        if (position < last) {
-          const p = position + 1;
-          set({
-            position: p,
-            current: context[order[p]],
-            history: newHistory,
-            isPlaying: true,
-          });
-        } else if (repeat === "all") {
+        if (position >= last && repeat === "all") {
           // Shuffle + repeat-all reshuffles each round, avoiding an immediate
           // repeat of the track that just ended (kept from the old store).
           const { shuffle } = get();
@@ -233,7 +244,7 @@ export const usePlayerStore = create<PlayerState>()(
             history: newHistory,
             isPlaying: true,
           });
-        } else if (auto) {
+        } else if (position >= last && auto) {
           // Queue ran out on its own: stop, rewound, ready to replay.
           set({
             history: newHistory,
@@ -241,7 +252,8 @@ export const usePlayerStore = create<PlayerState>()(
             seekRequest: seekTo(0),
           });
         } else {
-          const p = 0;
+          // Advance — or wrap to the top on a manual next at the end.
+          const p = position < last ? position + 1 : 0;
           set({
             position: p,
             current: context[order[p]],
@@ -324,24 +336,11 @@ export const usePlayerStore = create<PlayerState>()(
       setExpanded(expanded) {
         set({ expanded });
       },
-
-      clear() {
-        set({
-          context: [],
-          order: [],
-          position: -1,
-          current: null,
-          contextLabel: null,
-          userQueue: [],
-          isPlaying: false,
-          expanded: false,
-          seekRequest: null,
-        });
-      },
     }),
     {
       name: "tatsuro-player",
       version: 1,
+      storage: createJSONStorage(() => debouncedLocalStorage),
       // SSR renders an empty player; rehydrate after mount (AudioEngine) so
       // the first client render matches the server HTML.
       skipHydration: true,

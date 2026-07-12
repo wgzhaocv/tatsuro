@@ -6,10 +6,17 @@
 const DB_NAME = "audio-cache-lru";
 const STORE_NAME = "access-times";
 
+// One shared connection: setAccessTime fires on every cache hit and eviction
+// deletes in a loop — opening per call would churn connections.
+let dbPromise: Promise<IDBDatabase> | null = null;
+
 function initDB(): Promise<IDBDatabase> {
-  return new Promise((resolve, reject) => {
+  dbPromise ??= new Promise((resolve, reject) => {
     const request = indexedDB.open(DB_NAME, 1);
-    request.onerror = () => reject(request.error);
+    request.onerror = () => {
+      dbPromise = null;
+      reject(request.error);
+    };
     request.onsuccess = () => resolve(request.result);
     request.onupgradeneeded = (event) => {
       const db = (event.target as IDBOpenDBRequest).result;
@@ -18,6 +25,7 @@ function initDB(): Promise<IDBDatabase> {
       }
     };
   });
+  return dbPromise;
 }
 
 export async function setAccessTime(

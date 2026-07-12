@@ -44,18 +44,19 @@ export const audioStreamHandler = {
       if (rangeHeader) {
         const rangeMatch = rangeHeader.match(/bytes=(\d*)-(\d*)/);
         if (rangeMatch) {
-          const arrayBuffer = await cachedResponse.arrayBuffer();
+          // blob.slice is a view, not a copy — the full body is never
+          // materialized per range request (they arrive constantly on seeks).
+          const blob = await cachedResponse.blob();
           const start = Number.parseInt(rangeMatch[1], 10) || 0;
-          const end =
-            Number.parseInt(rangeMatch[2], 10) || arrayBuffer.byteLength - 1;
-          const sliced = arrayBuffer.slice(start, end + 1);
+          const end = Number.parseInt(rangeMatch[2], 10) || blob.size - 1;
+          const sliced = blob.slice(start, end + 1);
           return new Response(sliced, {
             status: 206,
             statusText: "Partial Content",
             headers: {
-              "Content-Range": `bytes ${start}-${end}/${arrayBuffer.byteLength}`,
+              "Content-Range": `bytes ${start}-${end}/${blob.size}`,
               "Accept-Ranges": "bytes",
-              "Content-Length": sliced.byteLength.toString(),
+              "Content-Length": sliced.size.toString(),
               "Content-Type":
                 cachedResponse.headers.get("Content-Type") || "audio/ogg",
             },
@@ -82,18 +83,23 @@ export const audioStreamHandler = {
 async function downloadAndCache(url: string, cache: Cache) {
   try {
     // Evict least-recently-used entries until the new file fits the budget.
-    const cacheKeys = await cache.keys();
-    const maxBytes = await getMaxCacheBytes();
+    const [cacheKeys, maxBytes] = await Promise.all([
+      cache.keys(),
+      getMaxCacheBytes(),
+    ]);
 
-    let totalBytes = 0;
-    const keySizes: { url: string; size: number }[] = [];
-    for (const key of cacheKeys) {
-      const resp = await cache.match(key);
-      const size =
-        Number.parseInt(resp?.headers.get("Content-Length") ?? "0", 10) || 0;
-      totalBytes += size;
-      keySizes.push({ url: key.url, size });
-    }
+    const keySizes = await Promise.all(
+      cacheKeys.map(async (key) => {
+        const resp = await cache.match(key);
+        return {
+          url: key.url,
+          size:
+            Number.parseInt(resp?.headers.get("Content-Length") ?? "0", 10) ||
+            0,
+        };
+      }),
+    );
+    let totalBytes = keySizes.reduce((sum, k) => sum + k.size, 0);
 
     if (totalBytes >= maxBytes) {
       const accessTimes = new Map(

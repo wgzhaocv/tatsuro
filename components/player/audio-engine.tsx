@@ -2,9 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { coverUrl, songStreamUrl } from "@/lib/api/urls";
+import { ARTIST } from "@/lib/constants";
 import { usePlayerStore, useProgressStore } from "@/lib/player/store";
-
-const ARTIST = "Tatsuro Yamashita";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // The one place state becomes sound. Renders the hidden <audio> element and
@@ -57,6 +56,7 @@ export function AudioEngine() {
   const yieldedAtRef = useRef(0);
   const hiddenAtRef = useRef<number | null>(null);
   const lastSrcChangeRef = useRef(0);
+  const lastPositionUpdateRef = useRef(0);
 
   useEffect(() => {
     const onVisibility = () => {
@@ -312,7 +312,14 @@ export function AudioEngine() {
         const a = e.currentTarget;
         if (a.paused) handleExternalPause(a);
         useProgressStore.getState().setProgress(a.currentTime, a.duration || 0);
-        if ("mediaSession" in navigator && a.duration > 0) {
+        // The platform extrapolates position from playbackRate between
+        // updates — refresh at most once a second, not per tick.
+        if (
+          "mediaSession" in navigator &&
+          a.duration > 0 &&
+          Date.now() - lastPositionUpdateRef.current > 1000
+        ) {
+          lastPositionUpdateRef.current = Date.now();
           navigator.mediaSession.setPositionState({
             duration: a.duration,
             position: Math.min(a.currentTime, a.duration),

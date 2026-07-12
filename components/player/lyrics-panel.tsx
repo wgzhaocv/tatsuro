@@ -198,12 +198,10 @@ const LyricRow = memo(function LyricRow({
 function LineText({ line, state }: { line: LyricLine; state: LineState }) {
   return (
     <>
-      {/* font-jp-gothic: lyrics run long — plain gothic instead of the
-          rounded Zen Maru that :lang(ja) would apply (titles keep it). */}
       <p
         lang={isJapanese(line.origin) ? "ja" : undefined}
         className={cn(
-          "font-jp-gothic text-[17px] leading-relaxed transition-colors duration-400 ease-lazy",
+          "text-[17px] leading-relaxed transition-colors duration-400 ease-lazy",
           state === "current" && "font-medium text-coral-ink dark:text-coral",
           state === "passed" && "text-muted-foreground/80",
           state === "plain" && "text-foreground/80",
@@ -212,10 +210,7 @@ function LineText({ line, state }: { line: LyricLine; state: LineState }) {
         {line.origin}
       </p>
       {line.ja && (
-        <p
-          lang="ja"
-          className="mt-1 font-jp-gothic text-[13px] text-muted-foreground"
-        >
+        <p lang="ja" className="mt-1 text-[13px] text-muted-foreground">
           {line.ja}
         </p>
       )}

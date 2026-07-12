@@ -47,7 +47,7 @@ bunx shadcn add <component>       # 装 shadcn 组件
 
 - **深水律**:文字/图标/状态指示永远不放在浅水原色上(`#1CA7C4` / `#2FBFA8` / `#FF8A5B` 对白字只有 2.3–2.9:1)。承载信息一律用深水形态:`ocean-deep #0C8097` / `turquoise-deep #0A8473` / `coral-ink #B04E23`(全部 ≥4.5:1),或 `--gradient-action`。浅水渐变(`--gradient-primary` / `--gradient-cta`)只做装饰。
 - **双主题**:`:root` = 正午(默认浅色),`.dark` = 黄昏暮蓝(不是黑夜)。每屏必须两个主题都成立。文字用语义 token(`text-foreground` / `text-muted-foreground`),别硬编码 navy。
-- **字体**:Quicksand(`font-display`,h1–h3 自动)/ Inter(`font-sans` 默认)/ 日文自动走 Zen Maru Gothic——给日文内容标 `lang="ja"` 即可(`:lang(ja)` 规则接管)。字重 700 禁用。
+- **字体**:Quicksand(`font-display`,h1–h3 自动)/ Inter(`font-sans` 默认)/ 日文自动走标准黑体系统栈(Hiragino Sans / Noto Sans JP)——给日文内容标 `lang="ja"` 即可(`:lang(ja)` 规则接管,不需要字体工具类)。字重 700 禁用;不用等宽字体(时间码用 `tabular-nums`)。
 - **语言**:UI chrome 一律英文;歌名/歌词等内容数据是日文。文案朴素功能性,禁止营销腔。
 - **动效**:交互 400–600ms `ease-lazy`;氛围动效用 `animate-breathe/glint/shimmer`(8–20s 周期)。全局 reduced-motion kill-switch 已存在,别绕过它。
 - **阴影**:只用 `shadow-postcard` / `shadow-lift-navy` / `shadow-lift-ocean` / `shadow-lift-coral`(带色、向下、收紧)。看到 `rgba(0,0,0,…)` 大糊影就是违规。

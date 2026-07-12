@@ -51,7 +51,7 @@ typography:
     lineHeight: 1.4
     letterSpacing: "0.02em"
   japanese:
-    fontFamily: "Zen Maru Gothic, Quicksand, sans-serif"
+    fontFamily: "Hiragino Sans, Hiragino Kaku Gothic ProN, Yu Gothic Medium, Noto Sans JP, Inter, sans-serif"
     fontWeight: 500
     lineHeight: 1.7
 rounded:
@@ -166,10 +166,10 @@ components:
 
 **Display Font:** Quicksand(圆润几何无衬线,fallback: ui-rounded, sans-serif)
 **Body Font:** Inter(正文与数据,fallback: system-ui)
-**Japanese Font:** Zen Maru Gothic(日文**歌名/标题**专用圆体,fallback: Quicksand);**日文长文(歌词正文)用标准黑体** `--font-jp-gothic`(Hiragino Sans / Yu Gothic / Noto Sans JP 系统栈)——圆体成段读起来发腻、与整体氛围不符(站主拍板 2026-07)
-**Mono Font:** Geist Mono(时间码等对齐数据,可选)
+**Japanese Font:** 标准黑体系统栈(Hiragino Sans / Yu Gothic / Noto Sans JP),**所有日文统一**——标题与长文不再区分。圆体 Zen Maru Gothic 已整体退役:圆体日文与设计氛围不搭(站主拍板 2026-07-13),且系统栈零下载。
+**Mono Font:** 无。时间码等对齐数据用 Inter + `tabular-nums`,不引入等宽字体(terminal 味是 slop tell)。
 
-**Character:** 圆润、轻盈、松弛。Quicksand 的圆几何呼应海边的柔和,Inter 保证数据可读,Zen Maru Gothic 让日文歌名带着与拉丁字形一致的圆润气质。
+**Character:** 圆润、轻盈、松弛。Quicksand 的圆几何呼应海边的柔和,Inter 保证数据可读,日文黑体清爽利落、不抢戏。
 
 ### Hierarchy
 - **Display** (600, clamp(2.75rem, 5vw, 3.75rem) ≈60px, lh 1.08): 页面主标题、Gate 页艺术家名。仅此处允许 600 以上字重。
@@ -177,12 +177,12 @@ components:
 - **Title** (500, 1.75rem/28px, lh 1.25): 区块标题、卡片组标题。
 - **Body** (400, 1rem/16px, lh 1.6): 曲目列表、正文。行长 ≤72ch。
 - **Label** (500, 0.8125rem/13px, lh 1.4, +0.02em): 时长、年份、辅助标签。
-- **Japanese** (Zen Maru Gothic 500, 继承所在层级字号, lh 1.7): 日文内容自动应用;日文行高比拉丁文松一档。
+- **Japanese** (标准黑体 500, 继承所在层级字号, lh 1.7): 日文内容自动应用;日文行高比拉丁文松一档。
 
 ### Named Rules
 **The Light-Weight Rule(轻字重律)。** 层级靠大小和间距拉开,不靠加黑。400–500 是常态,600 只给 Display 和按钮,700 禁用。满屏加粗 = 重、闷,是通透感的敌人。
 
-**The Mixed-Script Rule(混排律)。** UI chrome 一律英文;歌名/专辑名等日文**标题性内容**用 Zen Maru Gothic 渲染,**歌词等日文长文**用 `--font-jp-gothic` 标准黑体(`font-jp-gothic` 工具类覆盖 `:lang(ja)` 基础规则);禁止用拉丁字体的伪日文回退。日英同行混排时对齐基线、日文行高 1.7。
+**The Mixed-Script Rule(混排律)。** UI chrome 一律英文;**所有日文内容**(歌名/专辑名/歌词)统一标准黑体——给内容标 `lang="ja"`,`:lang(ja)` 规则自动接管,不需要任何字体工具类;禁止用拉丁字体的伪日文回退。日英同行混排时对齐基线、日文行高 1.7。
 
 ## 4. Elevation
 
@@ -256,7 +256,7 @@ components:
 - **Do** 保持每屏的深色锚点:Deep Navy 文字或 Cobalt 元素至少一处(深锚律)。
 - **Do** 用真实精致的海景照片提升质感——只要海、天、白沙、棕榈树,平视视角(Unsplash/Pexels: `palm tree blue sky`、`turquoise sea white sand`)。
 - **Do** 让动效像海边的光:8–20 秒周期的缓慢呼吸/光斑,交互过渡 400–600ms ease-out;每个动画都配 `prefers-reduced-motion` 静态替代。
-- **Do** 文案朴素、功能性:标题、专辑名、年份、时长这些真实信息,仅此而已。UI 一律英文,日文内容用 Zen Maru Gothic。
+- **Do** 文案朴素、功能性:标题、专辑名、年份、时长这些真实信息,仅此而已。UI 一律英文,日文内容标 `lang="ja"` 走标准黑体。
 - **Do** 分层优先用细线或换平涂色;必须投影时带色、浅、单方向向下。
 
 ### Don't:

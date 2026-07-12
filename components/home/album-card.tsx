@@ -2,9 +2,8 @@ import Image from "next/image";
 import Link from "next/link";
 import type { Album } from "@/lib/api/types";
 import { coverUrl } from "@/lib/api/urls";
-
-// Content data is often Japanese; tag it so :lang(ja) picks up Zen Maru Gothic.
-const JP = /[぀-ヿ㐀-鿿]/;
+// Content data is often Japanese; tag it so :lang(ja) picks up the JP gothic stack.
+import { isJapanese } from "@/lib/text";
 
 const CATEGORY_LABEL: Record<string, string> = {
   studio: "Studio",
@@ -14,7 +13,7 @@ const CATEGORY_LABEL: Record<string, string> = {
 
 /** A postcard: square cover + name + year, links to the album. */
 export function AlbumCard({ album }: { album: Album }) {
-  const isJa = JP.test(album.name);
+  const isJa = isJapanese(album.name);
   const badge =
     album.discCount > 1
       ? `${album.discCount} CD`

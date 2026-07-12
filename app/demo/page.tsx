@@ -272,7 +272,7 @@ export default function DemoPage() {
               マジック・ウェイズ
             </p>
             <span className="text-[12px] text-foreground/60">
-              Headline · Zen Maru Gothic 500
+              Headline · JP Gothic 500
             </span>
           </div>
           <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 border-b border-foreground/10 pb-6">

@@ -9,13 +9,6 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-inter);
   --font-display: var(--font-quicksand);
-  --font-jp: var(--font-zen-maru);
-  /* Long-form Japanese text (lyrics): a plain gothic — the rounded Zen Maru
-     is for titles/song names; paragraphs of it read cutesy. System stacks
-     keep it crisp with zero download. */
-  --font-jp-gothic:
-    "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic Medium",
-    "Noto Sans JP", var(--font-inter), sans-serif;
   --font-heading: var(--font-quicksand);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -199,9 +192,12 @@
     @apply font-display;
     text-wrap: balance;
   }
-  /* Mixed-Script Rule: Japanese content gets Zen Maru Gothic + looser leading */
+  /* Mixed-Script Rule: all Japanese runs in a plain gothic (system stacks —
+     crisp, zero download) with looser leading. Tag content lang="ja". */
   :lang(ja) {
-    font-family: var(--font-zen-maru), var(--font-quicksand), sans-serif;
+    font-family:
+      "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic Medium",
+      "Noto Sans JP", var(--font-inter), sans-serif;
     line-height: 1.7;
   }
   /* Ambient motion vocabulary — sea light: slow, tiny, nearly imperceptible */

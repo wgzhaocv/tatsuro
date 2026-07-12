@@ -238,7 +238,7 @@
       },
       "japanese": {
         "displayName": "Japanese 日文",
-        "purpose": "日文歌名/标题专用圆体;歌词等日文长文改用 --font-jp-gothic 标准黑体(2026-07 拍板)。"
+        "purpose": "所有日文统一标准黑体系统栈(Hiragino Sans/Yu Gothic/Noto Sans JP);圆体已退役(2026-07-13 拍板)。"
       }
     },
     "shadows": [
@@ -428,7 +428,7 @@
       },
       {
         "name": "The Mixed-Script Rule(混排律)",
-        "body": "UI chrome 一律英文;歌名/专辑名等日文标题用 Zen Maru Gothic,歌词等日文长文用 --font-jp-gothic 标准黑体(Hiragino Sans/Yu Gothic/Noto Sans JP 系统栈,font-jp-gothic 工具类覆盖 :lang(ja));行高 1.7,禁止拉丁字体伪回退。",
+        "body": "UI chrome 一律英文;所有日文内容(歌名/专辑名/歌词)统一标准黑体(Hiragino Sans/Yu Gothic/Noto Sans JP 系统栈)——标 lang=\"ja\" 由 :lang(ja) 规则接管;行高 1.7,禁止拉丁字体伪回退。",
         "section": "typography"
       },
       {
@@ -451,7 +451,7 @@
       "Do 保持每屏的深色锚点:Deep Navy 文字或 Cobalt 元素至少一处。",
       "Do 用真实精致的海景照片提升质感——只要海、天、白沙、棕榈树,平视视角。",
       "Do 让动效像海边的光:8–20 秒周期缓慢呼吸,交互 400–600ms ease-out,全部配 prefers-reduced-motion 替代。",
-      "Do 文案朴素、功能性;UI 一律英文,日文内容用 Zen Maru Gothic。",
+      "Do 文案朴素、功能性;UI 一律英文,日文内容标 lang=\"ja\" 走标准黑体。",
       "Do 分层优先用细线或换平涂色;必须投影时带色、浅、单方向向下。"
     ],
     "donts": [

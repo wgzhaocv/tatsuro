@@ -52,7 +52,9 @@ export function MiniPlayer() {
           type="button"
           onClick={() => setExpanded(true)}
           aria-label={song ? `Open player — ${song.name}` : "Open player"}
-          className="group flex min-w-0 flex-1 items-center gap-3 rounded-xl py-1.5 pr-2 text-left outline-none transition-colors duration-300 ease-lazy hover:bg-navy/[0.04] focus-visible:ring-2 focus-visible:ring-ring/50 dark:hover:bg-white/[0.05]"
+          // -ml compensates pl so the cover keeps its alignment while the
+          // hover wash gets equal breathing room on all sides.
+          className="group -ml-1.5 flex min-w-0 flex-1 items-center gap-3 rounded-xl py-1.5 pr-2 pl-1.5 text-left outline-none transition-colors duration-300 ease-lazy hover:bg-navy/[0.04] focus-visible:ring-2 focus-visible:ring-ring/50 dark:hover:bg-white/[0.05]"
         >
           <span className="relative block size-11 shrink-0 overflow-hidden rounded-lg bg-secondary">
             {song?.coverFrontId ? (

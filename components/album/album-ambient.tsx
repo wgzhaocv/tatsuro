@@ -9,11 +9,13 @@ import { FadeImage } from "./fade-image";
 export function AlbumAmbient({ cover }: { cover: string }) {
   return (
     <div aria-hidden className="fixed inset-0 -z-10 overflow-hidden">
-      {/* Decorative and heavily blurred — no priority preload; the crisp
-          hero cover is the LCP candidate. */}
+      {/* Decorative and heavily blurred — no priority preload (the crisp
+          hero cover deserves that), but eager: it fills the viewport, so
+          the browser flags it as LCP and lazy-loading it only delays it. */}
       <div className="absolute -inset-[12%] animate-breathe">
         <FadeImage
           src={cover}
+          eager
           sizes="100vw"
           className="blur-xl saturate-[1.35]"
         />

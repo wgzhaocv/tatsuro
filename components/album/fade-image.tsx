@@ -13,11 +13,15 @@ export function FadeImage({
   src,
   sizes,
   priority,
+  eager,
   className,
 }: {
   src: string;
   sizes: string;
   priority?: boolean;
+  /** Load immediately without the preload hint priority adds — for large
+   *  above-the-fold decoration (the ambient wash) that gets flagged as LCP. */
+  eager?: boolean;
   className?: string;
 }) {
   const [loaded, setLoaded] = useState(false);
@@ -27,6 +31,7 @@ export function FadeImage({
       alt=""
       fill
       priority={priority}
+      loading={eager && !priority ? "eager" : undefined}
       sizes={sizes}
       onLoad={() => setLoaded(true)}
       className={cn(

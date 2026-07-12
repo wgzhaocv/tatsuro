@@ -68,7 +68,12 @@ export function FullPlayer() {
           {cover && <AlbumAmbient cover={coverUrl(cover)} />}
 
           {/* ── Chrome: collapse + context ── */}
-          <header className="mx-auto flex w-full max-w-3xl items-center gap-3 px-5 pt-[max(1.25rem,env(safe-area-inset-top))] sm:px-8">
+          <header
+            className={cn(
+              "mx-auto flex w-full max-w-3xl items-center gap-3 px-5 pt-[max(1.25rem,env(safe-area-inset-top))] sm:px-8",
+              showLyrics && "lg:max-w-6xl",
+            )}
+          >
             <DialogPrimitive.Close
               render={
                 <Button
@@ -104,19 +109,36 @@ export function FullPlayer() {
           </header>
 
           {/* ── Cover ⇄ lyrics · identity · transport. Lyrics mode makes the
-              words the star: the cover shrinks into a thumbnail identity row
-              and the list takes every pixel between it and the scrubber. ── */}
-          <div className="mx-auto flex min-h-0 w-full max-w-3xl flex-1 flex-col items-center justify-evenly gap-6 px-6 py-6 sm:gap-8 sm:px-8 sm:py-8">
+              words the star. Phones: the cover shrinks into a thumbnail row
+              and the list takes every pixel down to the scrubber. Desktop
+              (lg+) is not a stretched phone: the classic player stage —
+              cover + identity upper-left, lyrics upper-right, the control
+              strip across the bottom, all three regions sharing one width
+              with the header. ── */}
+          <div
+            className={cn(
+              "mx-auto flex min-h-0 w-full max-w-3xl flex-1 flex-col items-center justify-evenly gap-6 px-6 py-6 sm:gap-8 sm:px-8 sm:py-8",
+              showLyrics &&
+                "lg:grid lg:max-w-6xl lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)] lg:grid-rows-[minmax(0,1fr)_auto] lg:gap-x-16 lg:gap-y-6",
+            )}
+          >
             {showLyrics ? (
               <>
-                <div className="flex w-full max-w-xl shrink-0 items-center gap-3.5">
-                  <div className="relative size-12 shrink-0 overflow-hidden rounded-[10px] bg-secondary shadow-postcard">
-                    {cover && <FadeImage src={coverUrl(cover)} sizes="48px" />}
+                {/* Identity: thumbnail row on phones; a proper cover +
+                    centered caption filling the upper-left cell on desktop. */}
+                <div className="flex w-full max-w-xl shrink-0 items-center gap-3.5 lg:col-start-1 lg:row-start-1 lg:max-w-none lg:flex-col lg:items-center lg:justify-center lg:gap-6 lg:self-stretch">
+                  <div className="relative aspect-square w-12 shrink-0 overflow-hidden rounded-[10px] bg-secondary shadow-postcard lg:w-[min(18rem,30vh)] lg:rounded-[20px]">
+                    {cover && (
+                      <FadeImage
+                        src={coverUrl(cover)}
+                        sizes="(min-width: 1024px) 288px, 48px"
+                      />
+                    )}
                   </div>
-                  <div className="min-w-0">
+                  <div className="min-w-0 lg:w-full lg:text-center">
                     <h2
                       lang={isJapanese(song.name) ? "ja" : undefined}
-                      className="truncate font-display text-[17px] leading-snug font-medium text-foreground"
+                      className="truncate font-display text-[17px] leading-snug font-medium text-foreground lg:text-[1.375rem] lg:leading-[1.25]"
                     >
                       {song.name}
                     </h2>
@@ -124,7 +146,7 @@ export function FullPlayer() {
                       lang={
                         albumName && isJapanese(albumName) ? "ja" : undefined
                       }
-                      className="truncate text-[13px] text-foreground/80"
+                      className="truncate text-[13px] text-foreground/80 lg:mt-1 lg:text-sm"
                     >
                       {ARTIST}
                       {albumName ? ` — ${albumName}` : ""}
@@ -133,7 +155,7 @@ export function FullPlayer() {
                 </div>
                 <LyricsPanel
                   songId={song.id}
-                  className="min-h-0 w-full max-w-xl flex-1"
+                  className="min-h-0 w-full max-w-xl flex-1 lg:col-start-2 lg:row-start-1 lg:max-w-none lg:self-stretch"
                 />
               </>
             ) : (
@@ -148,7 +170,15 @@ export function FullPlayer() {
               </div>
             )}
 
-            <div className="w-full max-w-xl shrink-0">
+            <div
+              className={cn(
+                "w-full max-w-xl shrink-0",
+                // Desktop lyrics mode: the control strip spans the bottom,
+                // full stage width (same rail as header and the two panes).
+                showLyrics &&
+                  "lg:col-span-2 lg:col-start-1 lg:row-start-2 lg:max-w-none",
+              )}
+            >
               {!showLyrics && (
                 <div className="text-center">
                   <h2

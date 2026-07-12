@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { ThemeImage } from "@/components/theme-image";
 import { ThemeToggle } from "@/components/theme-toggle";
 import beach from "./_assets/beach.jpg";
 import beachDusk from "./_assets/beach-dusk.jpg";
@@ -10,33 +10,17 @@ export default function GatePage() {
       <ThemeToggle className="absolute top-5 right-5 z-10" />
       {/* environment layer: real photo per theme + pale navy scrim (Light Overlay Rule) */}
       <div aria-hidden="true" className="absolute inset-0">
-        {/* Noon — aerial turquoise sea, white sand, a single palm. Already in the
-            ocean family, so it carries the wordmark raw (no colour grade). */}
-        <div className="absolute inset-0 dark:hidden">
-          <Image
-            src={beach}
-            alt=""
-            fill
-            priority
-            placeholder="blur"
-            sizes="100vw"
-            className="object-cover object-[50%_30%]"
-          />
-          <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(11,58,83,0.14),rgba(11,58,83,0)_40%,rgba(11,58,83,0.10)_72%,rgba(11,58,83,0.32))]" />
-        </div>
-        {/* Dusk — twilight palm, its own violet→coral→blue sky (a cinematic sunset scrim) */}
-        <div className="absolute inset-0 hidden dark:block">
-          <Image
-            src={beachDusk}
-            alt=""
-            fill
-            placeholder="blur"
-            sizes="100vw"
-            className="object-cover object-[50%_42%]"
-          />
-          {/* gentle navy veils top and bottom; the sky reads through the middle */}
-          <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(18,38,58,0.42),rgba(18,38,58,0.08)_28%,rgba(18,38,58,0.12)_66%,rgba(18,38,58,0.62))]" />
-        </div>
+        {/* Noon — aerial turquoise sea, white sand, a single palm (carries the
+            wordmark raw). Dusk — twilight palm with its own sunset sky. One
+            photo renders at a time (ThemeImage); scrims stay CSS-swapped. */}
+        <ThemeImage
+          noon={beach}
+          dusk={beachDusk}
+          sizes="100vw"
+          noonClassName="object-[50%_30%]"
+          duskClassName="object-[50%_42%]"
+        />
+        <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(11,58,83,0.14),rgba(11,58,83,0)_40%,rgba(11,58,83,0.10)_72%,rgba(11,58,83,0.32))] dark:bg-[linear-gradient(to_bottom,rgba(18,38,58,0.42),rgba(18,38,58,0.08)_28%,rgba(18,38,58,0.12)_66%,rgba(18,38,58,0.62))]" />
         {/* soft pool of shade behind the wordmark so white type never sits on bare glare/glow */}
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_56%_22%_at_50%_44%,rgba(11,58,83,0.28),transparent_72%)] dark:bg-[radial-gradient(ellipse_60%_24%_at_50%_44%,rgba(18,38,58,0.42),transparent_74%)]" />
       </div>

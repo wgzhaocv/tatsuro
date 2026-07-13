@@ -10,6 +10,13 @@
 export type AlbumCategory = "studio" | "live" | "compilation" | "single";
 export type Recording = "studio" | "live";
 
+/** The API's song-name language (?lang). Titles are bilingual; album/release
+ *  names are not. Derived from the UI locale — Chinese uses the English names. */
+export type NameLang = "en" | "ja";
+export function nameLang(locale: string): NameLang {
+  return locale === "ja" ? "ja" : "en";
+}
+
 // Category display labels are localized in messages (the `category` namespace),
 // keyed by AlbumCategory — see components/home/album-card + album/edition-view.
 

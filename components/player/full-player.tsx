@@ -14,12 +14,12 @@ import {
   SpeakerHigh,
   SpeakerSlash,
 } from "@phosphor-icons/react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 import { AlbumAmbient } from "@/components/album/album-ambient";
 import { FadeImage } from "@/components/album/fade-image";
 import { Button } from "@/components/ui/button";
-import type { Song } from "@/lib/api/types";
+import { nameLang, type Song } from "@/lib/api/types";
 import { coverUrl } from "@/lib/api/urls";
 import { ARTIST } from "@/lib/constants";
 import { formatDuration } from "@/lib/format";
@@ -54,7 +54,11 @@ export function FullPlayer() {
 
   // Queue entries carry cover/album from the release payload; for anything
   // missing (restored sessions, direct plays) the song query fills the gaps.
-  const { data: details } = useSong(expanded ? song?.id : undefined);
+  const locale = useLocale();
+  const { data: details } = useSong(
+    expanded ? song?.id : undefined,
+    nameLang(locale),
+  );
   const cover = song?.coverFrontId ?? details?.coverFrontId;
   const albumName = song?.albumName ?? details?.albumName;
 

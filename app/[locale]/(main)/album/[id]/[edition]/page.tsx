@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { setRequestLocale } from "next-intl/server";
 import { EditionView } from "@/components/album/edition-view";
 import { getAlbum, getAlbums } from "@/lib/api/albums";
-import { editionSlug, findEdition } from "@/lib/api/types";
+import { editionSlug, findEdition, nameLang } from "@/lib/api/types";
 
 // /album/:id/:edition — a specific pressing, addressed by year (e.g.
 // /album/…/1986). The default edition's canonical home is /album/:id, so only
@@ -21,10 +21,10 @@ export async function generateStaticParams() {
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ id: string; edition: string }>;
+  params: Promise<{ locale: string; id: string; edition: string }>;
 }) {
-  const { id, edition: slug } = await params;
-  const album = await getAlbum(id).catch(() => null);
+  const { locale, id, edition: slug } = await params;
+  const album = await getAlbum(id, nameLang(locale)).catch(() => null);
   const edition = album && findEdition(album, decodeURIComponent(slug));
   return {
     title:
@@ -41,7 +41,7 @@ export default async function EditionPage({
 }) {
   const { locale, id, edition: slug } = await params;
   setRequestLocale(locale);
-  const album = await getAlbum(id).catch(() => notFound());
+  const album = await getAlbum(id, nameLang(locale)).catch(() => notFound());
   const edition = findEdition(album, decodeURIComponent(slug));
   if (!edition) notFound();
   return <EditionView album={album} edition={edition} locale={locale} />;

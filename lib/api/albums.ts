@@ -4,6 +4,7 @@ import {
   type AlbumDetail,
   type ApiReleaseDetail,
   type ApiReleaseListItem,
+  type NameLang,
   toAlbum,
   toAlbumDetail,
 } from "./types";
@@ -28,13 +29,18 @@ export async function getAlbums(): Promise<Album[]> {
   return releases.map(toAlbum);
 }
 
-/** One release with its editions and discs (for the album detail screen). */
-export async function getAlbum(id: string): Promise<AlbumDetail> {
+/** One release with its editions and discs (for the album detail screen).
+ *  `lang` picks the song-name language (?lang); 'use cache' keys on it, so en
+ *  and ja are cached separately (album names themselves are language-neutral). */
+export async function getAlbum(
+  id: string,
+  lang: NameLang = "en",
+): Promise<AlbumDetail> {
   "use cache";
   cacheLife("max");
   cacheTag("albums", `album:${id}`);
 
-  const res = await fetch(`${API}/music/release/${id}`);
+  const res = await fetch(`${API}/music/release/${id}?lang=${lang}`);
   if (!res.ok) {
     throw new Error(
       `Failed to load album ${id}: ${res.status} ${res.statusText}`,

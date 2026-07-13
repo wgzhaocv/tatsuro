@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { setRequestLocale } from "next-intl/server";
 import { EditionView } from "@/components/album/edition-view";
 import { getAlbum, getAlbums } from "@/lib/api/albums";
-import { defaultEdition } from "@/lib/api/types";
+import { defaultEdition, nameLang } from "@/lib/api/types";
 
 // /album/:id — the release's default (latest) edition. Reissues live at
 // /album/:id/:year (see [edition]/page.tsx). The catalog is a fixed
@@ -17,10 +17,10 @@ export async function generateStaticParams() {
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: Promise<{ locale: string; id: string }>;
 }) {
-  const { id } = await params;
-  const album = await getAlbum(id).catch(() => null);
+  const { locale, id } = await params;
+  const album = await getAlbum(id, nameLang(locale)).catch(() => null);
   return {
     title: album ? `${album.name} — Tatsuro Yamashita` : "Tatsuro Yamashita",
   };
@@ -33,7 +33,7 @@ export default async function AlbumPage({
 }) {
   const { locale, id } = await params;
   setRequestLocale(locale);
-  const album = await getAlbum(id).catch(() => notFound());
+  const album = await getAlbum(id, nameLang(locale)).catch(() => notFound());
   return (
     <EditionView
       album={album}

@@ -71,6 +71,16 @@
    - **mv_09「蒼氓」已删**(2026-07-13):视频文件在源桶本就缺失(D1 有记录+缩略图,mp4 无,473MB 4K),旧站下载早已 404。站主本地有原件但 wrangler put 封顶 300MB、免费面板上传也不给传 >300MB,遂决定从 D1 `mvs` 删该行(现 13 部)+ 清掉孤儿缩略图。将来若要补回:需 S3 多段上传(建 R2 API token 走 `<账号>.r2.cloudflarestorage.com`,bun 原生 S3 client 自动多段)+ 重新插 D1 行。
    - **音频仍全私有**:主桶 `yamashita-tatsuro` 不动。将来音频若也想省 Worker,走 **S3 presigned URL**(每首签 1 次,浏览器直连 R2 做 Range)。
 
+5. **被缓存歌曲的视觉表示**(2026-07-13 记,未排期)— Service Worker 音频缓存(阶段 1 已落地,`audio-cache-events` 广播 + IndexedDB LRU)目前对用户完全不可见。想在曲目行/迷你条/全屏播放器上给「已离线缓存」的歌一个视觉标记(下载好的小图标/状态点,深水律),让用户知道哪些歌不吃流量。数据源已有(SW 的 `audio-cache-events` 广播 + IndexedDB 查询),缺的是前端订阅 + 标记 UI。
+6. **歌曲与专辑的分享**(2026-07-13 记,未排期)— 分享单曲 / 整张专辑的链接(可能配合 #7 的 OG 卡片,分享出去有像样的预览图)。专辑详情已是可分享 URL(`/album/:id` + 再版年份路由),单曲需要设计一个可深链的形态(`?song=` query 或独立路由)。私享站,分享面向熟人。
+7. **SEO / GEO / metadata / OpenGraph**(2026-07-13 记,未排期)— 全站 metadata 体系:Next `generateMetadata`(title/description 按屏动态)、OpenGraph + Twitter card(专辑/歌曲分享出去的预览图,配合 #6)、`sitemap.ts` / `robots.ts`、结构化数据(schema.org `MusicAlbum` / `MusicRecording`)、canonical。**注意与私享站定位的张力**:站点有 Gate 密码挡在前,爬虫进不来内容;真正要 index 的可能只有 Gate 落地页 + 少量公开元信息,或者纯粹为「分享链接有好预览」服务(那 OG 是重点、robots 可能反而要 disallow)。做之前先定「到底想被谁发现」。
+
+8. **PWA 形态 + 主动缓存 + 存储设置页**(2026-07-13 记,未排期)— 目标是**车载/离线**场景:手机进支架、蓝牙连车机,屏幕关着也能用。盘点后确认底层已 90% 就位,差的是三块产品化:
+   - **PWA 可安装形态**(投入最小)— SW 已就绪并注册(阶段 1,`@serwist/turbopack` + `sw-provider.tsx`),但**缺 `manifest.webmanifest` + 图标 + layout metadata**,所以装不到主屏、iOS 不 standalone 全屏。要加:`app/manifest.ts`(name/short_name/`display:"standalone"`/`start_url`/`theme_color`/双主题 `background_color`/icons 192·512)、一套图标(192/512/maskable + `apple-touch-icon`)、`layout.tsx` metadata 补 `manifest`/`appleWebApp`/`themeColor`/viewport。**MediaSession 与 iOS 后台播放已全做**(`audio-engine.tsx`:元数据/锁屏控制/positionState/焦点仲裁/`audioSession.type="playback"`),车机中控屏 + 方向盘键开箱可用,不用动。
+   - **主动缓存(保留被动)** — 现状 `app/sw/audio-cache.ts` 是**被动 opportunistic**:播过才后台存整文件、LRU 到 quota 一半淘汰。对"重复听"够用,但**跑长途听新歌仍会卡**(没听过=没缓存)。要加"下载这张专辑/歌单离线"入口:主动 fetch 队列里各首喂进现成的 `audioStreamHandler`(白送),被动缓存不变。
+   - **存储设置页** — "音乐很大"必须让用户看得见、管得了:用量条(已缓存 N 首 / 占 X MB / 上限 = quota 一半)+ 一键清理 + 每张专辑的离线开关状态。数据源现成(`audio-cache-events` 广播 + IndexedDB LRU 元数据),缺前端订阅 + UI。**与 #5(缓存的视觉标记)同源**,可合并一起做。
+   - 决策倾向(讨论已定):**做但克制** — 只在专辑/歌单给下载开关,不做全站"下载所有";PWA 图标待站主定长相。
+
 ## 阶段 4 — 上线
 
 - [ ] 生产部署(旧站 `Dockerfile` / `deploy_opi.sh` 可参考)

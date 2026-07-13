@@ -1,6 +1,7 @@
 "use client";
 
 import { CaretLeftIcon, DownloadSimpleIcon } from "@phosphor-icons/react";
+import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 import { AlbumAmbient } from "@/components/album/album-ambient";
 import { PageScroll } from "@/components/page-scroll";
@@ -8,7 +9,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { Link } from "@/components/ui/link";
 import type { Mv } from "@/lib/api/types";
 import { mvDownloadUrl } from "@/lib/api/urls";
-import { formatDuration, formatMvSizes } from "@/lib/format";
+import { formatDuration, formatFileSize } from "@/lib/format";
 import { usePlayerStore } from "@/lib/player/store";
 import { isJapanese } from "@/lib/text";
 import { cn } from "@/lib/utils";
@@ -27,6 +28,7 @@ import { cn } from "@/lib/utils";
  * left off.
  */
 export function MvWatch({ mv }: { mv: Mv }) {
+  const t = useTranslations("mv");
   const videoRef = useRef<HTMLVideoElement>(null);
   // The frame follows the video's real proportions (old PVs/CMs are 4:3) —
   // a fixed 16:9 box would show the element's own letterbox bars inside the
@@ -72,7 +74,7 @@ export function MvWatch({ mv }: { mv: Mv }) {
       <header className="mx-auto flex w-full max-w-3xl items-center gap-3 px-5 pt-[max(1.25rem,env(safe-area-inset-top))] sm:px-8 lg:max-w-6xl">
         <Link
           href="/mv"
-          aria-label="Back to music videos"
+          aria-label={t("back")}
           className={cn(
             buttonVariants({ variant: "glass", size: "icon-lg" }),
             "size-11 rounded-full",
@@ -81,14 +83,14 @@ export function MvWatch({ mv }: { mv: Mv }) {
           <CaretLeftIcon size={20} weight="bold" aria-hidden />
         </Link>
         <p className="min-w-0 flex-1 truncate text-center text-[13px] font-medium text-white/90 [text-shadow:0_2px_10px_rgba(11,58,83,0.5)]">
-          Music Video
+          {t("musicVideo")}
         </p>
         <a
           href={mvDownloadUrl(mv.id)}
           target="_blank"
           rel="noopener noreferrer"
-          aria-label={`Download ${mv.name}`}
-          title="Download"
+          aria-label={t("downloadNamed", { name: mv.name })}
+          title={t("download")}
           className={cn(
             buttonVariants({ variant: "glass", size: "icon-lg" }),
             "size-11 shrink-0 rounded-full",
@@ -135,7 +137,10 @@ export function MvWatch({ mv }: { mv: Mv }) {
           </h1>
           <p className="mt-1.5 text-[15px] text-white/90 [text-shadow:0_2px_10px_rgba(11,58,83,0.5)] tabular-nums">
             {mv.duration != null && `${formatDuration(mv.duration)} · `}
-            {formatMvSizes(mv.streamSize, mv.fileSize)}
+            {t("sizes", {
+              stream: formatFileSize(mv.streamSize),
+              file: formatFileSize(mv.fileSize),
+            })}
           </p>
         </div>
       </div>

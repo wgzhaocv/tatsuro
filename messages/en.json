@@ -1,0 +1,120 @@
+{
+  "nav": {
+    "albums": "Albums",
+    "discover": "Discover",
+    "mv": "MV",
+    "playlists": "Playlists",
+    "comingSoon": "Coming soon",
+    "sections": "Sections",
+    "search": "Search"
+  },
+  "filters": {
+    "all": "All",
+    "studio": "Studio",
+    "live": "Live",
+    "compilation": "Compilations",
+    "single": "Singles",
+    "legend": "Filter albums by type"
+  },
+  "category": {
+    "studio": "Studio",
+    "live": "Live",
+    "compilation": "Compilation",
+    "single": "Single"
+  },
+  "search": {
+    "placeholder": "Search…",
+    "title": "Search",
+    "description": "Search across the catalogue.",
+    "empty": "Nothing here yet."
+  },
+  "browse": {
+    "albumsHeading": "Albums",
+    "mvHeading": "Music Videos",
+    "noResults": "No results",
+    "albumsEmpty": "Nothing here for this filter.",
+    "mvEmpty": "No music videos yet.",
+    "albumCount": "{n, plural, one {# album} other {# albums}}",
+    "videoCount": "{n, plural, one {# video} other {# videos}}"
+  },
+  "album": {
+    "edition": "Edition",
+    "editions": "Editions",
+    "released": "Released {year}",
+    "cd": "{n} CD",
+    "versions": "{n} versions",
+    "discCount": "{n, plural, one {# disc} other {# discs}}",
+    "disc": "Disc {n}",
+    "songCount": "{n, plural, one {# song} other {# songs}}",
+    "back": "Albums",
+    "notFoundTitle": "Album not found",
+    "notFoundBody": "This record isn't in the collection.",
+    "notFoundBack": "Back to Albums",
+    "live": "Live",
+    "play": "Play",
+    "pause": "Pause",
+    "playNamed": "Play {name}",
+    "pauseNamed": "Pause {name}"
+  },
+  "mv": {
+    "download": "Download",
+    "watch": "Watch",
+    "musicVideo": "Music Video",
+    "back": "Back to music videos",
+    "playNamed": "Play {name}",
+    "downloadNamed": "Download {name}",
+    "sizes": "Watch {stream} · Download {file}"
+  },
+  "player": {
+    "player": "Player",
+    "open": "Open player",
+    "openNamed": "Open player — {name}",
+    "close": "Close player",
+    "previous": "Previous track",
+    "next": "Next track",
+    "play": "Play",
+    "pause": "Pause",
+    "nowPlaying": "Now playing — {name}",
+    "playingFrom": "Playing from {context}",
+    "showLyrics": "Show lyrics",
+    "hideLyrics": "Hide lyrics",
+    "shuffleOn": "Enable shuffle",
+    "shuffleOff": "Disable shuffle",
+    "repeatOff": "Repeat off — enable repeat all",
+    "repeatAll": "Repeat all — enable repeat one",
+    "repeatOne": "Repeat one — disable repeat",
+    "mute": "Mute",
+    "unmute": "Unmute",
+    "seek": "Seek",
+    "volume": "Volume"
+  },
+  "lyrics": {
+    "loading": "Loading lyrics",
+    "none": "No lyrics for this song yet."
+  },
+  "gate": {
+    "password": "Password",
+    "enter": "Enter",
+    "wrong": "Wrong password. Try again.",
+    "tooMany": "Too many attempts. Try again in {seconds}s."
+  },
+  "theme": {
+    "toggle": "Switch between noon and dusk theme",
+    "toNoon": "Switch to noon",
+    "toDusk": "Switch to dusk"
+  },
+  "switcher": {
+    "label": "Language",
+    "en": "English",
+    "ja": "日本語",
+    "zh": "中文"
+  },
+  "units": {
+    "min": "{n} min",
+    "hr": "{n} hr",
+    "hrMin": "{h} hr {m} min"
+  },
+  "metadata": {
+    "musicVideos": "Music Videos"
+  }
+}

@@ -1,18 +1,21 @@
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 import { Link } from "@/components/ui/link";
-import { type Album, CATEGORY_LABEL } from "@/lib/api/types";
+import type { Album } from "@/lib/api/types";
 import { coverUrl } from "@/lib/api/urls";
 // Content data is often Japanese; tag it so :lang(ja) picks up the JP gothic stack.
 import { isJapanese } from "@/lib/text";
 
 /** A postcard: square cover + name + year, links to the album. */
 export function AlbumCard({ album }: { album: Album }) {
+  const tc = useTranslations("category");
+  const ta = useTranslations("album");
   const isJa = isJapanese(album.name);
   const badge =
     album.discCount > 1
-      ? `${album.discCount} CD`
+      ? ta("cd", { n: album.discCount })
       : album.editionCount > 1
-        ? `${album.editionCount} versions`
+        ? ta("versions", { n: album.editionCount })
         : null;
 
   return (
@@ -51,7 +54,7 @@ export function AlbumCard({ album }: { album: Album }) {
             }
           >
             {" · "}
-            {CATEGORY_LABEL[album.category]}
+            {tc(album.category)}
           </span>
         )}
       </p>

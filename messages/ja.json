@@ -1,0 +1,120 @@
+{
+  "nav": {
+    "albums": "アルバム",
+    "discover": "見つける",
+    "mv": "MV",
+    "playlists": "プレイリスト",
+    "comingSoon": "近日公開",
+    "sections": "セクション",
+    "search": "検索"
+  },
+  "filters": {
+    "all": "すべて",
+    "studio": "スタジオ",
+    "live": "ライブ",
+    "compilation": "コンピレーション",
+    "single": "シングル",
+    "legend": "タイプで絞り込む"
+  },
+  "category": {
+    "studio": "スタジオ",
+    "live": "ライブ",
+    "compilation": "コンピレーション",
+    "single": "シングル"
+  },
+  "search": {
+    "placeholder": "検索…",
+    "title": "検索",
+    "description": "カタログを検索",
+    "empty": "まだ何もありません。"
+  },
+  "browse": {
+    "albumsHeading": "アルバム",
+    "mvHeading": "ミュージックビデオ",
+    "noResults": "見つかりません",
+    "albumsEmpty": "この絞り込みに該当するものはありません。",
+    "mvEmpty": "ミュージックビデオはまだありません。",
+    "albumCount": "{n, plural, other {#枚のアルバム}}",
+    "videoCount": "{n, plural, other {#本の動画}}"
+  },
+  "album": {
+    "edition": "エディション",
+    "editions": "エディション",
+    "released": "{year}年リリース",
+    "cd": "{n}枚組",
+    "versions": "{n}バージョン",
+    "discCount": "{n, plural, other {#枚組}}",
+    "disc": "ディスク{n}",
+    "songCount": "{n, plural, other {#曲}}",
+    "back": "アルバム",
+    "notFoundTitle": "アルバムが見つかりません",
+    "notFoundBody": "このレコードはコレクションにありません。",
+    "notFoundBack": "アルバムへ戻る",
+    "live": "ライブ",
+    "play": "再生",
+    "pause": "一時停止",
+    "playNamed": "{name}を再生",
+    "pauseNamed": "{name}を一時停止"
+  },
+  "mv": {
+    "download": "ダウンロード",
+    "watch": "再生",
+    "musicVideo": "ミュージックビデオ",
+    "back": "ミュージックビデオへ戻る",
+    "playNamed": "{name}を再生",
+    "downloadNamed": "{name}をダウンロード",
+    "sizes": "再生 {stream} · ダウンロード {file}"
+  },
+  "player": {
+    "player": "プレーヤー",
+    "open": "プレーヤーを開く",
+    "openNamed": "プレーヤーを開く — {name}",
+    "close": "プレーヤーを閉じる",
+    "previous": "前の曲",
+    "next": "次の曲",
+    "play": "再生",
+    "pause": "一時停止",
+    "nowPlaying": "再生中 — {name}",
+    "playingFrom": "{context} から再生",
+    "showLyrics": "歌詞を表示",
+    "hideLyrics": "歌詞を隠す",
+    "shuffleOn": "シャッフルを有効化",
+    "shuffleOff": "シャッフルを無効化",
+    "repeatOff": "リピートオフ — 全曲リピートへ",
+    "repeatAll": "全曲リピート — 1曲リピートへ",
+    "repeatOne": "1曲リピート — リピート解除",
+    "mute": "ミュート",
+    "unmute": "ミュート解除",
+    "seek": "シーク",
+    "volume": "音量"
+  },
+  "lyrics": {
+    "loading": "歌詞を読み込み中",
+    "none": "この曲の歌詞はまだありません。"
+  },
+  "gate": {
+    "password": "パスワード",
+    "enter": "入る",
+    "wrong": "パスワードが違います。もう一度お試しください。",
+    "tooMany": "試行回数が多すぎます。{seconds}秒後に再試行してください。"
+  },
+  "theme": {
+    "toggle": "正午と夕暮れのテーマを切り替え",
+    "toNoon": "正午に切り替え",
+    "toDusk": "夕暮れに切り替え"
+  },
+  "switcher": {
+    "label": "言語",
+    "en": "English",
+    "ja": "日本語",
+    "zh": "中文"
+  },
+  "units": {
+    "min": "{n}分",
+    "hr": "{n}時間",
+    "hrMin": "{h}時間{m}分"
+  },
+  "metadata": {
+    "musicVideos": "ミュージックビデオ"
+  }
+}

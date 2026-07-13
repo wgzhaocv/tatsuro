@@ -2,11 +2,12 @@
 
 import { DownloadSimpleIcon, PlayIcon } from "@phosphor-icons/react";
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 import { buttonVariants } from "@/components/ui/button";
 import { Link } from "@/components/ui/link";
 import type { Mv } from "@/lib/api/types";
 import { mvDownloadUrl } from "@/lib/api/urls";
-import { formatDuration, formatMvSizes } from "@/lib/format";
+import { formatDuration, formatFileSize } from "@/lib/format";
 // Video names are mostly Japanese; tag them so :lang(ja) picks the JP stack.
 import { isJapanese } from "@/lib/text";
 import { cn } from "@/lib/utils";
@@ -17,11 +18,12 @@ import { cn } from "@/lib/utils";
  * browser handles, same contract as before.
  */
 export function MvCard({ mv }: { mv: Mv }) {
+  const t = useTranslations("mv");
   return (
     <article>
       <Link
         href={`/mv/${mv.id}`}
-        aria-label={`Play ${mv.name}`}
+        aria-label={t("playNamed", { name: mv.name })}
         className="group/play relative block aspect-video overflow-hidden rounded-[14px] bg-navy shadow-postcard focus-visible:outline-none"
       >
         <Image
@@ -56,15 +58,18 @@ export function MvCard({ mv }: { mv: Mv }) {
             {mv.name}
           </h2>
           <p className="mt-0.5 text-[13px] text-muted-foreground tabular-nums">
-            {formatMvSizes(mv.streamSize, mv.fileSize)}
+            {t("sizes", {
+              stream: formatFileSize(mv.streamSize),
+              file: formatFileSize(mv.fileSize),
+            })}
           </p>
         </div>
         <a
           href={mvDownloadUrl(mv.id)}
           target="_blank"
           rel="noopener noreferrer"
-          aria-label={`Download ${mv.name}`}
-          title="Download"
+          aria-label={t("downloadNamed", { name: mv.name })}
+          title={t("download")}
           className={cn(
             buttonVariants({
               variant: "ghost",

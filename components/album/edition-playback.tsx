@@ -1,6 +1,7 @@
 "use client";
 
 import { Pause, Play } from "@phosphor-icons/react";
+import { useTranslations } from "next-intl";
 import { createContext, useContext } from "react";
 import { Button } from "@/components/ui/button";
 import type { Song } from "@/lib/api/types";
@@ -48,6 +49,7 @@ function useIsThisEdition(songs: Song[], label: string): boolean {
 
 /** The album rail's Play — starts the edition, or pauses/resumes it. */
 export function PlayEditionButton() {
+  const t = useTranslations("album");
   const { songs, label } = useEditionPlayback();
   const isThisEdition = useIsThisEdition(songs, label);
   const isPlaying = usePlayerStore((s) => s.isPlaying) && isThisEdition;
@@ -58,7 +60,11 @@ export function PlayEditionButton() {
     <Button
       type="button"
       variant="action"
-      aria-label={isPlaying ? `Pause ${label}` : `Play ${label}`}
+      aria-label={
+        isPlaying
+          ? t("pauseNamed", { name: label })
+          : t("playNamed", { name: label })
+      }
       onClick={() => {
         if (isThisEdition) toggle();
         else playQueue(songs, 0, label);
@@ -70,7 +76,7 @@ export function PlayEditionButton() {
       ) : (
         <Play className="size-5" weight="fill" aria-hidden />
       )}
-      {isPlaying ? "Pause" : "Play"}
+      {isPlaying ? t("pause") : t("play")}
     </Button>
   );
 }

@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 import { MvBrowser } from "@/components/mv/mv-browser";
 import { PageScroll } from "@/components/page-scroll";
 import { ThemeImage } from "@/components/theme-image";
@@ -6,11 +6,24 @@ import { getMvs } from "@/lib/api/mv";
 import beachDusk from "../_assets/home-dusk.jpg";
 import beachNoon from "../_assets/home-noon.jpg";
 
-export const metadata: Metadata = {
-  title: "Music Videos — Tatsuro Yamashita",
-};
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  setRequestLocale(locale);
+  const t = await getTranslations({ locale, namespace: "metadata" });
+  return { title: `${t("musicVideos")} — Tatsuro Yamashita` };
+}
 
-export default async function MvPage() {
+export default async function MvPage({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  setRequestLocale(locale);
   const mvs = await getMvs();
 
   return (
@@ -18,10 +31,7 @@ export default async function MvPage() {
       <PageScroll />
       {/* Same immersive surface as home: the beach photo fixed behind, a light
           navy scrim up top (Light Overlay Rule) so the white chrome reads. */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none fixed inset-0 z-0"
-      >
+      <div aria-hidden="true" className="pointer-events-none fixed inset-0 z-0">
         <div className="absolute inset-0">
           <ThemeImage
             noon={beachNoon}

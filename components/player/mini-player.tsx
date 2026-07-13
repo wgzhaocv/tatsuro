@@ -8,6 +8,7 @@ import {
   SkipForward,
 } from "@phosphor-icons/react";
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { coverUrl } from "@/lib/api/urls";
 import {
@@ -34,12 +35,13 @@ export function MiniPlayer() {
   const prev = usePlayerStore((s) => s.prev);
   const setExpanded = usePlayerStore((s) => s.setExpanded);
   const contextLabel = usePlayerStore((s) => s.contextLabel);
+  const t = useTranslations("player");
 
   const subline = song?.albumName ?? contextLabel ?? "";
 
   return (
     <section
-      aria-label="Player"
+      aria-label={t("player")}
       // Off-screen (no queue) means gone: unfocusable and invisible to AT.
       inert={!song}
       className={cn(
@@ -65,7 +67,7 @@ export function MiniPlayer() {
           <button
             type="button"
             onClick={() => setExpanded(true)}
-            aria-label={song ? `Open player — ${song.name}` : "Open player"}
+            aria-label={song ? t("openNamed", { name: song.name }) : t("open")}
             // -ml compensates pl so the cover keeps its alignment while the
             // hover wash gets equal breathing room on all sides.
             className="group -ml-1.5 flex min-w-0 flex-1 items-center gap-3 rounded-xl py-1.5 pr-2 pl-1.5 text-left outline-none transition-colors duration-300 ease-lazy hover:bg-navy/[0.04] focus-visible:ring-2 focus-visible:ring-ring/50 dark:hover:bg-white/[0.05]"
@@ -119,7 +121,7 @@ export function MiniPlayer() {
             <Button
               variant="ghost"
               size="icon"
-              aria-label="Previous track"
+              aria-label={t("previous")}
               onClick={() => prev()}
               className="hidden text-foreground sm:inline-flex"
             >
@@ -128,7 +130,7 @@ export function MiniPlayer() {
             <Button
               variant="action"
               size="icon-lg"
-              aria-label={isPlaying ? "Pause" : "Play"}
+              aria-label={isPlaying ? t("pause") : t("play")}
               onClick={() => toggle()}
               className="size-11 rounded-full shadow-lift-ocean"
             >
@@ -141,7 +143,7 @@ export function MiniPlayer() {
             <Button
               variant="ghost"
               size="icon"
-              aria-label="Next track"
+              aria-label={t("next")}
               onClick={() => next()}
               className="text-foreground"
             >

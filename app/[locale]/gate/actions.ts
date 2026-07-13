@@ -2,20 +2,24 @@
 
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { getLocale } from "next-intl/server";
 import { signToken } from "@/lib/auth";
 import { AUTH_COOKIE_NAME, REDIRECT_URL_COOKIE } from "@/lib/constants";
 
 export type GateState = { error: "wrong-password" } | null;
 
-function resolvePath(saved: string | undefined): string {
-  if (!saved) return "/";
+function resolvePath(saved: string | undefined, locale: string): string {
+  const fallback = `/${locale}`;
+  if (!saved) return fallback;
   try {
     const url = new URL(saved);
     // reject the gate itself and dot-paths (e.g. /.well-known devtools probes)
-    if (url.pathname === "/gate" || url.pathname.startsWith("/.")) return "/";
+    if (url.pathname.endsWith("/gate") || url.pathname.startsWith("/.")) {
+      return fallback;
+    }
     return url.pathname + url.search;
   } catch {
-    return "/";
+    return fallback;
   }
 }
 
@@ -40,5 +44,5 @@ export async function verifyArgot(
 
   const saved = cookieStore.get(REDIRECT_URL_COOKIE)?.value;
   cookieStore.delete(REDIRECT_URL_COOKIE);
-  redirect(resolvePath(saved));
+  redirect(resolvePath(saved, await getLocale()));
 }

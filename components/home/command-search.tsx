@@ -1,6 +1,7 @@
 "use client";
 
 import { MagnifyingGlassIcon } from "@phosphor-icons/react";
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { GlassPanel } from "@/components/glass-panel";
 import { Button } from "@/components/ui/button";
@@ -24,6 +25,8 @@ import {
  * self-contained; don't thread page data through here.
  */
 export function CommandSearch() {
+  const tn = useTranslations("nav");
+  const ts = useTranslations("search");
   const [open, setOpen] = useState(false);
 
   // ⌘K / Ctrl-K toggles the palette from anywhere on the page.
@@ -45,7 +48,7 @@ export function CommandSearch() {
         variant="glass"
         size="icon"
         onClick={() => setOpen(true)}
-        aria-label="Search"
+        aria-label={tn("search")}
         className="size-11 rounded-full"
       >
         <MagnifyingGlassIcon weight="bold" className="size-[18px]" />
@@ -56,15 +59,15 @@ export function CommandSearch() {
           showCloseButton={false}
           className="top-[16vh] translate-y-0 gap-0 border-0 bg-transparent p-0 shadow-none ring-0 sm:max-w-lg"
         >
-          <DialogTitle className="sr-only">Search</DialogTitle>
+          <DialogTitle className="sr-only">{ts("title")}</DialogTitle>
           <DialogDescription className="sr-only">
-            Search across the catalogue.
+            {ts("description")}
           </DialogDescription>
           <GlassPanel className="overflow-hidden rounded-lg shadow-lift-navy">
             <Command className="bg-transparent">
-              <CommandInput placeholder="Search…" />
+              <CommandInput placeholder={ts("placeholder")} />
               <CommandList>
-                <CommandEmpty>Nothing here yet.</CommandEmpty>
+                <CommandEmpty>{ts("empty")}</CommandEmpty>
               </CommandList>
             </Command>
           </GlassPanel>

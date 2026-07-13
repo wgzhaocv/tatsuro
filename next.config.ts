@@ -1,5 +1,8 @@
 import { withSerwist } from "@serwist/turbopack";
 import type { NextConfig } from "next";
+import createNextIntlPlugin from "next-intl/plugin";
+
+const withNextIntl = createNextIntlPlugin();
 
 // Backend image host, derived from the API URL so it stays a single source of truth.
 const apiUrl = process.env.NEXT_PUBLIC_API_URL;
@@ -28,4 +31,4 @@ const nextConfig: NextConfig = {
 
 // Serwist (Turbopack variant): the SW itself is bundled/served by
 // app/serwist/[path]/route.ts; this wrapper wires the build-id plumbing.
-export default withSerwist(nextConfig);
+export default withSerwist(withNextIntl(nextConfig));

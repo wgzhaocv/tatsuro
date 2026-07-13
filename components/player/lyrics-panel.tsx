@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { memo, useCallback, useEffect, useRef } from "react";
 import { currentLineIndex, isTimed, type LyricLine } from "@/lib/api/lyrics";
 import { usePlayerStore, useProgressStore } from "@/lib/player/store";
@@ -23,13 +24,14 @@ export function LyricsPanel({
   className?: string;
 }) {
   const { data: lines, isLoading, isError } = useLyrics(songId);
+  const t = useTranslations("lyrics");
 
   if (isLoading) {
     return (
       <output
         className={cn("flex flex-col justify-center gap-4 px-8", className)}
       >
-        <span className="sr-only">Loading lyrics</span>
+        <span className="sr-only">{t("loading")}</span>
         {[0, 1, 2].map((i) => (
           <div
             key={i}
@@ -44,9 +46,7 @@ export function LyricsPanel({
   if (isError || !lines || lines.length === 0) {
     return (
       <div className={cn("grid place-items-center px-8", className)}>
-        <p className="text-[15px] text-muted-foreground">
-          No lyrics for this song yet.
-        </p>
+        <p className="text-[15px] text-muted-foreground">{t("none")}</p>
       </div>
     );
   }

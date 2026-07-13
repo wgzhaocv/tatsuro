@@ -1,6 +1,7 @@
 "use client";
 
 import { ArrowRight, CircleNotch, LockSimple } from "@phosphor-icons/react";
+import { useTranslations } from "next-intl";
 import { useActionState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -8,6 +9,7 @@ import { type GateState, verifyArgot } from "./actions";
 import { useRateLimit } from "./use-rate-limit";
 
 export function GateForm() {
+  const t = useTranslations("gate");
   const [state, formAction, pending] = useActionState<GateState, FormData>(
     verifyArgot,
     null,
@@ -60,8 +62,8 @@ export function GateForm() {
           name="password"
           required
           autoComplete="current-password"
-          placeholder="Password"
-          aria-label="Password"
+          placeholder={t("password")}
+          aria-label={t("password")}
           aria-invalid={showError || undefined}
           aria-describedby={describedBy}
           disabled={pending}
@@ -72,7 +74,7 @@ export function GateForm() {
           disabled={pending || rateLimited}
           className="h-11 rounded-full bg-coral-ink px-6 text-white hover:bg-coral-ink/90 hover:shadow-lift-coral"
         >
-          Enter
+          {t("enter")}
           {pending ? (
             <CircleNotch aria-hidden="true" className="animate-spin" />
           ) : (
@@ -89,11 +91,11 @@ export function GateForm() {
       >
         {rateLimited ? (
           <p className="rounded-full bg-card/85 px-4 py-1.5 text-sm text-coral-ink backdrop-blur-xl dark:text-coral">
-            Too many attempts. Try again in {cooldownTime}s.
+            {t("tooMany", { seconds: cooldownTime })}
           </p>
         ) : showError ? (
           <p className="animate-in rounded-full bg-card/85 px-4 py-1.5 text-sm text-coral-ink backdrop-blur-xl duration-400 fade-in dark:text-coral">
-            Wrong password. Try again.
+            {t("wrong")}
           </p>
         ) : null}
       </div>

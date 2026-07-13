@@ -1,13 +1,13 @@
+import { getTranslations } from "next-intl/server";
 import { GlassPanel } from "@/components/glass-panel";
 import {
   type AlbumDetail,
-  CATEGORY_LABEL,
   type Edition,
   editionQueueSongs,
 } from "@/lib/api/types";
 import { coverUrl } from "@/lib/api/urls";
 import { ARTIST } from "@/lib/constants";
-import { formatTotalDuration } from "@/lib/format";
+import { durationLabel } from "@/lib/format";
 import { isJapanese } from "@/lib/text";
 import { AlbumAmbient } from "./album-ambient";
 import { DiscSection } from "./disc-section";
@@ -21,13 +21,18 @@ import { FadeImage } from "./fade-image";
  * cover in view), and the frosted tracklist sheet. Editions are sibling routes
  * (see EditionSwitch); the page above resolves which one this is.
  */
-export function EditionView({
+export async function EditionView({
   album,
   edition,
+  locale,
 }: {
   album: AlbumDetail;
   edition: Edition;
+  locale: string;
 }) {
+  // Explicit locale keeps getTranslations static under Cache Components (no
+  // request-locale/header read); the page passes it from its route params.
+  const t = await getTranslations({ locale });
   const hasEditions = album.editions.length > 1;
   const multiDisc = edition.discs.length > 1;
   const cover = coverUrl(edition.coverFrontId);
@@ -37,13 +42,13 @@ export function EditionView({
     (s, d) => s + d.tracks.reduce((t, tr) => t + (tr.duration ?? 0), 0),
     0,
   );
-  const totalLabel = seconds > 0 ? formatTotalDuration(seconds) : null;
+  const totalLabel = durationLabel(t, seconds);
 
   const metaLine = [
     album.year,
-    album.category && CATEGORY_LABEL[album.category],
-    `${trackCount} ${trackCount === 1 ? "song" : "songs"}`,
-    multiDisc ? `${edition.discs.length} discs` : null,
+    album.category && t(`category.${album.category}`),
+    t("album.songCount", { n: trackCount }),
+    multiDisc ? t("album.discCount", { n: edition.discs.length }) : null,
     totalLabel,
   ]
     .filter(Boolean)
@@ -97,7 +102,11 @@ export function EditionView({
 
           {hasEditions && (
             <div className="col-span-2 sm:col-span-1 sm:col-start-2 lg:w-full">
-              <EditionSwitch album={album} currentEditionId={edition.id} />
+              <EditionSwitch
+                album={album}
+                currentEditionId={edition.id}
+                locale={locale}
+              />
             </div>
           )}
         </aside>
@@ -114,13 +123,14 @@ export function EditionView({
               disc={disc}
               showHeading={multiDisc}
               startIndex={discStarts[d]}
+              locale={locale}
             />
           ))}
 
           <p className="mt-8 border-t border-border/70 px-3 pt-5 text-[13px] text-muted-foreground">
             {[
-              album.year && `Released ${album.year}`,
-              `${trackCount} songs`,
+              album.year && t("album.released", { year: album.year }),
+              t("album.songCount", { n: trackCount }),
               totalLabel,
             ]
               .filter(Boolean)

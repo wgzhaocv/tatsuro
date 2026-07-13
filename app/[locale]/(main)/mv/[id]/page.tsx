@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { setRequestLocale } from "next-intl/server";
 import { MvWatch } from "@/components/mv/mv-watch";
 import { getMvs } from "@/lib/api/mv";
 
@@ -31,9 +32,10 @@ export async function generateMetadata({
 export default async function MvWatchPage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: Promise<{ locale: string; id: string }>;
 }) {
-  const { id } = await params;
+  const { locale, id } = await params;
+  setRequestLocale(locale);
   const mv = await findMv(id);
   if (!mv) notFound();
   return <MvWatch mv={mv} />;

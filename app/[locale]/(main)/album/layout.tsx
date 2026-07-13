@@ -1,4 +1,5 @@
 import { ArrowLeft } from "@phosphor-icons/react/dist/ssr";
+import { getTranslations } from "next-intl/server";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { buttonVariants } from "@/components/ui/button";
 import { Link } from "@/components/ui/link";
@@ -9,11 +10,15 @@ import { cn } from "@/lib/utils";
  * the back-to-albums pill and the theme toggle. Each edition page below brings
  * its own ambient wash, rail, and tracklist.
  */
-export default function AlbumLayout({
+export default async function AlbumLayout({
   children,
+  params,
 }: {
   children: React.ReactNode;
+  params: Promise<{ locale: string }>;
 }) {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: "album" });
   return (
     <div className="relative isolate flex min-h-dvh flex-col">
       <header className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-5 py-4 sm:px-8 sm:py-5">
@@ -25,7 +30,7 @@ export default function AlbumLayout({
           )}
         >
           <ArrowLeft size={18} weight="bold" aria-hidden />
-          Albums
+          {t("back")}
         </Link>
         <ThemeToggle />
       </header>

@@ -7,35 +7,37 @@ import {
   Playlist,
   VinylRecord,
 } from "@phosphor-icons/react";
-import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Link } from "@/components/ui/link";
+import { usePathname } from "@/i18n/navigation";
 import { usePlayerStore } from "@/lib/player/store";
 import { cn } from "@/lib/utils";
 
 // Sections mirror the desktop pill nav (HomeNav): an href means a live screen;
-// the rest are drawn as placeholders (shown, never a dead click). `match`
-// decides which tab reads as current for a given path — /album/[id] still
-// belongs to the Albums section, /mv/* to MV.
+// the rest are drawn as placeholders (shown, never a dead click). `key` indexes
+// the `nav` messages; `match` decides which tab reads as current for a given
+// path — /album/[id] still belongs to Albums, /mv/* to MV. `usePathname` from
+// i18n/navigation is already locale-stripped, so the predicates stay simple.
 const SECTIONS: {
-  label: string;
+  key: "albums" | "discover" | "mv" | "playlists";
   icon: Icon;
   href?: string;
   match?: (p: string) => boolean;
 }[] = [
   {
-    label: "Albums",
+    key: "albums",
     href: "/",
     icon: VinylRecord,
     match: (p) => p === "/" || p.startsWith("/album"),
   },
-  { label: "Discover", icon: Compass },
+  { key: "discover", icon: Compass },
   {
-    label: "MV",
+    key: "mv",
     href: "/mv",
     icon: FilmSlate,
     match: (p) => p.startsWith("/mv"),
   },
-  { label: "Playlists", icon: Playlist },
+  { key: "playlists", icon: Playlist },
 ];
 
 /**
@@ -48,6 +50,7 @@ const SECTIONS: {
  * the PlayerDock.
  */
 export function BottomNav() {
+  const t = useTranslations("nav");
   const pathname = usePathname();
   const videoStage = usePlayerStore((s) => s.videoStage);
   if (videoStage) return null;
@@ -73,20 +76,20 @@ export function BottomNav() {
             // No href → a not-yet-built screen: shown, disabled, never a dead click.
             if (!s.href)
               return (
-                <li key={s.label} className="flex-1">
+                <li key={s.key} className="flex-1">
                   <span
                     aria-disabled="true"
-                    title="Coming soon"
+                    title={t("comingSoon")}
                     className="flex h-full cursor-not-allowed flex-col items-center justify-center gap-1 text-muted-foreground/55"
                   >
                     <Icon size={22} aria-hidden />
-                    <span className="text-[11px] leading-none">{s.label}</span>
+                    <span className="text-[11px] leading-none">{t(s.key)}</span>
                   </span>
                 </li>
               );
             const active = s.match?.(pathname) ?? false;
             return (
-              <li key={s.label} className="flex-1">
+              <li key={s.key} className="flex-1">
                 <Link
                   href={s.href}
                   aria-current={active ? "page" : undefined}
@@ -111,7 +114,7 @@ export function BottomNav() {
                       active && "font-medium",
                     )}
                   >
-                    {s.label}
+                    {t(s.key)}
                   </span>
                 </Link>
               </li>

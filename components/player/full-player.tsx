@@ -14,6 +14,7 @@ import {
   SpeakerHigh,
   SpeakerSlash,
 } from "@phosphor-icons/react";
+import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 import { AlbumAmbient } from "@/components/album/album-ambient";
 import { FadeImage } from "@/components/album/fade-image";
@@ -46,6 +47,7 @@ export function FullPlayer() {
   const setExpanded = usePlayerStore((s) => s.setExpanded);
   const song = usePlayerStore((s) => s.current);
   const contextLabel = usePlayerStore((s) => s.contextLabel);
+  const t = useTranslations("player");
   // Cover ⇄ lyrics flip; kept while the player stays open so a listener can
   // follow along across an album.
   const [showLyrics, setShowLyrics] = useState(false);
@@ -62,7 +64,7 @@ export function FullPlayer() {
     <DialogPrimitive.Root open={expanded} onOpenChange={setExpanded}>
       <DialogPrimitive.Portal>
         <DialogPrimitive.Popup
-          aria-label={`Now playing — ${song.name}`}
+          aria-label={t("nowPlaying", { name: song.name })}
           className="fixed inset-0 isolate z-50 flex flex-col overflow-y-auto bg-background outline-none duration-500 ease-lazy data-closed:animate-out data-closed:fade-out-0 data-closed:slide-out-to-bottom-8 data-open:animate-in data-open:fade-in-0 data-open:slide-in-from-bottom-8"
         >
           {/* ── Ambient: the cover's own colour fills the room — the same
@@ -76,7 +78,7 @@ export function FullPlayer() {
                 <Button
                   variant="glass-ink"
                   size="icon-lg"
-                  aria-label="Close player"
+                  aria-label={t("close")}
                   className="size-11 rounded-full"
                 />
               }
@@ -84,17 +86,17 @@ export function FullPlayer() {
               <CaretDown size={20} weight="bold" aria-hidden />
             </DialogPrimitive.Close>
             {contextLabel && (
-              <p className="min-w-0 flex-1 truncate text-center text-[13px] font-medium text-foreground/80">
-                Playing from{" "}
-                <span lang={isJapanese(contextLabel) ? "ja" : undefined}>
-                  {contextLabel}
-                </span>
+              <p
+                lang={isJapanese(contextLabel) ? "ja" : undefined}
+                className="min-w-0 flex-1 truncate text-center text-[13px] font-medium text-foreground/80"
+              >
+                {t("playingFrom", { context: contextLabel })}
               </p>
             )}
             <Button
               variant={showLyrics ? "action" : "glass-ink"}
               size="icon-lg"
-              aria-label={showLyrics ? "Hide lyrics" : "Show lyrics"}
+              aria-label={showLyrics ? t("hideLyrics") : t("showLyrics")}
               aria-pressed={showLyrics}
               onClick={() => setShowLyrics((v) => !v)}
               // Desktop shows lyrics beside the cover permanently — the flip
@@ -245,6 +247,7 @@ function SeekBar() {
   const currentTime = useProgressStore((s) => s.currentTime);
   const duration = useDuration();
   const seek = usePlayerStore((s) => s.seek);
+  const t = useTranslations("player");
 
   const [draft, setDraft] = useState<number | null>(null);
   const [committed, setCommitted] = useState<number | null>(null);
@@ -267,7 +270,7 @@ function SeekBar() {
   return (
     <div className="mt-7">
       <Scrubber
-        label="Seek"
+        label={t("seek")}
         min={0}
         max={Math.max(duration, 1)}
         step={1}
@@ -315,20 +318,21 @@ function TransportControls() {
   const prev = usePlayerStore((s) => s.prev);
   const toggleShuffle = usePlayerStore((s) => s.toggleShuffle);
   const cycleRepeat = usePlayerStore((s) => s.cycleRepeat);
+  const t = useTranslations("player");
 
   const repeatLabel =
     repeat === "off"
-      ? "Repeat off — enable repeat all"
+      ? t("repeatOff")
       : repeat === "all"
-        ? "Repeat all — enable repeat one"
-        : "Repeat one — disable repeat";
+        ? t("repeatAll")
+        : t("repeatOne");
 
   return (
     <div className="mt-4 flex items-center justify-between sm:justify-center sm:gap-6">
       <Button
         variant="ghost"
         size="icon-lg"
-        aria-label={shuffle ? "Disable shuffle" : "Enable shuffle"}
+        aria-label={shuffle ? t("shuffleOff") : t("shuffleOn")}
         aria-pressed={shuffle}
         onClick={() => toggleShuffle()}
         className={cn(
@@ -342,7 +346,7 @@ function TransportControls() {
       <Button
         variant="ghost"
         size="icon-lg"
-        aria-label="Previous track"
+        aria-label={t("previous")}
         onClick={() => prev()}
         className="size-12 rounded-full text-foreground"
       >
@@ -350,7 +354,7 @@ function TransportControls() {
       </Button>
       <Button
         variant="action"
-        aria-label={isPlaying ? "Pause" : "Play"}
+        aria-label={isPlaying ? t("pause") : t("play")}
         onClick={() => toggle()}
         className="size-16 rounded-full shadow-lift-ocean hover:-translate-y-0.5"
       >
@@ -363,7 +367,7 @@ function TransportControls() {
       <Button
         variant="ghost"
         size="icon-lg"
-        aria-label="Next track"
+        aria-label={t("next")}
         onClick={() => next()}
         className="size-12 rounded-full text-foreground"
       >
@@ -396,6 +400,7 @@ function VolumeControl() {
   const muted = usePlayerStore((s) => s.muted);
   const setVolume = usePlayerStore((s) => s.setVolume);
   const toggleMute = usePlayerStore((s) => s.toggleMute);
+  const t = useTranslations("player");
 
   return (
     // Phones control volume with hardware buttons; show this from sm up.
@@ -403,7 +408,7 @@ function VolumeControl() {
       <Button
         variant="ghost"
         size="icon-sm"
-        aria-label={muted ? "Unmute" : "Mute"}
+        aria-label={muted ? t("unmute") : t("mute")}
         aria-pressed={muted}
         onClick={() => toggleMute()}
         className="rounded-full text-foreground/70"
@@ -415,7 +420,7 @@ function VolumeControl() {
         )}
       </Button>
       <Scrubber
-        label="Volume"
+        label={t("volume")}
         min={0}
         max={100}
         step={1}

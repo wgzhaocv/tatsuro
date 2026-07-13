@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { setRequestLocale } from "next-intl/server";
 import { EditionView } from "@/components/album/edition-view";
 import { getAlbum, getAlbums } from "@/lib/api/albums";
 import { editionSlug, findEdition } from "@/lib/api/types";
@@ -36,11 +37,12 @@ export async function generateMetadata({
 export default async function EditionPage({
   params,
 }: {
-  params: Promise<{ id: string; edition: string }>;
+  params: Promise<{ locale: string; id: string; edition: string }>;
 }) {
-  const { id, edition: slug } = await params;
+  const { locale, id, edition: slug } = await params;
+  setRequestLocale(locale);
   const album = await getAlbum(id).catch(() => notFound());
   const edition = findEdition(album, decodeURIComponent(slug));
   if (!edition) notFound();
-  return <EditionView album={album} edition={edition} />;
+  return <EditionView album={album} edition={edition} locale={locale} />;
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { MoonStars, SunDim } from "@phosphor-icons/react";
+import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
 import {
   Tooltip,
@@ -19,6 +20,7 @@ import { cn } from "@/lib/utils";
 export function ThemeToggle({ className }: { className?: string }) {
   const { resolvedTheme, setTheme } = useTheme();
   const isDark = resolvedTheme === "dark";
+  const t = useTranslations("theme");
 
   return (
     <Tooltip>
@@ -26,7 +28,7 @@ export function ThemeToggle({ className }: { className?: string }) {
         render={
           <button
             type="button"
-            aria-label="Switch between noon and dusk theme"
+            aria-label={t("toggle")}
             onClick={() => setTheme(isDark ? "light" : "dark")}
             className={cn(
               "group relative grid size-11 place-items-center rounded-full border border-white/60 bg-card/80 text-foreground shadow-lift-navy backdrop-blur-xl transition-shadow duration-400 ease-lazy hover:shadow-lift-ocean focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean/40 dark:border-white/15 dark:hover:shadow-lift-coral dark:focus-visible:ring-sky-bright/40",
@@ -49,7 +51,7 @@ export function ThemeToggle({ className }: { className?: string }) {
         }
       />
       <TooltipContent sideOffset={8}>
-        {isDark ? "Switch to noon" : "Switch to dusk"}
+        {isDark ? t("toNoon") : t("toDusk")}
       </TooltipContent>
     </Tooltip>
   );

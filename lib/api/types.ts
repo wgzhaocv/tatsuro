@@ -10,13 +10,8 @@
 export type AlbumCategory = "studio" | "live" | "compilation" | "single";
 export type Recording = "studio" | "live";
 
-/** Human labels for each release category (shared by the grid card + album meta). */
-export const CATEGORY_LABEL: Record<AlbumCategory, string> = {
-  studio: "Studio",
-  live: "Live",
-  compilation: "Compilation",
-  single: "Single",
-};
+// Category display labels are localized in messages (the `category` namespace),
+// keyed by AlbumCategory — see components/home/album-card + album/edition-view.
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Domain — what the app consumes.

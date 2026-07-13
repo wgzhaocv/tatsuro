@@ -1,0 +1,120 @@
+{
+  "nav": {
+    "albums": "专辑",
+    "discover": "发现",
+    "mv": "MV",
+    "playlists": "歌单",
+    "comingSoon": "敬请期待",
+    "sections": "分区",
+    "search": "搜索"
+  },
+  "filters": {
+    "all": "全部",
+    "studio": "录音室",
+    "live": "现场",
+    "compilation": "合辑",
+    "single": "单曲",
+    "legend": "按类型筛选专辑"
+  },
+  "category": {
+    "studio": "录音室",
+    "live": "现场",
+    "compilation": "合辑",
+    "single": "单曲"
+  },
+  "search": {
+    "placeholder": "搜索…",
+    "title": "搜索",
+    "description": "搜索整个曲库",
+    "empty": "这里还什么都没有。"
+  },
+  "browse": {
+    "albumsHeading": "专辑",
+    "mvHeading": "音乐视频",
+    "noResults": "没有结果",
+    "albumsEmpty": "该筛选下没有内容。",
+    "mvEmpty": "还没有音乐视频。",
+    "albumCount": "{n, plural, other {# 张专辑}}",
+    "videoCount": "{n, plural, other {# 个视频}}"
+  },
+  "album": {
+    "edition": "版本",
+    "editions": "版本",
+    "released": "发行于 {year}",
+    "cd": "{n} CD",
+    "versions": "{n} 个版本",
+    "discCount": "{n, plural, other {# 碟}}",
+    "disc": "第 {n} 碟",
+    "songCount": "{n, plural, other {# 首}}",
+    "back": "专辑",
+    "notFoundTitle": "未找到专辑",
+    "notFoundBody": "这张唱片不在收藏中。",
+    "notFoundBack": "返回专辑",
+    "live": "现场",
+    "play": "播放",
+    "pause": "暂停",
+    "playNamed": "播放 {name}",
+    "pauseNamed": "暂停 {name}"
+  },
+  "mv": {
+    "download": "下载",
+    "watch": "观看",
+    "musicVideo": "音乐视频",
+    "back": "返回音乐视频",
+    "playNamed": "播放 {name}",
+    "downloadNamed": "下载 {name}",
+    "sizes": "观看 {stream} · 下载 {file}"
+  },
+  "player": {
+    "player": "播放器",
+    "open": "打开播放器",
+    "openNamed": "打开播放器 — {name}",
+    "close": "关闭播放器",
+    "previous": "上一首",
+    "next": "下一首",
+    "play": "播放",
+    "pause": "暂停",
+    "nowPlaying": "正在播放 — {name}",
+    "playingFrom": "播放来源:{context}",
+    "showLyrics": "显示歌词",
+    "hideLyrics": "隐藏歌词",
+    "shuffleOn": "开启随机播放",
+    "shuffleOff": "关闭随机播放",
+    "repeatOff": "循环关闭 — 开启列表循环",
+    "repeatAll": "列表循环 — 开启单曲循环",
+    "repeatOne": "单曲循环 — 关闭循环",
+    "mute": "静音",
+    "unmute": "取消静音",
+    "seek": "跳转",
+    "volume": "音量"
+  },
+  "lyrics": {
+    "loading": "正在加载歌词",
+    "none": "这首歌还没有歌词。"
+  },
+  "gate": {
+    "password": "密码",
+    "enter": "进入",
+    "wrong": "密码错误,请重试。",
+    "tooMany": "尝试次数过多,请在 {seconds} 秒后重试。"
+  },
+  "theme": {
+    "toggle": "在正午与黄昏主题间切换",
+    "toNoon": "切换到正午",
+    "toDusk": "切换到黄昏"
+  },
+  "switcher": {
+    "label": "语言",
+    "en": "English",
+    "ja": "日本語",
+    "zh": "中文"
+  },
+  "units": {
+    "min": "{n} 分钟",
+    "hr": "{n} 小时",
+    "hrMin": "{h} 小时 {m} 分钟"
+  },
+  "metadata": {
+    "musicVideos": "音乐视频"
+  }
+}

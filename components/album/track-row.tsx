@@ -1,6 +1,7 @@
 "use client";
 
 import { Pause, Play } from "@phosphor-icons/react";
+import { useTranslations } from "next-intl";
 import { useRef } from "react";
 import type { Song } from "@/lib/api/types";
 import { formatDuration } from "@/lib/format";
@@ -28,6 +29,7 @@ export function TrackRow({
   /** Position in the edition-wide queue (across discs). */
   queueIndex: number;
 }) {
+  const t = useTranslations("album");
   const { songs, label } = useEditionPlayback();
   const isCurrent = usePlayerStore((s) => s.current?.id === track.id);
   const isPlaying = usePlayerStore((s) => s.isPlaying) && isCurrent;
@@ -44,7 +46,11 @@ export function TrackRow({
     <li ref={rowRef}>
       <button
         type="button"
-        aria-label={isPlaying ? `Pause ${track.name}` : `Play ${track.name}`}
+        aria-label={
+          isPlaying
+            ? t("pauseNamed", { name: track.name })
+            : t("playNamed", { name: track.name })
+        }
         aria-current={isCurrent ? "true" : undefined}
         onClick={() => {
           if (isCurrent) toggle();

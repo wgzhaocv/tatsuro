@@ -1,7 +1,7 @@
 import { GlassPanel } from "@/components/glass-panel";
 import {
-  type AlbumCategory,
   type AlbumDetail,
+  CATEGORY_LABEL,
   type Edition,
   editionQueueSongs,
 } from "@/lib/api/types";
@@ -14,12 +14,6 @@ import { DiscSection } from "./disc-section";
 import { EditionPlaybackProvider, PlayEditionButton } from "./edition-playback";
 import { EditionSwitch } from "./edition-switch";
 import { FadeImage } from "./fade-image";
-
-const CATEGORY_LABEL: Record<AlbumCategory, string> = {
-  studio: "Studio",
-  live: "Live",
-  compilation: "Compilation",
-};
 
 /**
  * One edition of a release, rendered fully on the server: the cover's ambient

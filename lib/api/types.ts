@@ -7,8 +7,16 @@
 // detail embeds each disc's tracks (with duration); getDiscSongs/getSong remain
 // for other callers (a disc == one backend source album).
 
-export type AlbumCategory = "studio" | "live" | "compilation";
+export type AlbumCategory = "studio" | "live" | "compilation" | "single";
 export type Recording = "studio" | "live";
+
+/** Human labels for each release category (shared by the grid card + album meta). */
+export const CATEGORY_LABEL: Record<AlbumCategory, string> = {
+  studio: "Studio",
+  live: "Live",
+  compilation: "Compilation",
+  single: "Single",
+};
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Domain — what the app consumes.
@@ -101,6 +109,22 @@ export function editionQueueSongs(
   );
 }
 
+/** A music video. Download-only: streaming video would burn Worker requests
+ *  (every <video> seek is a ranged hit), so the grid hands the file to the
+ *  browser via mvDownloadUrl (see ./urls). */
+export type Mv = {
+  id: string;
+  name: string;
+  /** Bytes. */
+  fileSize: number;
+  /** Length in seconds. */
+  duration?: number;
+  /** Direct video URL on the public bucket domain — for <video> playback. */
+  streamUrl: string;
+  /** Direct thumbnail URL on the public bucket domain. */
+  thumbnailUrl: string;
+};
+
 /** A track. */
 export type Song = {
   id: string;
@@ -155,6 +179,16 @@ export type ApiReleaseDetail = {
   }[];
 };
 
+/** List item from /mv/list. */
+export type ApiMvItem = {
+  id: string;
+  name: string;
+  fileSize: number;
+  duration: number | null;
+  streamUrl: string;
+  thumbnailUrl: string;
+};
+
 /** Track-list item from /music/album_songs/{discId}. */
 export type ApiAlbumSong = {
   id: string;
@@ -178,7 +212,9 @@ export type ApiSongInfo = {
 // ─────────────────────────────────────────────────────────────────────────────
 
 function asCategory(c: string | null): AlbumCategory | undefined {
-  return c === "studio" || c === "live" || c === "compilation" ? c : undefined;
+  return c === "studio" || c === "live" || c === "compilation" || c === "single"
+    ? c
+    : undefined;
 }
 
 export function toAlbum(r: ApiReleaseListItem): Album {
@@ -234,6 +270,17 @@ function parseTrackTitle(raw: string): { trackNumber?: number; name: string } {
   const match = raw.match(/^\s*(\d+)\s*-\s*(.*)$/);
   if (match) return { trackNumber: Number(match[1]), name: match[2].trim() };
   return { name: raw.trim() };
+}
+
+export function toMv(m: ApiMvItem): Mv {
+  return {
+    id: m.id,
+    name: m.name,
+    fileSize: m.fileSize,
+    duration: m.duration ?? undefined,
+    streamUrl: m.streamUrl,
+    thumbnailUrl: m.thumbnailUrl,
+  };
 }
 
 /** album_songs item → Song. discId is the disc the list was fetched for. */

@@ -8,6 +8,7 @@ const FILTERS: { key: FilterKey; label: string }[] = [
   { key: "studio", label: "Studio" },
   { key: "live", label: "Live" },
   { key: "compilation", label: "Compilations" },
+  { key: "single", label: "Singles" },
 ];
 
 /** Album type filter — glass pills over the hero photo. */

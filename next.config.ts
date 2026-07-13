@@ -5,6 +5,9 @@ import type { NextConfig } from "next";
 const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 const apiHost = apiUrl ? new URL(apiUrl).hostname : "ys-tr.withyakul.me";
 
+// MV thumbnails + video are served direct off the public bucket domain.
+const mvHost = process.env.NEXT_PUBLIC_MV_HOST ?? "tatsuro-mv.withyakul.me";
+
 const nextConfig: NextConfig = {
   // Cache Components: data is dynamic by default; lib/api caches explicitly via
   // 'use cache' + cacheLife + cacheTag. Enables use cache / cacheLife / cacheTag.
@@ -18,7 +21,7 @@ const nextConfig: NextConfig = {
     // static imports (app/**/_assets), which don't need remotePatterns.
     remotePatterns: [
       { protocol: "https", hostname: apiHost, pathname: "/stream/img/**" },
-      { protocol: "https", hostname: apiHost, pathname: "/mv/thumbnail/**" },
+      { protocol: "https", hostname: mvHost, pathname: "/**" },
     ],
   },
 };

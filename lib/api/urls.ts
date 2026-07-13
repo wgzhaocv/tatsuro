@@ -21,12 +21,9 @@ export function songDownloadUrl(songId: string): string {
   return `${API}/stream/download/${songId}`;
 }
 
-/** MV thumbnail image. */
-export function mvThumbnailUrl(mvId: string): string {
-  return `${API}/mv/thumbnail/${mvId}`;
-}
-
-/** Downloadable MV video file. */
+/** Downloadable MV video file. Streaming + thumbnails come pre-built from
+ *  /mv/list (public bucket domain); only the attachment download stays a
+ *  Worker route (for the Content-Disposition filename). */
 export function mvDownloadUrl(mvId: string): string {
   return `${API}/mv/download/${mvId}`;
 }

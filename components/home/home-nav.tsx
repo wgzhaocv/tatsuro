@@ -2,15 +2,23 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { Link } from "@/components/ui/link";
 import { HomeSearch } from "./home-search";
 
-// Only Albums exists today; the rest are drawn as placeholders (their screens
-// land in a later phase) — shown, but never a dead click.
-const SECTIONS = ["Songs", "MV", "Playlists"];
+// Sections with an href have a live screen; the rest are drawn as placeholders
+// (their screens land in a later phase) — shown, but never a dead click.
+const SECTIONS: { label: string; href?: string }[] = [
+  { label: "Albums", href: "/" },
+  { label: "Songs" },
+  { label: "MV", href: "/mv" },
+  { label: "Playlists" },
+];
 
-/** The home top bar, floating over the hero photo. */
+/** The browse-screen top bar, floating over the hero photo. */
 export function HomeNav({
+  current,
   query,
   onQueryChange,
 }: {
+  /** Label of the active section (matches SECTIONS). */
+  current: "Albums" | "MV";
   query: string;
   onQueryChange: (value: string) => void;
 }) {
@@ -40,23 +48,35 @@ export function HomeNav({
 
       <nav aria-label="Sections" className="hidden lg:block">
         <div className="flex gap-1 rounded-full border border-white/40 bg-white/15 p-1 backdrop-blur-xs dark:bg-dusk-navy/40">
-          <Link
-            href="/"
-            aria-current="page"
-            className="rounded-full bg-white px-5 py-2 text-sm font-semibold text-navy"
-          >
-            Albums
-          </Link>
-          {SECTIONS.map((s) => (
-            <span
-              key={s}
-              aria-disabled="true"
-              title="Coming soon"
-              className="cursor-not-allowed rounded-full px-5 py-2 text-sm font-medium text-white/85 [text-shadow:0_1px_5px_rgba(11,58,83,0.5)]"
-            >
-              {s}
-            </span>
-          ))}
+          {SECTIONS.map((s) => {
+            // No href → a placeholder for a not-yet-built screen (never a dead click).
+            if (!s.href)
+              return (
+                <span
+                  key={s.label}
+                  aria-disabled="true"
+                  title="Coming soon"
+                  className="cursor-not-allowed rounded-full px-5 py-2 text-sm font-medium text-white/85 [text-shadow:0_1px_5px_rgba(11,58,83,0.5)]"
+                >
+                  {s.label}
+                </span>
+              );
+            const isCurrent = s.label === current;
+            return (
+              <Link
+                key={s.label}
+                href={s.href}
+                aria-current={isCurrent ? "page" : undefined}
+                className={
+                  isCurrent
+                    ? "rounded-full bg-white px-5 py-2 text-sm font-semibold text-navy"
+                    : "rounded-full px-5 py-2 text-sm font-medium text-white/85 transition-colors duration-500 ease-lazy [text-shadow:0_1px_5px_rgba(11,58,83,0.5)] hover:bg-white/15 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
+                }
+              >
+                {s.label}
+              </Link>
+            );
+          })}
         </div>
       </nav>
 

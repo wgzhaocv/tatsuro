@@ -10,6 +10,13 @@ export function formatDuration(seconds: number): string {
   return `${minutes}:${rest.toString().padStart(2, "0")}`;
 }
 
+/** Bytes → "84.5 MB" / "1.2 GB" for download sizes. */
+export function formatFileSize(bytes: number): string {
+  const mb = bytes / 1024 ** 2;
+  if (mb >= 1024) return `${(mb / 1024).toFixed(1)} GB`;
+  return mb >= 100 ? `${Math.round(mb)} MB` : `${mb.toFixed(1)} MB`;
+}
+
 /** Summed seconds → a human total: "58 min", "1 hr 12 min", "2 hr". */
 export function formatTotalDuration(seconds: number): string {
   const minutes = Math.round(seconds / 60);

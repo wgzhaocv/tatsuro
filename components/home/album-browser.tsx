@@ -35,7 +35,7 @@ export function AlbumBrowser({ albums }: { albums: Album[] }) {
 
   return (
     <div className="relative z-10 flex min-h-dvh flex-col">
-      <HomeNav query={query} onQueryChange={setQuery} />
+      <HomeNav current="Albums" query={query} onQueryChange={setQuery} />
 
       <div className="px-5 pb-5 pt-6 sm:px-8 sm:pt-10">
         <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between sm:gap-6">

@@ -16,7 +16,7 @@ export default async function Home() {
           Rule) so the white chrome stays legible. */}
       <div
         aria-hidden="true"
-        className="pointer-events-none fixed left-0 top-0 z-0 h-screen w-screen"
+        className="pointer-events-none fixed inset-0 z-0"
       >
         <div className="absolute inset-0">
           <ThemeImage

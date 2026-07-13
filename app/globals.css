@@ -176,6 +176,11 @@
   }
   html {
     @apply font-sans;
+    /* Always reserve the scrollbar gutter. When a dialog (⌘K palette) locks
+       scroll it hides the scrollbar; without a reserved gutter the layout
+       width jumps on inset-scrollbar systems and the fixed 100vw hero photo
+       appears to slide sideways. `stable` keeps the width constant. */
+    scrollbar-gutter: stable;
   }
   body {
     @apply bg-background text-foreground;

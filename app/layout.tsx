@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Quicksand } from "next/font/google";
 import "./globals.css";
+import { AudioEngine } from "@/components/player/audio-engine";
 import { QueryProvider } from "@/components/query-provider";
 import { ServiceWorkerProvider } from "@/components/sw-provider";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -48,6 +49,10 @@ export default function RootLayout({
             <TooltipProvider>{children}</TooltipProvider>
           </QueryProvider>
           <ServiceWorkerProvider />
+          {/* Above [locale] so a language switch never remounts it — a
+              remounted <audio> element would ghost-play alongside its
+              replacement (the double-audio bug). */}
+          <AudioEngine />
         </ThemeProvider>
       </body>
     </html>

@@ -1,8 +1,8 @@
 import { getTranslations } from "next-intl/server";
+import { TrackRow } from "@/components/track/track-row";
 import type { Disc } from "@/lib/api/types";
 import { durationLabel } from "@/lib/format";
 import { isJapanese } from "@/lib/text";
-import { TrackRow } from "./track-row";
 
 /**
  * One disc's tracks inside the sheet. Multi-disc sets get a heading — the

@@ -1,0 +1,272 @@
+"use client";
+
+// Likes + playlists as a persisted zustand store, mirroring lib/player/store's
+// conventions: skipHydration + rehydrate-after-mount (SSR renders empty), a
+// partialize whitelist, and full denormalized Song objects stored per entry so
+// a row renders without a refetch. Pure local state — the store is the source
+// of truth; no React Query, no backend. When an account lands, sync uploads the
+// wire projection (see ./types toWireRows). Every mutation bumps updatedAt.
+
+import { create } from "zustand";
+import { createJSONStorage, persist } from "zustand/middleware";
+import { useShallow } from "zustand/react/shallow";
+import type { Song } from "@/lib/api/types";
+import { LIKED_ID, type Playlist, type PlaylistEntry } from "./types";
+
+export const PLAYLISTS_STORAGE_KEY = "tatsuro-playlists";
+
+type PlaylistsState = {
+  playlists: Playlist[];
+  /** False until the client has rehydrated (+ run legacy migration). UI gates
+   *  on this so a first paint never flashes an empty library. Not persisted.
+   *  Reads go through the reactive hooks at the bottom of this file. */
+  hasHydrated: boolean;
+
+  // writes (all bump updatedAt) ─────────────────────────────────────────────
+  createPlaylist(name: string): string;
+  createPlaylistFromAlbum(name: string, coverId: string, songs: Song[]): string;
+  renamePlaylist(id: string, name: string): void;
+  deletePlaylist(id: string): void;
+  addSong(playlistId: string, song: Song): void;
+  removeSong(playlistId: string, songId: string): void;
+  reorder(playlistId: string, from: number, to: number): void;
+  toggleLike(song: Song): void;
+
+  // lifecycle ────────────────────────────────────────────────────────────────
+  /** Add the reserved Liked list if a rehydrate left it missing (fresh visitor
+   *  or a legacy import without one). Idempotent. */
+  ensureLiked(): void;
+  /** Merge migrated legacy playlists in (dedupe by id; liked folds into liked). */
+  importLegacy(legacy: Playlist[]): void;
+  setHasHydrated(v: boolean): void;
+};
+
+function now(): number {
+  return Date.now();
+}
+
+function newId(): string {
+  return crypto.randomUUID();
+}
+
+function makeLiked(): Playlist {
+  const t = now();
+  // `name` is a fallback; the UI localizes liked via kind (t("likedSongs")).
+  return {
+    id: LIKED_ID,
+    kind: "liked",
+    name: "Liked Songs",
+    entries: [],
+    createdAt: t,
+    updatedAt: t,
+  };
+}
+
+/** Live (non-tombstoned) playlists, liked pinned first, then newest-first. */
+function forDisplay(playlists: Playlist[]): Playlist[] {
+  return playlists
+    .filter((p) => !p.deletedAt)
+    .sort((a, b) => {
+      if (a.kind === "liked") return -1;
+      if (b.kind === "liked") return 1;
+      return b.createdAt - a.createdAt;
+    });
+}
+
+/** Replace one playlist by id via an updater, stamping updatedAt. */
+function patch(
+  playlists: Playlist[],
+  id: string,
+  fn: (p: Playlist) => Playlist,
+): Playlist[] {
+  return playlists.map((p) =>
+    p.id === id ? { ...fn(p), updatedAt: now() } : p,
+  );
+}
+
+export const usePlaylistStore = create<PlaylistsState>()(
+  persist(
+    (set, get) => ({
+      playlists: [],
+      hasHydrated: false,
+
+      createPlaylist(name) {
+        const id = newId();
+        const t = now();
+        set((s) => ({
+          playlists: [
+            ...s.playlists,
+            {
+              id,
+              kind: "user",
+              name: name.trim(),
+              entries: [],
+              createdAt: t,
+              updatedAt: t,
+            },
+          ],
+        }));
+        return id;
+      },
+
+      createPlaylistFromAlbum(name, coverId, songs) {
+        const id = newId();
+        const t = now();
+        set((s) => ({
+          playlists: [
+            ...s.playlists,
+            {
+              id,
+              kind: "user",
+              name: name.trim(),
+              coverId,
+              entries: songs.map((song) => ({ song, addedAt: t })),
+              createdAt: t,
+              updatedAt: t,
+            },
+          ],
+        }));
+        return id;
+      },
+
+      renamePlaylist(id, name) {
+        if (id === LIKED_ID) return; // liked is not renamable
+        set((s) => ({
+          playlists: patch(s.playlists, id, (p) => ({
+            ...p,
+            name: name.trim(),
+          })),
+        }));
+      },
+
+      deletePlaylist(id) {
+        if (id === LIKED_ID) return; // liked is not deletable
+        // Soft delete (tombstone) so the removal can propagate on a future sync.
+        set((s) => ({
+          playlists: patch(s.playlists, id, (p) => ({
+            ...p,
+            deletedAt: now(),
+          })),
+        }));
+      },
+
+      addSong(playlistId, song) {
+        set((s) => ({
+          playlists: patch(s.playlists, playlistId, (p) =>
+            p.entries.some((e) => e.song.id === song.id)
+              ? p // already in — no-op (dedupe by song id)
+              : { ...p, entries: [...p.entries, { song, addedAt: now() }] },
+          ),
+        }));
+      },
+
+      removeSong(playlistId, songId) {
+        set((s) => ({
+          playlists: patch(s.playlists, playlistId, (p) => ({
+            ...p,
+            entries: p.entries.filter((e) => e.song.id !== songId),
+          })),
+        }));
+      },
+
+      reorder(playlistId, from, to) {
+        set((s) => ({
+          playlists: patch(s.playlists, playlistId, (p) => {
+            const entries = [...p.entries];
+            if (
+              from < 0 ||
+              to < 0 ||
+              from >= entries.length ||
+              to >= entries.length
+            )
+              return p;
+            const [moved] = entries.splice(from, 1);
+            entries.splice(to, 0, moved);
+            return { ...p, entries };
+          }),
+        }));
+      },
+
+      toggleLike(song) {
+        get().ensureLiked();
+        const liked = get().playlists.find((p) => p.id === LIKED_ID);
+        if (liked?.entries.some((e) => e.song.id === song.id))
+          get().removeSong(LIKED_ID, song.id);
+        else get().addSong(LIKED_ID, song);
+      },
+
+      ensureLiked() {
+        if (get().playlists.some((p) => p.id === LIKED_ID)) return;
+        set((s) => ({ playlists: [makeLiked(), ...s.playlists] }));
+      },
+
+      importLegacy(legacy) {
+        set((s) => {
+          const byId = new Map(s.playlists.map((p) => [p.id, p]));
+          for (const p of legacy) {
+            if (p.id === LIKED_ID) {
+              // Fold legacy likes into the existing liked list (union by song id).
+              const existing = byId.get(LIKED_ID) ?? makeLiked();
+              const seen = new Set(existing.entries.map((e) => e.song.id));
+              const merged: PlaylistEntry[] = [
+                ...existing.entries,
+                ...p.entries.filter((e) => !seen.has(e.song.id)),
+              ];
+              byId.set(LIKED_ID, {
+                ...existing,
+                entries: merged,
+                updatedAt: now(),
+              });
+            } else if (!byId.has(p.id)) {
+              byId.set(p.id, p);
+            }
+          }
+          return { playlists: [...byId.values()] };
+        });
+      },
+
+      setHasHydrated(v) {
+        set({ hasHydrated: v });
+      },
+    }),
+    {
+      name: PLAYLISTS_STORAGE_KEY,
+      version: 1,
+      storage: createJSONStorage(() => localStorage),
+      skipHydration: true, // SSR renders empty; the hydration mount rehydrates.
+      partialize: (s) => ({ playlists: s.playlists }),
+    },
+  ),
+);
+
+// ── Reactive read hooks ──────────────────────────────────────────────────────
+// Components read through these (not the store's imperative getState) so they
+// re-render on the slice they care about. Array results use useShallow so a new
+// sorted array with the same members doesn't force a render.
+
+export function useHasHydrated(): boolean {
+  return usePlaylistStore((s) => s.hasHydrated);
+}
+
+/** Live playlists, liked first — a fresh array each call, shallow-compared. */
+export function useVisiblePlaylists(): Playlist[] {
+  return usePlaylistStore(useShallow((s) => forDisplay(s.playlists)));
+}
+
+/** One live playlist by id (undefined if missing or tombstoned). */
+export function usePlaylist(id: string): Playlist | undefined {
+  return usePlaylistStore((s) => {
+    const p = s.playlists.find((x) => x.id === id);
+    return p && !p.deletedAt ? p : undefined;
+  });
+}
+
+/** Whether a song sits in the Liked list — a boolean, so identity-compared. */
+export function useIsLiked(songId: string): boolean {
+  return usePlaylistStore(
+    (s) =>
+      !!s.playlists
+        .find((p) => p.id === LIKED_ID)
+        ?.entries.some((e) => e.song.id === songId),
+  );
+}

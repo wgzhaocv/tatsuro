@@ -92,6 +92,33 @@
     "loading": "正在加载歌词",
     "none": "这首歌还没有歌词。"
   },
+  "playlists": {
+    "heading": "歌单",
+    "likedSongs": "我喜欢的歌曲",
+    "newPlaylist": "新建歌单",
+    "createTitle": "新建歌单",
+    "namePlaceholder": "歌单名称",
+    "nameTaken": "已有同名歌单。",
+    "create": "创建",
+    "cancel": "取消",
+    "rename": "重命名",
+    "renameTitle": "重命名歌单",
+    "delete": "删除",
+    "deleteTitle": "删除歌单？",
+    "deleteBody": "将删除“{name}”,此操作无法撤销。",
+    "playAll": "播放全部",
+    "like": "添加到我喜欢的歌曲",
+    "unlike": "从我喜欢的歌曲移除",
+    "addToPlaylist": "添加到歌单",
+    "removeFromPlaylist": "从此歌单移除",
+    "songCount": "{n, plural, other {# 首}}",
+    "listSubtitle": "{n, plural, other {# 个歌单}}",
+    "emptyList": "还没有歌单。",
+    "emptyListBody": "创建歌单,或给喜欢的歌点心,都会出现在这里。",
+    "emptyDetail": "这里还没有歌曲。",
+    "emptyDetailBody": "从专辑或播放器添加歌曲。",
+    "emptyLikedBody": "点任意歌曲的心形即可收藏到这里。"
+  },
   "gate": {
     "password": "密码",
     "enter": "进入",
@@ -115,6 +142,7 @@
     "hrMin": "{h} 小时 {m} 分钟"
   },
   "metadata": {
-    "musicVideos": "音乐视频"
+    "musicVideos": "音乐视频",
+    "playlists": "歌单"
   }
 }

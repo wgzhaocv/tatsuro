@@ -37,7 +37,12 @@ const SECTIONS: {
     icon: FilmSlate,
     match: (p) => p.startsWith("/mv"),
   },
-  { key: "playlists", icon: Playlist },
+  {
+    key: "playlists",
+    href: "/playlists",
+    icon: Playlist,
+    match: (p) => p.startsWith("/playlists"),
+  },
 ];
 
 /**

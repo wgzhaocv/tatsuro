@@ -1,6 +1,10 @@
 import { getTranslations } from "next-intl/server";
 import { GlassPanel } from "@/components/glass-panel";
 import {
+  PlayQueueButton,
+  QueuePlaybackProvider,
+} from "@/components/track/playback-context";
+import {
   type AlbumDetail,
   type Edition,
   editionQueueSongs,
@@ -11,7 +15,6 @@ import { durationLabel } from "@/lib/format";
 import { isJapanese } from "@/lib/text";
 import { AlbumAmbient } from "./album-ambient";
 import { DiscSection } from "./disc-section";
-import { EditionPlaybackProvider, PlayEditionButton } from "./edition-playback";
 import { EditionSwitch } from "./edition-switch";
 import { FadeImage } from "./fade-image";
 
@@ -67,7 +70,11 @@ export async function EditionView({
       : album.name;
 
   return (
-    <EditionPlaybackProvider songs={queueSongs} label={queueLabel}>
+    <QueuePlaybackProvider
+      songs={queueSongs}
+      label={queueLabel}
+      queueId={edition.id}
+    >
       <AlbumAmbient cover={cover} />
 
       <div className="mx-auto w-full max-w-6xl px-5 pt-2 pb-20 sm:px-8 lg:grid lg:grid-cols-[18.5rem_1fr] lg:items-start lg:gap-12 lg:pt-6">
@@ -96,7 +103,10 @@ export async function EditionView({
             <p className="mt-1.5 text-sm text-foreground/85">{metaLine}</p>
 
             <div className="mt-5 sm:mt-6">
-              <PlayEditionButton />
+              <PlayQueueButton
+                playText={t("album.play")}
+                pauseText={t("album.pause")}
+              />
             </div>
           </div>
 
@@ -138,6 +148,6 @@ export async function EditionView({
           </p>
         </GlassPanel>
       </div>
-    </EditionPlaybackProvider>
+    </QueuePlaybackProvider>
   );
 }

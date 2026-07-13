@@ -47,6 +47,21 @@ export function AudioEngine() {
     usePlayerStore.persist.rehydrate();
   }, []);
 
+  // Defense in depth against the double-audio bug: a media element detached
+  // from the DOM keeps playing until GC'd. The engine now lives above
+  // `[locale]` so it shouldn't remount on a language switch — but if any future
+  // remount does detach this element, silence it first so it can't play on
+  // alongside its replacement.
+  useEffect(() => {
+    const audio = audioRef.current;
+    return () => {
+      if (!audio) return;
+      audio.pause();
+      audio.removeAttribute("src");
+      audio.load();
+    };
+  }, []);
+
   const song = usePlayerStore((s) => s.current);
   const isPlaying = usePlayerStore((s) => s.isPlaying);
   const repeat = usePlayerStore((s) => s.repeat);

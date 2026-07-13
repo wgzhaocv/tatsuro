@@ -92,6 +92,33 @@
     "loading": "歌詞を読み込み中",
     "none": "この曲の歌詞はまだありません。"
   },
+  "playlists": {
+    "heading": "プレイリスト",
+    "likedSongs": "お気に入り",
+    "newPlaylist": "新規プレイリスト",
+    "createTitle": "新規プレイリスト",
+    "namePlaceholder": "プレイリスト名",
+    "nameTaken": "同じ名前のプレイリストがすでにあります。",
+    "create": "作成",
+    "cancel": "キャンセル",
+    "rename": "名前を変更",
+    "renameTitle": "プレイリスト名を変更",
+    "delete": "削除",
+    "deleteTitle": "プレイリストを削除しますか？",
+    "deleteBody": "「{name}」を削除します。この操作は取り消せません。",
+    "playAll": "すべて再生",
+    "like": "お気に入りに追加",
+    "unlike": "お気に入りから削除",
+    "addToPlaylist": "プレイリストに追加",
+    "removeFromPlaylist": "このプレイリストから削除",
+    "songCount": "{n, plural, other {#曲}}",
+    "listSubtitle": "{n, plural, other {#件のプレイリスト}}",
+    "emptyList": "プレイリストはまだありません。",
+    "emptyListBody": "プレイリストを作るか、曲をお気に入りに登録するとここに表示されます。",
+    "emptyDetail": "まだ曲がありません。",
+    "emptyDetailBody": "アルバムやプレーヤーから曲を追加できます。",
+    "emptyLikedBody": "曲のハートをタップするとここに保存されます。"
+  },
   "gate": {
     "password": "パスワード",
     "enter": "入る",
@@ -115,6 +142,7 @@
     "hrMin": "{h}時間{m}分"
   },
   "metadata": {
-    "musicVideos": "ミュージックビデオ"
+    "musicVideos": "ミュージックビデオ",
+    "playlists": "プレイリスト"
   }
 }

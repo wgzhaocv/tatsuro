@@ -9,6 +9,7 @@ import {
 } from "@phosphor-icons/react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
+import { LikeButton } from "@/components/playlists/like-button";
 import { Button } from "@/components/ui/button";
 import { coverUrl } from "@/lib/api/urls";
 import {
@@ -118,6 +119,9 @@ export function MiniPlayer() {
           </button>
 
           <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+            {song && (
+              <LikeButton song={song} className="hidden sm:inline-flex" />
+            )}
             <Button
               variant="ghost"
               size="icon"

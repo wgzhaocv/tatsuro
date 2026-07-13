@@ -14,7 +14,7 @@ const SECTIONS: {
   { key: "albums", href: "/" },
   { key: "discover" },
   { key: "mv", href: "/mv" },
-  { key: "playlists" },
+  { key: "playlists", href: "/playlists" },
 ];
 
 /** The browse-screen top bar, floating over the hero photo. */
@@ -23,7 +23,7 @@ export function HomeNav({
   search,
 }: {
   /** Key of the active section (matches SECTIONS). */
-  current: "albums" | "mv";
+  current: "albums" | "mv" | "playlists";
   /** Search affordance for the right rail (the command-palette trigger). */
   search?: ReactNode;
 }) {

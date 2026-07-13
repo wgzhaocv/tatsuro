@@ -37,6 +37,10 @@ export type PlayerState = {
   current: Song | null;
   /** Where the context came from, e.g. the album name — shown in the player. */
   contextLabel: string | null;
+  /** Stable identity of the loaded queue (edition id / playlist id), separate
+   *  from the display label so a rename or locale switch can't change *which*
+   *  queue is loaded. Used to tell "is this queue playing?". */
+  contextId: string | null;
   /** "Play next" queue, consumed before the context advances. */
   userQueue: Song[];
   /** Recently played (newest last, capped at 100). */
@@ -57,8 +61,13 @@ export type PlayerState = {
    *  which would also match 404s and leave music running with hidden chrome. */
   videoStage: boolean;
 
-  /** Play a list (album edition) starting at startIndex. */
-  playQueue(songs: Song[], startIndex?: number, contextLabel?: string): void;
+  /** Play a list (album edition / playlist) starting at startIndex. */
+  playQueue(
+    songs: Song[],
+    startIndex?: number,
+    contextLabel?: string,
+    contextId?: string,
+  ): void;
   addToQueue(songs: Song | Song[]): void;
   removeFromQueue(songId: string): void;
   clearUserQueue(): void;
@@ -131,6 +140,7 @@ export const usePlayerStore = create<PlayerState>()(
       position: -1,
       current: null,
       contextLabel: null,
+      contextId: null,
       userQueue: [],
       history: [],
       isPlaying: false,
@@ -142,7 +152,7 @@ export const usePlayerStore = create<PlayerState>()(
       expanded: false,
       videoStage: false,
 
-      playQueue(songs, startIndex = 0, contextLabel) {
+      playQueue(songs, startIndex = 0, contextLabel, contextId) {
         if (songs.length === 0) return;
         const start = Math.min(Math.max(startIndex, 0), songs.length - 1);
         const { shuffle, history, current } = get();
@@ -156,6 +166,7 @@ export const usePlayerStore = create<PlayerState>()(
           position,
           current: songs[order[position]],
           contextLabel: contextLabel ?? null,
+          contextId: contextId ?? null,
           userQueue: [],
           history: pushHistory(history, current),
           isPlaying: true,
@@ -377,6 +388,7 @@ export const usePlayerStore = create<PlayerState>()(
         position: s.position,
         current: s.current,
         contextLabel: s.contextLabel,
+        contextId: s.contextId,
         userQueue: s.userQueue,
         history: s.history,
         shuffle: s.shuffle,

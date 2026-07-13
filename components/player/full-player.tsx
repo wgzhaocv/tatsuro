@@ -18,6 +18,8 @@ import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 import { AlbumAmbient } from "@/components/album/album-ambient";
 import { FadeImage } from "@/components/album/fade-image";
+import { AddToPlaylistButton } from "@/components/playlists/add-to-playlist-dialog";
+import { LikeButton } from "@/components/playlists/like-button";
 import { Button } from "@/components/ui/button";
 import { nameLang, type Song } from "@/lib/api/types";
 import { coverUrl } from "@/lib/api/urls";
@@ -64,6 +66,14 @@ export function FullPlayer() {
 
   if (!song) return null;
 
+  // Fold the best-known cover/album back in, so a like/add here saves a
+  // playlist entry that renders with artwork even on a restored/direct play.
+  const enrichedSong: Song = {
+    ...song,
+    coverFrontId: cover ?? song.coverFrontId,
+    albumName: albumName ?? song.albumName,
+  };
+
   return (
     <DialogPrimitive.Root open={expanded} onOpenChange={setExpanded}>
       <DialogPrimitive.Portal>
@@ -97,20 +107,24 @@ export function FullPlayer() {
                 {t("playingFrom", { context: contextLabel })}
               </p>
             )}
-            <Button
-              variant={showLyrics ? "action" : "glass-ink"}
-              size="icon-lg"
-              aria-label={showLyrics ? t("hideLyrics") : t("showLyrics")}
-              aria-pressed={showLyrics}
-              onClick={() => setShowLyrics((v) => !v)}
-              // Desktop shows lyrics beside the cover permanently — the flip
-              // is a phone affordance.
-              className="size-11 shrink-0 rounded-full lg:hidden"
-            >
-              {/* Mic = lyrics/sing-along — the convention the old site used
-                  too; a bare quote glyph read as nothing to actual users. */}
-              <MicrophoneStage size={20} weight="fill" aria-hidden />
-            </Button>
+            <div className="ml-auto flex shrink-0 items-center gap-1">
+              <LikeButton song={enrichedSong} className="size-11" />
+              <AddToPlaylistButton song={enrichedSong} className="size-11" />
+              <Button
+                variant={showLyrics ? "action" : "glass-ink"}
+                size="icon-lg"
+                aria-label={showLyrics ? t("hideLyrics") : t("showLyrics")}
+                aria-pressed={showLyrics}
+                onClick={() => setShowLyrics((v) => !v)}
+                // Desktop shows lyrics beside the cover permanently — the flip
+                // is a phone affordance.
+                className="size-11 rounded-full lg:hidden"
+              >
+                {/* Mic = lyrics/sing-along — the convention the old site used
+                    too; a bare quote glyph read as nothing to actual users. */}
+                <MicrophoneStage size={20} weight="fill" aria-hidden />
+              </Button>
+            </div>
           </header>
 
           {/* ── Cover ⇄ lyrics · identity · transport. Phones flip between a

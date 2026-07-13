@@ -19,11 +19,12 @@ import { isJapanese } from "@/lib/text";
 import { cn } from "@/lib/utils";
 
 /**
- * The persistent bar at the bottom of every (main) screen. Always an opaque
- * solid surface — white in noon, twilight navy in dusk (Glass Discipline's
- * explicit exemption) — with a hairline of played-progress hugging its top
- * edge. Tapping the song identity opens the full player; transport buttons
- * stay directly reachable.
+ * The persistent player at the bottom of every (main) screen — a floating
+ * bar, detached from the edges, sharing the frosted-glass material of the top
+ * nav and the content sheets (GlassPanel: white glass in noon, twilight navy
+ * in dusk), carried on a tinted downward shadow, with a hairline of
+ * played-progress hugging its top edge. Tapping the song identity opens the
+ * full player; transport buttons stay directly reachable.
  */
 export function MiniPlayer() {
   const song = usePlayerStore((s) => s.current);
@@ -42,87 +43,105 @@ export function MiniPlayer() {
       // Off-screen (no queue) means gone: unfocusable and invisible to AT.
       inert={!song}
       className={cn(
-        "fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card text-card-foreground transition-transform duration-500 ease-lazy",
-        song ? "translate-y-0" : "pointer-events-none translate-y-full",
+        "fixed inset-x-0 bottom-0 z-40 px-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] transition-transform duration-500 ease-lazy sm:px-4",
+        song ? "translate-y-0" : "pointer-events-none translate-y-[130%]",
       )}
     >
-      <MiniProgress />
-      <div className="mx-auto flex h-[4.75rem] max-w-6xl items-center gap-3 px-4 pb-[env(safe-area-inset-bottom)] sm:px-6">
-        <button
-          type="button"
-          onClick={() => setExpanded(true)}
-          aria-label={song ? `Open player — ${song.name}` : "Open player"}
-          // -ml compensates pl so the cover keeps its alignment while the
-          // hover wash gets equal breathing room on all sides.
-          className="group -ml-1.5 flex min-w-0 flex-1 items-center gap-3 rounded-xl py-1.5 pr-2 pl-1.5 text-left outline-none transition-colors duration-300 ease-lazy hover:bg-navy/[0.04] focus-visible:ring-2 focus-visible:ring-ring/50 dark:hover:bg-white/[0.05]"
-        >
-          <span className="relative block size-11 shrink-0 overflow-hidden rounded-lg bg-secondary">
-            {song?.coverFrontId ? (
-              <Image
-                src={coverUrl(song.coverFrontId)}
-                alt=""
-                fill
-                sizes="44px"
-                className="object-cover"
-              />
-            ) : (
-              <MusicNotes
-                aria-hidden
-                size={20}
-                className="absolute inset-0 m-auto text-muted-foreground"
-              />
-            )}
-          </span>
-          <span className="flex min-w-0 flex-col">
+      {/* The floating bar proper: the same frosted glass as the nav / content
+          sheets, but a heavier fill (less see-through) since it carries live
+          controls. Rounded, lifted on a navy shadow; overflow-hidden lets the
+          progress line ride the rounded top edge. */}
+      <div className="relative mx-auto max-w-2xl overflow-hidden rounded-2xl border border-white/55 bg-white/72 text-foreground shadow-float-navy backdrop-blur-md dark:border-white/15 dark:bg-dusk-navy/80">
+        <MiniProgress />
+        {/* Height chosen so the 44px cover/controls get the same ~10px inset
+            top, bottom, and left — a uniform frame gap. */}
+        <div className="flex h-16 items-center gap-3 px-2.5">
+          <button
+            type="button"
+            onClick={() => setExpanded(true)}
+            aria-label={song ? `Open player — ${song.name}` : "Open player"}
+            // -ml compensates pl so the cover keeps its alignment while the
+            // hover wash gets equal breathing room on all sides.
+            className="group -ml-1.5 flex min-w-0 flex-1 items-center gap-3 rounded-xl py-1.5 pr-2 pl-1.5 text-left outline-none transition-colors duration-300 ease-lazy hover:bg-navy/[0.04] focus-visible:ring-2 focus-visible:ring-ring/50 dark:hover:bg-white/[0.05]"
+          >
+            {/* The cover turns like a record while playing; pausing freezes it
+              in place via animation-play-state (no snap back to 0°). Round so
+              the turn reads as a disc rather than a tumbling square. */}
             <span
-              lang={song && isJapanese(song.name) ? "ja" : undefined}
-              className="truncate text-[15px] leading-snug text-foreground"
+              className={cn(
+                "relative block size-11 shrink-0 animate-spin-slow overflow-hidden rounded-full bg-secondary",
+                isPlaying
+                  ? "[animation-play-state:running]"
+                  : "[animation-play-state:paused]",
+              )}
             >
-              {song?.name}
+              {song?.coverFrontId ? (
+                <Image
+                  src={coverUrl(song.coverFrontId)}
+                  alt=""
+                  fill
+                  sizes="44px"
+                  className="object-cover"
+                />
+              ) : (
+                <MusicNotes
+                  aria-hidden
+                  size={20}
+                  className="absolute inset-0 m-auto text-muted-foreground"
+                />
+              )}
             </span>
-            {subline && (
+            <span className="flex min-w-0 flex-col">
               <span
-                lang={isJapanese(subline) ? "ja" : undefined}
-                className="truncate text-[12.5px] leading-snug text-muted-foreground"
+                lang={song && isJapanese(song.name) ? "ja" : undefined}
+                className="truncate text-[15px] leading-snug text-foreground"
               >
-                {subline}
+                {song?.name}
               </span>
-            )}
-          </span>
-        </button>
+              {subline && (
+                <span
+                  lang={isJapanese(subline) ? "ja" : undefined}
+                  className="truncate text-[12.5px] leading-snug text-muted-foreground"
+                >
+                  {subline}
+                </span>
+              )}
+            </span>
+          </button>
 
-        <div className="flex shrink-0 items-center gap-1 sm:gap-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label="Previous track"
-            onClick={() => prev()}
-            className="hidden text-foreground sm:inline-flex"
-          >
-            <SkipBack size={20} weight="fill" aria-hidden />
-          </Button>
-          <Button
-            variant="action"
-            size="icon-lg"
-            aria-label={isPlaying ? "Pause" : "Play"}
-            onClick={() => toggle()}
-            className="size-11 rounded-full shadow-lift-ocean"
-          >
-            {isPlaying ? (
-              <Pause size={20} weight="fill" aria-hidden />
-            ) : (
-              <Play size={20} weight="fill" aria-hidden />
-            )}
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label="Next track"
-            onClick={() => next()}
-            className="text-foreground"
-          >
-            <SkipForward size={20} weight="fill" aria-hidden />
-          </Button>
+          <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label="Previous track"
+              onClick={() => prev()}
+              className="hidden text-foreground sm:inline-flex"
+            >
+              <SkipBack size={20} weight="fill" aria-hidden />
+            </Button>
+            <Button
+              variant="action"
+              size="icon-lg"
+              aria-label={isPlaying ? "Pause" : "Play"}
+              onClick={() => toggle()}
+              className="size-11 rounded-full shadow-lift-ocean"
+            >
+              {isPlaying ? (
+                <Pause size={20} weight="fill" aria-hidden />
+              ) : (
+                <Play size={20} weight="fill" aria-hidden />
+              )}
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label="Next track"
+              onClick={() => next()}
+              className="text-foreground"
+            >
+              <SkipForward size={20} weight="fill" aria-hidden />
+            </Button>
+          </div>
         </div>
       </div>
     </section>
@@ -137,10 +156,7 @@ function MiniProgress() {
     duration > 0 ? Math.min(100, (currentTime / duration) * 100) : 0;
 
   return (
-    <div
-      aria-hidden
-      className="absolute inset-x-0 top-0 h-[3px] -translate-y-px"
-    >
+    <div aria-hidden className="absolute inset-x-0 top-0 z-10 h-[3px]">
       <div
         className="h-full bg-[image:var(--gradient-action)] transition-[width] duration-300 ease-linear"
         style={{ width: `${percent}%` }}

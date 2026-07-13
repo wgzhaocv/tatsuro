@@ -150,8 +150,8 @@ components:
 - **Deep Navy 深海军蓝** (#0B3A53 / oklch(0.331 0.065 237.5)): 正文文字。**永远代替纯黑**——黑色会压死通透感。
 - **Cobalt Deep 深钴蓝** (#145495): 深锚点。全是中高明度画面会发平、发灰;钴蓝按钮/图形元素让画面"透"起来。也是小号文字需要坐在品牌色上时的安全底色。
 - **Ink Mist 雾蓝** (#4C7083 / oklch(0.526 0.051 232)): muted 文字(时长、年份、次要信息)。在最深的浅色底(--muted)上仍有 4.55:1;**不要再浅了**——这是次要文字的明度地板。
-- **Sea Glass 海玻璃白** (#E9F7F2)、**Shell White 贝壳白** (#FFF6E9)、**Sky 天青** (#BFE9F2): 正午背景渐变的三个停靠点 `linear-gradient(to bottom, #BFE9F2, #E9F7F2, #FFF6E9)`。Sky 同时是 chip/边框的浅色底。
-- **Dusk Navy 暮夜蓝** (#12263A)、**Dusk Deep 暮海蓝** (#23324D)、**Dusk Slate 暮蓝灰** (#3A4A6B)、**Dusk Plum 暮色紫红** (#C4739A): 黄昏主题的背景渐变 `linear-gradient(to bottom, #12263A, #23324D 40%, #3A4A6B)`;Dusk Deep 兼任黄昏主题的卡片/迷你播放条底色;Plum 只做黄昏天际线的一抹,不是 UI 语义色。
+- **Sea Glass 海玻璃白** (#E9F7F2)、**Shell White 贝壳白** (#FFF6E9)、**Sky 天青** (#BFE9F2): 正午的浅色面料。页面底色是 `--background` 平涂——**环境天空渐变已废除,任何全屏背景渐变都不再使用**;氛围靠照片/封面糊化,不靠渐变。Sea Glass/Shell 做浅色表面,Sky 是 chip/边框的浅色底。
+- **Dusk Navy 暮夜蓝** (#12263A)、**Dusk Deep 暮海蓝** (#23324D)、**Dusk Slate 暮蓝灰** (#3A4A6B)、**Dusk Plum 暮色紫红** (#C4739A): 黄昏主题的深色面料。页面底色同样是 `--background` 平涂(环境渐变已废除);Dusk Deep 兼任黄昏主题的卡片/迷你播放条底色;Plum 只做黄昏天际线的一抹,不是 UI 语义色。
 
 ### Named Rules
 **The Transparency Rule(通透律)。** 任何新增颜色/图层先问:它降低画面明度了吗?让边界发脏了吗?是,就重做。深色蒙版能不压就不压,要压也压到 14–28% 透明度的浅 navy 为止。
@@ -195,9 +195,9 @@ components:
 - **postcard**(`box-shadow: 0 12px 22px -14px rgba(11,58,83,0.35)`): 专辑封面明信片卡的常驻纸感投影。
 
 ### Named Rules
-**The Warm Shadow Rule(暖影律)。** 阴影必须带色(元素本色或暖色)、单方向向下、负 spread 收紧。看到 `rgba(0,0,0,…)` 的大糊影就是违规。
+**The Warm Shadow Rule(暖影律)。** 阴影必须带色(元素本色或暖色)、单方向向下、负 spread 收紧。看到 `rgba(0,0,0,…)` 的大糊影就是违规。允许的投影 token:`shadow-postcard` / `shadow-lift-navy` / `shadow-lift-ocean` / `shadow-lift-coral`,以及给悬浮播放条用的**更强双层** `shadow-float-navy`(navy 双层、下向、负 spread)。
 
-**The Glass Discipline Rule(玻璃纪律)。** 照片/环境层上的内容层 → 半透明磨砂玻璃托底;平涂背景上 → 不透明实色,不需要玻璃。常驻迷你播放条**永远是不透明实色**。玻璃叠玻璃 = 发糊、层级不清,绝对禁止。**标准 sheet 配方已固化为 `GlassPanel` 组件**(`components/glass-panel.tsx`):正午 `rgba(255,255,255,0.45)` + `border-white/55`,黄昏 `dusk-navy/60` + `border-white/15`,统一**微模糊** `backdrop-blur-xs`(~4px,让底下的颜色/形状透出,别糊成一片);圆角/阴影/间距留在调用处。首页专辑网格与专辑页曲目 sheet 都是它。
+**The Glass Discipline Rule(玻璃纪律)。** 照片/环境层上的内容层 → 半透明磨砂玻璃托底;平涂背景上 → 不透明实色,不需要玻璃。玻璃叠玻璃 = 发糊、层级不清,绝对禁止——**唯一豁免:底部悬浮播放条**(与 nav / sheet 材质同源,故容许浮在其上,见 Mini Player Bar)。**标准 sheet 配方已固化为 `GlassPanel` 组件**(`components/glass-panel.tsx`):正午 `rgba(255,255,255,0.45)` + `border-white/55`,黄昏 `dusk-navy/60` + `border-white/15`,统一**微模糊** `backdrop-blur-xs`(~4px,让底下的颜色/形状透出,别糊成一片);圆角/阴影/间距留在调用处。首页专辑网格与专辑页曲目 sheet 都是它。
 
 **The Light Overlay Rule(浅罩律)。** 照片上需要压字时,用浅 navy 渐变 scrim(`rgba(11,58,83,0.14)` 到 `0.28`),绝不用深黑蒙版把照片压死。
 
@@ -240,7 +240,9 @@ components:
 - 轨道:Sky 浅底 4px;已播:深水渐变(状态指示,对 Sky 轨道 3.7:1);拖点:白色圆点 + lift-ocean 光晕。时间码 Label 级、Ink Mist、Geist Mono 可选。全屏播放器可在已播段加缓慢的波光 shimmer(8s+ 周期,reduced-motion 时静止)。
 
 ### Mini Player Bar(签名组件)
-- 常驻底部,**不透明实色**(浅色主题:白/贝壳白;黄昏:Dusk Deep #23324D)——玻璃纪律的明文豁免区之外。封面缩略 44px 圆角 8px、歌名 Body、播放/暂停主色圆钮、细进度线贴顶。
+- 常驻底部的**悬浮条**:不贴边,左右留白 + 底部留白,`max-w-2xl` 居中,圆角 `rounded-2xl`,靠 `shadow-float-navy`(更强双层)托起——呼应顶部 nav 的浮起玻璃药丸。高度 `h-16`,配 `px-2.5` 让封面上下左三边等距(~10px)。
+- **材质与 nav / 内容 sheet 同源的磨砂玻璃**,但**填充更重**(承载常驻控件,不能太透):浅色 `bg-white/72 backdrop-blur-md`、黄昏 `dusk-navy/80`,边 `white/55`(黄昏 `white/15`)。文字/图标走前景 token(深水律仍成立)。封面缩略 44px **圆形**,播放时像唱片一样慢转(`animate-spin-slow`,8s/圈,落在环境动效带内),暂停用 `animation-play-state: paused` **原地冻结**(绝不复位回 0°),reduced-motion 走全局开关。歌名 Body、播放/暂停主色圆钮、细进度线贴顶(随圆角裁切)。内边距收紧(`px-2.5`)让封面上下左三边等距。
+- 唯一破例:悬浮条**允许**盖在内容 sheet 的玻璃上(玻璃叠玻璃),因为它是全局浮层、以材质一致优先——除此之外玻璃纪律照旧。
 
 ### Photo Surface(签名材质)
 - 照片只出现在**环境层**(页面背景、Gate 全屏):海、天、白沙、棕榈,平视,无人物/建筑/船。
@@ -263,7 +265,7 @@ components:
 - **Don't** 使用旧站的"深紫/品红霓虹夜店风"及任何霓虹脉冲、一惊一乍的动画(弹跳、闪烁、快速位移)——PRODUCT.md 明令抛弃的方向。
 - **Don't** 写做作、煽情、营销腔文案("进入这个聆听室""驶向朝阳"这类)。
 - **Don't** 用手绘装饰元素(手绘太阳之类)——显廉价;质感只来自真实照片与干净平涂。
-- **Don't** 玻璃叠玻璃;迷你播放条永远实色(玻璃纪律)。
+- **Don't** 玻璃叠玻璃(玻璃纪律)——唯一豁免是底部悬浮播放条(见 Mini Player Bar,它与 nav / 内容 sheet 材质同源,故容许浮在其上)。
 - **Don't** 用重黑阴影、多方向糊影或深色蒙版压照片——一切拉低明度、让边界发脏的东西都违反通透律。
 - **Don't** 用纯黑文字(用 Deep Navy #0B3A53),也不要把 muted 文字淡过 Ink Mist #4C7083(对比度红线 4.5:1)。
 - **Don't** 把文字或必需图标放在浅水原色(Ocean/Turquoise/Coral/Sun)上——浅色主题下白字最高只有 2.9:1;要么换深水形态(深水律),要么让浅水保持纯装饰。

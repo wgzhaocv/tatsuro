@@ -71,6 +71,9 @@
 
   /* Warm Shadow Rule: colored, downward, tight negative spread — never black blur */
   --shadow-lift-navy: 0 12px 26px -16px rgb(11 58 83 / 0.5);
+  /* Deeper two-layer navy lift for a truly floating surface (mini player). */
+  --shadow-float-navy:
+    0 4px 12px -6px rgb(11 58 83 / 0.4), 0 22px 48px -20px rgb(11 58 83 / 0.6);
   --shadow-lift-ocean: 0 10px 22px -8px rgb(28 167 196 / 0.7);
   --shadow-lift-coral: 0 10px 22px -8px rgb(255 138 91 / 0.7);
   --shadow-postcard: 0 12px 22px -14px rgb(11 58 83 / 0.35);
@@ -80,6 +83,9 @@
   --animate-breathe: breathe 12s ease-in-out infinite;
   --animate-glint: glint 14s ease-in-out infinite;
   --animate-shimmer: shimmer 8s ease-in-out infinite;
+  /* Now-playing cover: a slow record turn; pause it with animation-play-state
+     (never reset) so it freezes in place. */
+  --animate-spin-slow: spin-slow 8s linear infinite;
 }
 
 :root {
@@ -118,8 +124,6 @@
   --sidebar-border: oklch(0.907 0.045 212.1);
   --sidebar-ring: oklch(0.555 0.097 216.8);
 
-  /* Environment gradients — backgrounds always breathe, never flat-fill */
-  --gradient-bg: linear-gradient(to bottom, #bfe9f2, #e9f7f2, #fff6e9);
   /* shallows — decorative washes only (never under text/icons/state) */
   --gradient-primary: linear-gradient(90deg, #1ca7c4, #2fbfa8);
   --gradient-cta: linear-gradient(90deg, #ff8a5b, #ffb4a2);
@@ -164,7 +168,6 @@
   --sidebar-border: oklch(1 0 0 / 12%);
   --sidebar-ring: oklch(0.775 0.106 215.1);
 
-  --gradient-bg: linear-gradient(to bottom, #12263a, #23324d 40%, #3a4a6b);
 }
 
 @layer base {
@@ -176,15 +179,6 @@
   }
   body {
     @apply bg-background text-foreground;
-  }
-  /* Fixed sky layer via pseudo-element: background-attachment:fixed is broken on iOS Safari */
-  body::before {
-    content: "";
-    position: fixed;
-    inset: 0;
-    z-index: -1;
-    background-image: var(--gradient-bg);
-    pointer-events: none;
   }
   h1,
   h2,
@@ -232,6 +226,11 @@
     100% {
       transform: translateX(10rem);
       opacity: 0;
+    }
+  }
+  @keyframes spin-slow {
+    to {
+      transform: rotate(1turn);
     }
   }
   /* Every animation must have a reduced-motion alternative */

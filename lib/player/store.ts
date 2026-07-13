@@ -51,6 +51,11 @@ export type PlayerState = {
   seekRequest: { time: number; nonce: number } | null;
   /** Full-screen player open. */
   expanded: boolean;
+  /** A video screen owns the stage (MV watch route): the dock chrome hides
+   *  and the music is silenced, so audio never plays without visible
+   *  controls. Set by the screen that actually rendered — not by route shape,
+   *  which would also match 404s and leave music running with hidden chrome. */
+  videoStage: boolean;
 
   /** Play a list (album edition) starting at startIndex. */
   playQueue(songs: Song[], startIndex?: number, contextLabel?: string): void;
@@ -71,6 +76,7 @@ export type PlayerState = {
   setVolume(volume: number): void;
   toggleMute(): void;
   setExpanded(expanded: boolean): void;
+  setVideoStage(on: boolean): void;
 };
 
 /** Fisher–Yates over context indexes, with the given index pinned first. */
@@ -134,6 +140,7 @@ export const usePlayerStore = create<PlayerState>()(
       muted: false,
       seekRequest: null,
       expanded: false,
+      videoStage: false,
 
       playQueue(songs, startIndex = 0, contextLabel) {
         if (songs.length === 0) return;
@@ -343,6 +350,14 @@ export const usePlayerStore = create<PlayerState>()(
 
       setExpanded(expanded) {
         set({ expanded });
+      },
+
+      setVideoStage(on) {
+        // Entering also pauses: the dock is about to disappear, and audio
+        // without controls would be a trap.
+        set(
+          on ? { videoStage: true, isPlaying: false } : { videoStage: false },
+        );
       },
     }),
     {

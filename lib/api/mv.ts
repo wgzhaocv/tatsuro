@@ -2,7 +2,8 @@ import { cacheLife, cacheTag } from "next/cache";
 import { type ApiMvItem, type Mv, toMv } from "./types";
 
 // Same fixed-catalog caching as albums.ts: 'max' profile + a tag for a one-shot
-// revalidateTag('mv') when videos are added server-side.
+// revalidateTag('mv') when videos are added server-side. Payload carries both
+// weights per video: streamSize (webm playback) and fileSize (mp4 download).
 
 const API = process.env.NEXT_PUBLIC_API_URL;
 

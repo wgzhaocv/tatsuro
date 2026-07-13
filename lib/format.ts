@@ -17,6 +17,13 @@ export function formatFileSize(bytes: number): string {
   return mb >= 100 ? `${Math.round(mb)} MB` : `${mb.toFixed(1)} MB`;
 }
 
+/** An MV's two weights, labelled: "Watch 70.7 MB · Download 118 MB".
+ *  Watching (webm) and downloading (mp4) are different files with different
+ *  sizes — plain verbs so the numbers mean something, no codec talk. */
+export function formatMvSizes(streamSize: number, fileSize: number): string {
+  return `Watch ${formatFileSize(streamSize)} · Download ${formatFileSize(fileSize)}`;
+}
+
 /** Summed seconds → a human total: "58 min", "1 hr 12 min", "2 hr". */
 export function formatTotalDuration(seconds: number): string {
   const minutes = Math.round(seconds / 60);

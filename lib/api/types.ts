@@ -109,14 +109,16 @@ export function editionQueueSongs(
   );
 }
 
-/** A music video. Download-only: streaming video would burn Worker requests
- *  (every <video> seek is a ranged hit), so the grid hands the file to the
+/** A music video. Playback streams the webm straight off the public bucket
+ *  domain (no Worker in the path); download is a separate mp4 handed to the
  *  browser via mvDownloadUrl (see ./urls). */
 export type Mv = {
   id: string;
   name: string;
-  /** Bytes. */
+  /** Download (mp4) size in bytes. */
   fileSize: number;
+  /** Streaming (webm) size in bytes — what playback actually pulls. */
+  streamSize: number;
   /** Length in seconds. */
   duration?: number;
   /** Direct video URL on the public bucket domain — for <video> playback. */
@@ -184,6 +186,7 @@ export type ApiMvItem = {
   id: string;
   name: string;
   fileSize: number;
+  streamSize: number;
   duration: number | null;
   streamUrl: string;
   thumbnailUrl: string;
@@ -277,6 +280,7 @@ export function toMv(m: ApiMvItem): Mv {
     id: m.id,
     name: m.name,
     fileSize: m.fileSize,
+    streamSize: m.streamSize,
     duration: m.duration ?? undefined,
     streamUrl: m.streamUrl,
     thumbnailUrl: m.thumbnailUrl,

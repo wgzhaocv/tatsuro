@@ -56,12 +56,6 @@ const NEUTRALS = [
 
 const GRADIENTS = [
   {
-    name: "Environment",
-    css: "var(--gradient-bg)",
-    note: "body backdrop — follows the theme",
-    tall: true,
-  },
-  {
     name: "Shallow water",
     css: "var(--gradient-primary)",
     note: "decorative only — never under text or icons",
@@ -230,10 +224,7 @@ export default function DemoPage() {
               className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-6"
             >
               <div
-                className={cn(
-                  "flex items-center rounded-2xl border border-foreground/10 px-4 sm:w-1/2",
-                  g.tall ? "h-16" : "h-12",
-                )}
+                className="flex h-12 items-center rounded-2xl border border-foreground/10 px-4 sm:w-1/2"
                 style={{ backgroundImage: g.css }}
               >
                 {g.sample && (

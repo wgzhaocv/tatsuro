@@ -62,7 +62,13 @@
    - **Google OAuth:免费但大陆直连不可达** — 只对海外/翻墙用户有效,可作补充入口,不能当主路
    - **倾向方案:自托管账号(email 或用户名 + 密码,或 passkey)**,存到后端 D1,零成本、全球可用;站点本来有 Gate 密码挡在前面,是熟人小站,不需要重型 IdP。将来想加社交登录再叠 Google
 2. **歌名/专辑名双语(英↔日)** — 后端 schema 扩展(`name_en` / `name_ja` 之类),前端按语言偏好显示;涉及 D1 migration + 全曲库补译,工作量在数据不在代码
-3. **UI 多语言(i18n)** — 现行 PRODUCT.md 语言策略 = UI chrome 纯英文;要做 i18n(en/zh/ja?)需先改 PRODUCT.md 再选方案(next-intl 等),和 #2 的内容双语是两件事
+3. **UI 多语言(i18n),中日英三语**(2026-07-13 定方案,未排期)— 只做 **UI chrome**(约 45–50 条界面文案);**专辑名/歌名/歌词内容保持日文**(内容中英化是 #2,数据工程、另算,且日文曲名无公认中译)。做前需同步改 PRODUCT.md 现行「UI chrome 纯英文」策略。方案已拍板:
+   - **承载 = 官方 `app/[lang]/` 子路径路由**(Next 16 文档 `node_modules/next/dist/docs/01-app/02-guides/internationalization.md`):`/en|ja|zh/…`,配 `generateStaticParams` 静态化。**代价明确**:整个 `app/(main)/` 树迁进 `app/[lang]/(main)/`,所有路由/`generateStaticParams`(专辑默认版 + 再版年份路由 + MV)/内部链接加 `lang` 前缀;`@/components/ui/link` 是收拢点,链接前缀在 wrapper 里统一注入即可少改叶子。理由:URL 带语言、可分享、SEO 友好(即便私享站,分享链接预览语言一致也是好事)。
+   - **首访默认 = Accept-Language 探测**,优先级阶梯 **cookie(用户显式选过) > Accept-Language 头 > 英文兜底**。在现有 `proxy.ts`(Gate 鉴权已在此)里:无 `/[lang]` 前缀的请求 → 读 locale cookie,没有则用 `@formatjs/intl-localematcher` + `negotiator` 匹配 Accept-Language,重定向到 `/${locale}${pathname}`。**不做 IP 定位**(信号差/要接 geo/隐私重,对熟人小站过度工程)。语言切换器写 cookie + 换 URL 前缀。
+   - **字典 = 手写 `dictionaries/{en,ja,zh}.json` + `getDictionary(lang)`**(server-only,`import()` 按需),**不上 next-intl**(文案量太小)。现有 `lib/api/types.ts` 的 `CATEGORY_LABEL`(key→文案查表)就是字典该长的样子,天然适配;迁进字典。**复数**(en 有 song/songs、video/videos、album/albums;zh/ja 无变化)用 `Intl.PluralRules` 写十行 helper,别为它上库。
+   - **与 Cache Components 的关系**:专辑/歌曲的 `'use cache'` 数据函数**不依赖 locale**,继续照缓存;只有渲染 UI 文案的服务端组件读 locale 取字典。日文内容仍靠 `lang="ja"` + `:lang(ja)` 字体规则(不受 UI locale 影响)。
+   - **文案清单(约 45–50 条,已盘)**:导航(Albums/Discover/MV/Playlists/Coming soon)、筛选(All/Studio/Live/Compilations/Singles)、搜索(Search/Search…/Nothing here yet.)、计数含复数(`N album(s)`/`video(s)`/`song(s)`)、空状态(No results/Nothing here for this filter./No music videos yet.)、专辑(Play/Pause/Back to Albums/`N CD`/`N versions`/Disc N/Edition(s)/CATEGORY_LABEL)、播放器(Previous track/Next track/Close player/Player)、歌词(Loading lyrics/No lyrics for this song yet.)、MV(Download/Back to music videos)、Gate(Password + 密码错误提示)、主题(Switch between noon and dusk theme)。
+   - **和 #2 的关系**:#2(内容双语)是后端 D1 schema + 全曲库补译,和本条(前端 UI)是两件独立的事,可各自推进。
 4. **MV 站内流播(零 Worker 消耗,2026-07-13 已落地 ✅)** — MV 视频改为公开 bucket 直连流播,**全程免费**:
    - **已做**:新建公开桶 `yamashita-mv`,14 部 MV 的视频+缩略图从 `yamashita-tatsuro` 迁入(删原件、不留两份);绑自定义域 **`tatsuro-mv.withyakul.me`**(zone `withyakul.me` 同账号,min-TLS 1.2)。前端 `<video>` 直连该域流播,Range 请求走 R2(实测 **206 Partial Content**),完全不过 Worker。
    - **架构**:`/mv/list` 现返回 `streamUrl`/`thumbnailUrl`(公开域直链,缩略图也不再过 Worker);Worker 加第二 binding `MV_BUCKET`→`yamashita-mv`,仅 `/mv/download`(整文件 GET,带 `attachment`,单请求不是 Range,成本可忽略)与 `/mv/thumbnail`(遗留路由)读它。前端卡片点缩略图内联播放(`components/mv/mv-card.tsx` 转 client),保留下载钮;`next.config.ts` remotePatterns 加 `tatsuro-mv.withyakul.me`(env `NEXT_PUBLIC_MV_HOST` 可覆盖)。
@@ -80,6 +86,8 @@
    - **主动缓存(保留被动)** — 现状 `app/sw/audio-cache.ts` 是**被动 opportunistic**:播过才后台存整文件、LRU 到 quota 一半淘汰。对"重复听"够用,但**跑长途听新歌仍会卡**(没听过=没缓存)。要加"下载这张专辑/歌单离线"入口:主动 fetch 队列里各首喂进现成的 `audioStreamHandler`(白送),被动缓存不变。
    - **存储设置页** — "音乐很大"必须让用户看得见、管得了:用量条(已缓存 N 首 / 占 X MB / 上限 = quota 一半)+ 一键清理 + 每张专辑的离线开关状态。数据源现成(`audio-cache-events` 广播 + IndexedDB LRU 元数据),缺前端订阅 + UI。**与 #5(缓存的视觉标记)同源**,可合并一起做。
    - 决策倾向(讨论已定):**做但克制** — 只在专辑/歌单给下载开关,不做全站"下载所有";PWA 图标待站主定长相。
+
+9. **Discover 页(策展合集)**(2026-07-13 记,未排期)— 内容底稿已成型:见 **[DISCOVER.md](./DISCOVER.md)**(曲目全部对着真实库核对、能播)。两类内容:**情绪明信片**(8+ 张 10–13 首,用来逛/挑心情,呼应 The Noon Postcard)+ **长途 Mix**(3 张 60+ 分,开车/循环用,全程中高能量零慢板,防犯困)。**待拍板**(见 DISCOVER.md 尾):①策展方式(纯手工倾向 / mood 标签自动聚需 D1 加字段 / 混合)②明信片封面形态 ③点进去可播(接 #5 歌单)+ 可离线跑长途(接 #8)才闭环。**依赖 #5 歌单基建**——discover 合集本质就是编辑部歌单,建议 #5 落地后顺势做。
 
 ## 阶段 4 — 上线
 

@@ -1,12 +1,12 @@
+import type { ReactNode } from "react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Link } from "@/components/ui/link";
-import { HomeSearch } from "./home-search";
 
 // Sections with an href have a live screen; the rest are drawn as placeholders
 // (their screens land in a later phase) — shown, but never a dead click.
 const SECTIONS: { label: string; href?: string }[] = [
   { label: "Albums", href: "/" },
-  { label: "Songs" },
+  { label: "Discover" },
   { label: "MV", href: "/mv" },
   { label: "Playlists" },
 ];
@@ -14,16 +14,15 @@ const SECTIONS: { label: string; href?: string }[] = [
 /** The browse-screen top bar, floating over the hero photo. */
 export function HomeNav({
   current,
-  query,
-  onQueryChange,
+  search,
 }: {
   /** Label of the active section (matches SECTIONS). */
   current: "Albums" | "MV";
-  query: string;
-  onQueryChange: (value: string) => void;
+  /** Search affordance for the right rail (the command-palette trigger). */
+  search?: ReactNode;
 }) {
   return (
-    <header className="flex items-center justify-between gap-3 px-5 py-4 sm:px-8 sm:py-5">
+    <header className="relative flex items-center justify-between gap-3 px-5 py-4 sm:px-8 sm:py-5">
       <Link
         href="/"
         className="flex items-center gap-2 rounded-full text-white [text-shadow:0_2px_12px_rgba(11,58,83,0.5)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
@@ -46,7 +45,12 @@ export function HomeNav({
         </span>
       </Link>
 
-      <nav aria-label="Sections" className="hidden lg:block">
+      {/* Absolutely centered on the viewport — the side rails (logo / controls)
+          vary in width, so a flex-between would drift the pills off-center. */}
+      <nav
+        aria-label="Sections"
+        className="-translate-x-1/2 absolute left-1/2 hidden lg:block"
+      >
         <div className="flex gap-1 rounded-full border border-white/40 bg-white/15 p-1 backdrop-blur-xs dark:bg-dusk-navy/40">
           {SECTIONS.map((s) => {
             // No href → a placeholder for a not-yet-built screen (never a dead click).
@@ -81,11 +85,7 @@ export function HomeNav({
       </nav>
 
       <div className="flex items-center gap-3">
-        <HomeSearch
-          value={query}
-          onChange={onQueryChange}
-          className="hidden w-56 sm:flex"
-        />
+        {search}
         <ThemeToggle />
       </div>
     </header>

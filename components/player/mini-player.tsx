@@ -155,10 +155,13 @@ function MiniProgress() {
   const percent =
     duration > 0 ? Math.min(100, (currentTime / duration) * 100) : 0;
 
+  // Inset past the card's rounded corners (radius ~36px) so the line never
+  // rides into the curve — the played fill starts cleanly at the left, on the
+  // straight top edge, with a rounded leading cap.
   return (
-    <div aria-hidden className="absolute inset-x-0 top-0 z-10 h-[3px]">
+    <div aria-hidden className="absolute inset-x-10 top-2 z-10 h-[3px]">
       <div
-        className="h-full bg-[image:var(--gradient-action)] transition-[width] duration-300 ease-linear"
+        className="h-full rounded-full bg-[image:var(--gradient-action)] transition-[width] duration-300 ease-linear"
         style={{ width: `${percent}%` }}
       />
     </div>

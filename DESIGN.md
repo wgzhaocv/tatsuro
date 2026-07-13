@@ -241,7 +241,7 @@ components:
 
 ### Mini Player Bar(签名组件)
 - 常驻底部的**悬浮条**:不贴边,左右留白 + 底部留白,`max-w-2xl` 居中,圆角 `rounded-2xl`,靠 `shadow-float-navy`(更强双层)托起——呼应顶部 nav 的浮起玻璃药丸。高度 `h-16`,配 `px-2.5` 让封面上下左三边等距(~10px)。
-- **材质与 nav / 内容 sheet 同源的磨砂玻璃**,但**填充更重**(承载常驻控件,不能太透):浅色 `bg-white/72 backdrop-blur-md`、黄昏 `dusk-navy/80`,边 `white/55`(黄昏 `white/15`)。文字/图标走前景 token(深水律仍成立)。封面缩略 44px **圆形**,播放时像唱片一样慢转(`animate-spin-slow`,8s/圈,落在环境动效带内),暂停用 `animation-play-state: paused` **原地冻结**(绝不复位回 0°),reduced-motion 走全局开关。歌名 Body、播放/暂停主色圆钮、细进度线贴顶(随圆角裁切)。内边距收紧(`px-2.5`)让封面上下左三边等距。
+- **材质与 nav / 内容 sheet 同源的磨砂玻璃**,但**填充更重**(承载常驻控件,不能太透):浅色 `bg-white/72 backdrop-blur-md`、黄昏 `dusk-navy/80`,边 `white/55`(黄昏 `white/15`)。文字/图标走前景 token(深水律仍成立)。封面缩略 44px **圆形**,播放时像唱片一样慢转(`animate-spin-slow`,8s/圈,落在环境动效带内),暂停用 `animation-play-state: paused` **原地冻结**(绝不复位回 0°),reduced-motion 走全局开关。歌名 Body、播放/暂停主色圆钮、细进度线**内嵌在顶部**(左右避开圆角半径、端头圆角,绝不切进弧里)。内边距收紧(`px-2.5`)让封面上下左三边等距。
 - 唯一破例:悬浮条**允许**盖在内容 sheet 的玻璃上(玻璃叠玻璃),因为它是全局浮层、以材质一致优先——除此之外玻璃纪律照旧。
 
 ### Photo Surface(签名材质)

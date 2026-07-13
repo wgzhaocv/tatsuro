@@ -43,15 +43,21 @@ export function MiniPlayer() {
       // Off-screen (no queue) means gone: unfocusable and invisible to AT.
       inert={!song}
       className={cn(
-        "fixed inset-x-0 bottom-0 z-40 px-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] transition-transform duration-500 ease-lazy sm:px-4",
-        song ? "translate-y-0" : "pointer-events-none translate-y-[130%]",
+        // Below lg the BottomNav owns the bottom edge, so float above it
+        // (+3.5rem bar + a gap); at lg the tab bar is gone and the bar sits low.
+        // The wrapper never catches pointer events — its transparent padding
+        // overlaps the BottomNav below it (z-40 over z-30), and would otherwise
+        // eat the tab bar's clicks. Only the bar itself is interactive.
+        "pointer-events-none fixed inset-x-0 bottom-0 z-40 px-3 pb-[calc(env(safe-area-inset-bottom)+3.5rem+0.5rem)] transition-transform duration-500 ease-lazy sm:px-4 lg:pb-[calc(env(safe-area-inset-bottom)+0.75rem)]",
+        song ? "translate-y-0" : "translate-y-[130%]",
       )}
     >
       {/* The floating bar proper: the same frosted glass as the nav / content
           sheets, but a heavier fill (less see-through) since it carries live
           controls. Rounded, lifted on a navy shadow; overflow-hidden lets the
-          progress line ride the rounded top edge. */}
-      <div className="relative mx-auto max-w-2xl overflow-hidden rounded-2xl border border-white/55 bg-white/72 text-foreground shadow-float-navy backdrop-blur-md dark:border-white/15 dark:bg-dusk-navy/80">
+          progress line ride the rounded top edge. pointer-events-auto re-arms
+          the bar (the wrapper opts out above). */}
+      <div className="pointer-events-auto relative mx-auto max-w-2xl overflow-hidden rounded-2xl border border-white/55 bg-white/72 text-foreground shadow-float-navy backdrop-blur-md dark:border-white/15 dark:bg-dusk-navy/80">
         <MiniProgress />
         {/* Height chosen so the 44px cover/controls get the same ~10px inset
             top, bottom, and left — a uniform frame gap. */}

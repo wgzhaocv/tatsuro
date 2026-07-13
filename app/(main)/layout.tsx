@@ -1,3 +1,4 @@
+import { BottomNav } from "@/components/bottom-nav";
 import { AudioEngine } from "@/components/player/audio-engine";
 import { PlayerDock } from "@/components/player/player-dock";
 
@@ -5,7 +6,8 @@ import { PlayerDock } from "@/components/player/player-dock";
  * Everything inside the app (not gate/demo) shares the player: the hidden
  * audio engine, the persistent mini bar, and the full-screen player it
  * expands into. Pages render above; the dock reserves its own space at the
- * bottom while a queue is loaded.
+ * bottom while a queue is loaded. On phone/tablet the BottomNav carries the
+ * section switcher the desktop top bar hides below `lg`.
  */
 export default function MainLayout({
   children,
@@ -16,6 +18,7 @@ export default function MainLayout({
     <>
       {children}
       <PlayerDock />
+      <BottomNav />
       <AudioEngine />
     </>
   );

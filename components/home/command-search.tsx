@@ -3,7 +3,6 @@
 import { MagnifyingGlassIcon } from "@phosphor-icons/react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
-import { GlassPanel } from "@/components/glass-panel";
 import { Button } from "@/components/ui/button";
 import {
   Command,
@@ -57,20 +56,18 @@ export function CommandSearch() {
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent
           showCloseButton={false}
-          className="top-[16vh] translate-y-0 gap-0 border-0 bg-transparent p-0 shadow-none ring-0 sm:max-w-lg"
+          className="top-[16vh] translate-y-0 gap-0 overflow-hidden p-0 sm:max-w-lg"
         >
           <DialogTitle className="sr-only">{ts("title")}</DialogTitle>
           <DialogDescription className="sr-only">
             {ts("description")}
           </DialogDescription>
-          <GlassPanel className="overflow-hidden rounded-lg shadow-lift-navy">
-            <Command className="bg-transparent">
-              <CommandInput placeholder={ts("placeholder")} />
-              <CommandList>
-                <CommandEmpty>{ts("empty")}</CommandEmpty>
-              </CommandList>
-            </Command>
-          </GlassPanel>
+          <Command className="bg-transparent">
+            <CommandInput placeholder={ts("placeholder")} />
+            <CommandList>
+              <CommandEmpty>{ts("empty")}</CommandEmpty>
+            </CommandList>
+          </Command>
         </DialogContent>
       </Dialog>
     </>

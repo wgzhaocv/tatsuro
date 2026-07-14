@@ -32,21 +32,8 @@ export function HomeNav({
     <header className="relative flex items-center justify-between gap-3 px-5 py-4 sm:px-8 sm:py-5">
       <Link
         href="/"
-        className="flex items-center gap-2 rounded-full text-white [text-shadow:0_2px_12px_rgba(11,58,83,0.5)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
+        className="flex items-center rounded-full text-white [text-shadow:0_2px_12px_rgba(11,58,83,0.5)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
       >
-        <svg
-          aria-hidden="true"
-          viewBox="0 0 24 24"
-          className="size-6"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={2.2}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <path d="M2 15c3-3 5-3 8 0s5 3 8 0" />
-          <path d="M2 9c3-3 5-3 8 0" />
-        </svg>
         <span className="font-display text-xl font-semibold tracking-[0.08em]">
           TATSURO
         </span>

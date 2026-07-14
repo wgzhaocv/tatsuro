@@ -15,7 +15,7 @@ import type { Song } from "@/lib/api/types";
 import { usePlaylistStore, useVisiblePlaylists } from "@/lib/playlists/store";
 import { isJapanese } from "@/lib/text";
 import { cn } from "@/lib/utils";
-import { MAX_NAME } from "./name-dialog";
+import { MAX_NAME, submittedPlaylistName } from "./name-dialog";
 import { PlaylistCover } from "./playlist-cover";
 
 /**
@@ -74,21 +74,6 @@ function AddToPlaylistBody({ song }: { song: Song }) {
   const createPlaylist = usePlaylistStore((s) => s.createPlaylist);
 
   const [creating, setCreating] = useState(false);
-  const [name, setName] = useState("");
-
-  // Same rules as PlaylistNameDialog so the two create paths can't disagree.
-  const trimmed = name.trim();
-  const duplicate = playlists.some(
-    (p) => p.name.trim().toLowerCase() === trimmed.toLowerCase(),
-  );
-  const canCreate = trimmed.length > 0 && !duplicate;
-
-  function create() {
-    if (!canCreate) return;
-    addSong(createPlaylist(trimmed), song);
-    setName("");
-    setCreating(false);
-  }
 
   return (
     <div className="flex flex-col gap-1">
@@ -98,13 +83,15 @@ function AddToPlaylistBody({ song }: { song: Song }) {
             const member = p.entries.some((e) => e.song.id === song.id);
             return (
               <li key={p.id}>
-                <button
+                <Button
                   type="button"
+                  variant="row"
+                  size="row"
+                  className="w-full"
                   aria-pressed={member}
                   onClick={() =>
                     member ? removeSong(p.id, song.id) : addSong(p.id, song)
                   }
-                  className="flex min-h-11 w-full items-center gap-3 rounded-xl px-2 py-1.5 text-left outline-none transition-colors duration-300 ease-lazy hover:bg-navy/[0.05] focus-visible:ring-2 focus-visible:ring-ring/50 dark:hover:bg-white/[0.06]"
                 >
                   <PlaylistCover
                     playlist={p}
@@ -129,7 +116,7 @@ function AddToPlaylistBody({ song }: { song: Song }) {
                       aria-hidden
                     />
                   )}
-                </button>
+                </Button>
               </li>
             );
           })}
@@ -140,28 +127,37 @@ function AddToPlaylistBody({ song }: { song: Song }) {
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            create();
+            // Same rules as PlaylistNameDialog so the two create paths can't disagree.
+            const name = submittedPlaylistName(
+              e.currentTarget,
+              playlists,
+              t("nameTaken"),
+            );
+            if (name === null) return;
+            addSong(createPlaylist(name), song);
+            setCreating(false);
           }}
           className="flex items-center gap-2 pt-1"
         >
           <Input
+            name="name"
             autoFocus
-            value={name}
+            required
             maxLength={MAX_NAME}
-            aria-invalid={duplicate || undefined}
             placeholder={t("namePlaceholder")}
-            onChange={(e) => setName(e.target.value)}
+            onInput={(e) => e.currentTarget.setCustomValidity("")}
           />
-          <Button type="submit" variant="cta" disabled={!canCreate}>
+          <Button type="submit" variant="cta">
             {t("create")}
           </Button>
         </form>
       ) : (
         <Button
           type="button"
-          variant="ghost"
+          variant="row"
+          size="row"
           onClick={() => setCreating(true)}
-          className="mt-1 h-11 justify-start gap-2 rounded-xl px-2 text-[15px] text-foreground"
+          className="-mx-2 mt-1 w-full"
         >
           <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-secondary">
             <Plus
@@ -170,7 +166,9 @@ function AddToPlaylistBody({ song }: { song: Song }) {
               aria-hidden
             />
           </span>
-          {t("newPlaylist")}
+          <span className="text-[15px] text-foreground">
+            {t("newPlaylist")}
+          </span>
         </Button>
       )}
     </div>

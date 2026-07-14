@@ -1,7 +1,6 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useId, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -17,10 +16,39 @@ import { useVisiblePlaylists } from "@/lib/playlists/store";
 export const MAX_NAME = 50;
 
 /**
- * The shared name form behind Create and Rename — one text field, live
- * validation (non-empty, ≤50, no duplicate name), and a quiet submit. No fake
- * delay or success theatre: it commits and closes. Controlled by the caller so
- * it can live inside a menu or a header action.
+ * Read the trimmed name out of a submitted playlist form. Shared by every
+ * create/rename path so the rules can't disagree: non-empty after trim,
+ * ≤MAX_NAME (the input's maxLength), no duplicate name. Invalid input is
+ * surfaced through the native validity bubble and yields null. The name field
+ * must be `name="name"` and clear its customValidity onInput, or a rejected
+ * duplicate would block the form's next submit.
+ */
+export function submittedPlaylistName(
+  form: HTMLFormElement,
+  playlists: { id: string; name: string }[],
+  takenMessage: string,
+  excludeId?: string,
+): string | null {
+  const input = form.elements.namedItem("name") as HTMLInputElement;
+  const name = input.value.trim();
+  const taken = playlists.some(
+    (p) =>
+      p.id !== excludeId && p.name.trim().toLowerCase() === name.toLowerCase(),
+  );
+  if (!name || taken) {
+    if (!name) input.value = ""; // whitespace-only → let `required` speak
+    input.setCustomValidity(taken ? takenMessage : "");
+    input.reportValidity();
+    return null;
+  }
+  return name;
+}
+
+/**
+ * The shared name form behind Create and Rename — one uncontrolled text field
+ * validated on submit (native validity bubble), and a quiet commit-and-close.
+ * The popup unmounts when closed, so defaultValue starts fresh every open.
+ * Controlled by the caller so it can live inside a menu or a header action.
  */
 export function PlaylistNameDialog({
   open,
@@ -40,32 +68,9 @@ export function PlaylistNameDialog({
 }) {
   const t = useTranslations("playlists");
   const playlists = useVisiblePlaylists();
-  const fieldId = useId();
-  const [name, setName] = useState(initialName);
-
-  const trimmed = name.trim();
-  const duplicate = playlists.some(
-    (p) =>
-      p.id !== excludeId &&
-      p.name.trim().toLowerCase() === trimmed.toLowerCase(),
-  );
-  const valid = trimmed.length > 0 && trimmed.length <= MAX_NAME && !duplicate;
-
-  function submit() {
-    if (!valid) return;
-    onSubmit(trimmed);
-    onOpenChange(false);
-  }
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(v) => {
-        // Reset to the starting value whenever the dialog (re)opens.
-        if (v) setName(initialName);
-        onOpenChange(v);
-      }}
-    >
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="gap-5">
         <DialogHeader>
           <DialogTitle>
@@ -76,34 +81,37 @@ export function PlaylistNameDialog({
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            submit();
+            const name = submittedPlaylistName(
+              e.currentTarget,
+              playlists,
+              t("nameTaken"),
+              excludeId,
+            );
+            if (name === null) return;
+            onSubmit(name);
+            onOpenChange(false);
           }}
           className="flex flex-col gap-2"
         >
           <Input
-            id={fieldId}
+            // Rename commits change initialName while the popup is still
+            // animating out — remount so the uncontrolled field never sees a
+            // defaultValue change (base-ui warns otherwise).
+            key={initialName}
+            name="name"
             autoFocus
-            value={name}
+            required
+            defaultValue={initialName}
             maxLength={MAX_NAME}
             placeholder={t("namePlaceholder")}
-            aria-invalid={duplicate || undefined}
-            aria-describedby={duplicate ? `${fieldId}-err` : undefined}
-            onChange={(e) => setName(e.target.value)}
+            onInput={(e) => e.currentTarget.setCustomValidity("")}
           />
-          {duplicate && (
-            <p
-              id={`${fieldId}-err`}
-              className="px-1 text-[13px] text-destructive"
-            >
-              {t("nameTaken")}
-            </p>
-          )}
 
           <DialogFooter className="mt-2">
             <DialogClose render={<Button type="button" variant="outline" />}>
               {t("cancel")}
             </DialogClose>
-            <Button type="submit" variant="cta" disabled={!valid}>
+            <Button type="submit" variant="cta">
               {mode === "create" ? t("create") : t("rename")}
             </Button>
           </DialogFooter>

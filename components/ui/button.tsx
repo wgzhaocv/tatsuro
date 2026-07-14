@@ -35,6 +35,8 @@ const buttonVariants = cva(
         // white-text `glass` is for dark scrimmed photos only (Deep Water Rule).
         "glass-ink":
           "border-white/70 bg-white/55 text-navy backdrop-blur-xs hover:bg-white/75 dark:border-white/20 dark:bg-dusk-navy/50 dark:text-foreground dark:hover:bg-dusk-navy/70",
+        // Quiet list row (playlist picker etc.) — pair with size="row".
+        row: "justify-start rounded-xl text-left font-normal transition-colors duration-300 ease-lazy hover:bg-navy/[0.05] dark:hover:bg-white/[0.06]",
       },
       size: {
         default:
@@ -46,6 +48,8 @@ const buttonVariants = cva(
         "icon-xs": "size-6 [&_svg:not([class*='size-'])]:size-3",
         "icon-sm": "size-8",
         "icon-lg": "size-10",
+        // List row geometry for variant="row" (caller sets width).
+        row: "h-auto min-h-11 gap-3 px-2 py-1.5",
       },
     },
     defaultVariants: {

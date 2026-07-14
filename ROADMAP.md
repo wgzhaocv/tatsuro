@@ -20,7 +20,7 @@
 
 ## 阶段 1 — 数据层(先于所有屏,或与 Gate 并行)
 
-- [~] `lib/api/`:集中 API client——**已做 `albums.ts`(`getAlbums`/`getAlbum`)+ `songs.ts`(`getAlbumSongs`/`getSong`)+ `urls.ts`(封面/流媒体/MV 直链构造)**;`lyrics.ts` / `mv.ts` 待建。缓存策略统一到 Next 16 Cache Components:`next.config.ts` 开 `cacheComponents: true`,每个 client 函数 `'use cache'` + `cacheLife('max')` + `cacheTag`(`albums`/`songs` + 细粒度 `album:{id}`/`song:{id}` 等),将来 `revalidateTag('albums'|'songs')` 一键刷新
+- [x] `lib/api/`:集中 API client——`albums.ts`(`getAlbums`/`getAlbum`/`findReleaseByDisc`)+ `songs.ts`(`getDiscSongs`/`getSong`)+ `urls.ts`(封面/流媒体/MV 直链)+ `lyrics.ts`(`fetchLyrics`/`isTimed`/`currentLineIndex`,`GET /lyrics/{id}`)+ `mv.ts`(`getMvs`→`/mv/list`)+ `types.ts`(wire→domain 映射)+ `client.ts`(`fetchSong`,TanStack Query 侧)全部落地。缓存策略统一到 Next 16 Cache Components:`next.config.ts` 开 `cacheComponents: true`,每个 client 函数 `'use cache'` + `cacheLife('max')` + `cacheTag`(`albums`/`songs`/`mv` + 细粒度 `album:{id}`/`song:{id}`/`lyrics` 等),将来 `revalidateTag('albums'|'songs')` 一键刷新
 - [x] 领域模型 `lib/api/types.ts`——**演进为「Release → Edition → Disc」(后端建模,见 `../yamashita-api`)**:`Album`(发行)/ `Edition`(版本)/ `Disc`(碟)+ 曲目 `Song{id,name,trackNumber,…}`(`name` 已剥 "01 - " 前缀)。既消除了旧站 `AlbumSong` / `SongType` 双套字段,又顺带解决多碟被拆成多专辑、无年份、无 studio/live 的问题(JOY 1.5 归为 Ray of Hope 第 2 碟等)
 - [x] `.env`:`NEXT_PUBLIC_API_URL` / `ARGOT` / `AUTH_SECRET`(已从旧仓库拷贝)
 - [x] `next.config.ts` remotePatterns 加后端图片域(`/stream/img/**`、`/mv/thumbnail/**`,host 由 `NEXT_PUBLIC_API_URL` 推导)

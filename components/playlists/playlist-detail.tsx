@@ -60,7 +60,7 @@ export function PlaylistDetail({ id }: { id: string }) {
 
   return (
     <div className="relative z-10 flex min-h-dvh flex-col">
-      <header className="mx-auto flex w-full max-w-4xl items-center justify-between gap-3 px-5 py-4 sm:px-8 sm:py-5">
+      <header className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-5 py-4 sm:px-8 sm:py-5">
         <Link
           href="/playlists"
           className={cn(
@@ -76,26 +76,29 @@ export function PlaylistDetail({ id }: { id: string }) {
 
       {hydrated && playlist && (
         <QueuePlaybackProvider songs={songs} label={name} queueId={playlist.id}>
-          <div className="mx-auto w-full max-w-4xl px-5 pb-24 sm:px-8">
-            {/* Compact cover-beside-identity, mirroring the album detail: a
-                small cover left of left-aligned title, meta, and Play all. */}
-            <div className="flex items-center gap-4 py-2 sm:gap-6">
+          <div className="mx-auto w-full max-w-6xl px-5 pt-2 pb-20 sm:px-8 lg:grid lg:grid-cols-[18.5rem_1fr] lg:items-start lg:gap-12 lg:pt-6">
+            {/* Identity rail — same structure as the album detail:
+                cover-beside-identity on phones/tablets, a sticky column on
+                desktop so long lists keep the cover in view. It floats over the
+                beach hero (no ambient wash), so the text stays white. */}
+            <aside className="grid grid-cols-[8rem_1fr] items-center gap-x-5 sm:grid-cols-[14rem_1fr] sm:gap-x-7 lg:sticky lg:top-8 lg:flex lg:flex-col lg:items-start">
               <PlaylistCover
                 playlist={playlist}
-                sizes="(max-width: 639px) 112px, 192px"
-                className="size-28 shrink-0 rounded-[14px] shadow-postcard sm:size-48 sm:rounded-[18px]"
+                sizes="(max-width: 640px) 128px, (max-width: 1024px) 224px, 296px"
+                className="aspect-square w-full rounded-[14px] shadow-postcard sm:rounded-[20px]"
               />
+
               <div className="flex min-w-0 flex-col items-start">
                 <h1
                   lang={!isLiked && isJapanese(name) ? "ja" : undefined}
-                  className="font-display text-2xl font-semibold leading-[1.15] text-white [text-shadow:0_4px_24px_rgba(11,58,83,0.5)] sm:text-[2.375rem] sm:leading-[1.12]"
+                  className="font-display text-2xl font-semibold leading-[1.15] text-white [text-shadow:0_4px_24px_rgba(11,58,83,0.5)] sm:text-[2.375rem] sm:leading-[1.12] lg:mt-6"
                 >
                   {name}
                 </h1>
                 <p className="mt-2 text-sm text-white/90 [text-shadow:0_2px_10px_rgba(11,58,83,0.5)]">
                   {meta}
                 </p>
-                <div className="mt-4 flex items-center gap-2.5 sm:mt-6">
+                <div className="mt-5 flex items-center gap-2.5 sm:mt-6">
                   <PlayQueueButton
                     playText={t("playAll")}
                     pauseText={tRoot("album.pause")}
@@ -103,10 +106,10 @@ export function PlaylistDetail({ id }: { id: string }) {
                   {!isLiked && <PlaylistHeaderActions playlist={playlist} />}
                 </div>
               </div>
-            </div>
+            </aside>
 
             {songs.length === 0 ? (
-              <GlassPanel className="mt-8 rounded-[28px] px-6 py-16 text-center shadow-postcard">
+              <GlassPanel className="mt-10 rounded-[28px] px-6 py-16 text-center shadow-postcard lg:mt-0">
                 <p className="font-display text-lg font-medium text-foreground">
                   {t("emptyDetail")}
                 </p>
@@ -117,7 +120,7 @@ export function PlaylistDetail({ id }: { id: string }) {
             ) : (
               <GlassPanel
                 as="main"
-                className="mt-8 rounded-[28px] px-2 py-4 shadow-postcard sm:px-4"
+                className="mt-10 rounded-[28px] px-3 py-6 shadow-postcard sm:px-6 lg:mt-0"
               >
                 <ol>
                   {songs.map((song, i) => (
@@ -146,6 +149,10 @@ export function PlaylistDetail({ id }: { id: string }) {
                     />
                   ))}
                 </ol>
+
+                <p className="mt-8 border-t border-border/70 px-3 pt-5 text-[13px] text-muted-foreground">
+                  {meta}
+                </p>
               </GlassPanel>
             )}
           </div>

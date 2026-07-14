@@ -2,6 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { BrowseGrid } from "@/components/browse-grid";
+import { CommandSearch } from "@/components/home/command-search";
 import { HomeNav } from "@/components/home/home-nav";
 import { useHasHydrated, useVisiblePlaylists } from "@/lib/playlists/store";
 import { CreatePlaylistButton } from "./create-playlist-button";
@@ -21,7 +22,7 @@ export function PlaylistsBrowser() {
 
   return (
     <div className="relative z-10 flex min-h-dvh flex-col">
-      <HomeNav current="playlists" />
+      <HomeNav current="playlists" search={<CommandSearch />} />
 
       <div className="flex items-end justify-between gap-4 px-5 pb-5 pt-6 sm:px-8 sm:pt-10">
         <div>

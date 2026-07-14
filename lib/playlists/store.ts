@@ -29,6 +29,9 @@ type PlaylistsState = {
   deletePlaylist(id: string): void;
   addSong(playlistId: string, song: Song): void;
   removeSong(playlistId: string, songId: string): void;
+  /** Re-insert a removed entry at its old index — the undo for removeSong,
+   *  preserving position (addSong would only append). No-op if it's back. */
+  restoreSong(playlistId: string, entry: PlaylistEntry, index: number): void;
   reorder(playlistId: string, from: number, to: number): void;
   toggleLike(song: Song): void;
 
@@ -166,6 +169,17 @@ export const usePlaylistStore = create<PlaylistsState>()(
             ...p,
             entries: p.entries.filter((e) => e.song.id !== songId),
           })),
+        }));
+      },
+
+      restoreSong(playlistId, entry, index) {
+        set((s) => ({
+          playlists: patch(s.playlists, playlistId, (p) => {
+            if (p.entries.some((e) => e.song.id === entry.song.id)) return p;
+            const entries = [...p.entries];
+            entries.splice(index, 0, entry); // splice clamps an out-of-range index
+            return { ...p, entries };
+          }),
         }));
       },
 

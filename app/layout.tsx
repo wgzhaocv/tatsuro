@@ -5,6 +5,7 @@ import { AudioEngine } from "@/components/player/audio-engine";
 import { QueryProvider } from "@/components/query-provider";
 import { ServiceWorkerProvider } from "@/components/sw-provider";
 import { ThemeProvider } from "@/components/theme-provider";
+import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
@@ -61,6 +62,14 @@ export default function RootLayout({
               remounted <audio> element would ghost-play alongside its
               replacement (the double-audio bug). */}
           <AudioEngine />
+          {/* Top-center clears the bottom chrome (mobile tab bar + mini
+              player); the offset drops it below the page header. mobileOffset
+              is separate — sonner uses it under 600px. */}
+          <Toaster
+            position="top-center"
+            offset={{ top: "5rem" }}
+            mobileOffset={{ top: "5rem" }}
+          />
         </ThemeProvider>
       </body>
     </html>

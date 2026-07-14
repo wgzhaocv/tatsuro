@@ -11,6 +11,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import type { Song } from "@/lib/api/types";
 import { usePlaylistStore, useVisiblePlaylists } from "@/lib/playlists/store";
 import { isJapanese } from "@/lib/text";
@@ -39,21 +44,27 @@ export function AddToPlaylistButton({
 
   return (
     <>
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon"
-        aria-label={label}
-        title={label}
-        className={cn("rounded-full", className)}
-        onClick={() => setOpen(true)}
-      >
-        <Plus
-          weight="bold"
-          className="size-[18px] text-muted-foreground group-hover/button:text-foreground"
-          aria-hidden
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              aria-label={label}
+              className={cn("rounded-full", className)}
+              onClick={() => setOpen(true)}
+            >
+              <Plus
+                weight="bold"
+                className="size-[18px] text-muted-foreground group-hover/button:text-foreground"
+                aria-hidden
+              />
+            </Button>
+          }
         />
-      </Button>
+        <TooltipContent>{label}</TooltipContent>
+      </Tooltip>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="gap-4">
           <DialogHeader>

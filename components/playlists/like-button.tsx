@@ -3,6 +3,11 @@
 import { Heart } from "@phosphor-icons/react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import type { Song } from "@/lib/api/types";
 import { useIsLiked, usePlaylistStore } from "@/lib/playlists/store";
 import { cn } from "@/lib/utils";
@@ -26,26 +31,32 @@ export function LikeButton({
   const label = liked ? t("unlike") : t("like");
 
   return (
-    <Button
-      type="button"
-      variant="ghost"
-      size="icon"
-      aria-pressed={liked}
-      aria-label={label}
-      title={label}
-      onClick={() => toggleLike(song)}
-      className={cn("rounded-full", className)}
-    >
-      <Heart
-        weight={liked ? "fill" : "bold"}
-        className={cn(
-          "size-[18px] transition-colors duration-300 ease-lazy",
-          liked
-            ? "text-coral-ink dark:text-coral"
-            : "text-muted-foreground group-hover/button:text-foreground",
-        )}
-        aria-hidden
+    <Tooltip>
+      <TooltipTrigger
+        render={
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            aria-pressed={liked}
+            aria-label={label}
+            onClick={() => toggleLike(song)}
+            className={cn("rounded-full", className)}
+          >
+            <Heart
+              weight={liked ? "fill" : "bold"}
+              className={cn(
+                "size-[18px] transition-colors duration-300 ease-lazy",
+                liked
+                  ? "text-coral-ink dark:text-coral"
+                  : "text-muted-foreground group-hover/button:text-foreground",
+              )}
+              aria-hidden
+            />
+          </Button>
+        }
       />
-    </Button>
+      <TooltipContent>{label}</TooltipContent>
+    </Tooltip>
   );
 }

@@ -5,6 +5,11 @@ import { useTranslations } from "next-intl";
 import { AddToPlaylistButton } from "@/components/playlists/add-to-playlist-dialog";
 import { LikeButton } from "@/components/playlists/like-button";
 import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import type { Song } from "@/lib/api/types";
 
 /**
@@ -32,21 +37,27 @@ export function TrackActions({
       {!hideLike && <LikeButton song={song} />}
       <AddToPlaylistButton song={song} />
       {onRemove && (
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          aria-label={t("removeFromPlaylist")}
-          title={t("removeFromPlaylist")}
-          className="rounded-full"
-          onClick={onRemove}
-        >
-          <X
-            weight="bold"
-            className="size-[18px] text-muted-foreground group-hover/button:text-foreground"
-            aria-hidden
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                aria-label={t("removeFromPlaylist")}
+                className="rounded-full"
+                onClick={onRemove}
+              >
+                <X
+                  weight="bold"
+                  className="size-[18px] text-muted-foreground group-hover/button:text-foreground"
+                  aria-hidden
+                />
+              </Button>
+            }
           />
-        </Button>
+          <TooltipContent>{t("removeFromPlaylist")}</TooltipContent>
+        </Tooltip>
       )}
     </div>
   );

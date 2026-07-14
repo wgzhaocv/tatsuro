@@ -20,6 +20,7 @@ import { AlbumAmbient } from "@/components/album/album-ambient";
 import { FadeImage } from "@/components/album/fade-image";
 import { AddToPlaylistButton } from "@/components/playlists/add-to-playlist-dialog";
 import { LikeButton } from "@/components/playlists/like-button";
+import { ShareButton } from "@/components/track/share-button";
 import { Button } from "@/components/ui/button";
 import { nameLang, type Song } from "@/lib/api/types";
 import { coverUrl } from "@/lib/api/urls";
@@ -110,6 +111,7 @@ export function FullPlayer() {
             <div className="ml-auto flex shrink-0 items-center gap-1">
               <LikeButton song={enrichedSong} className="size-11" />
               <AddToPlaylistButton song={enrichedSong} className="size-11" />
+              <ShareButton song={enrichedSong} className="size-11" />
               <Button
                 variant={showLyrics ? "action" : "glass-ink"}
                 size="icon-lg"

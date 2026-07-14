@@ -1,8 +1,22 @@
+import { getTranslations, setRequestLocale } from "next-intl/server";
 import { ThemeImage } from "@/components/theme-image";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { socialMeta } from "@/lib/site";
 import beach from "./_assets/beach.jpg";
 import beachDusk from "./_assets/beach-dusk.jpg";
 import { GateForm } from "./gate-form";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  setRequestLocale(locale);
+  const t = await getTranslations({ locale, namespace: "metadata" });
+  // og:image is the sibling opengraph-image.tsx (the dusk "locked" card).
+  return socialMeta(t("gateTitle"), t("gateDescription"));
+}
 
 export default function GatePage() {
   return (

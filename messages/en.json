@@ -144,8 +144,23 @@
     "hr": "{n} hr",
     "hrMin": "{h} hr {m} min"
   },
+  "song": {
+    "openAlbum": "Open album"
+  },
+  "share": {
+    "song": "Share song",
+    "copied": "Link copied to clipboard",
+    "shared": "Shared",
+    "failed": "Couldn't create a share link"
+  },
   "metadata": {
     "musicVideos": "Music Videos",
-    "playlists": "Playlists"
+    "playlists": "Playlists",
+    "siteDescription": "The complete discography of Tatsuro Yamashita — albums, lyrics, music videos, and playlists.",
+    "mvDescription": "Music videos from Tatsuro Yamashita.",
+    "playlistsDescription": "Your Tatsuro Yamashita playlists and liked songs.",
+    "albumDescription": "{name} by Tatsuro Yamashita.",
+    "gateTitle": "Password required",
+    "gateDescription": "A private Tatsuro Yamashita library. Enter the password to continue."
   }
 }

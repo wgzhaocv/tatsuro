@@ -27,6 +27,7 @@ export function TrackRow({
   queueIndex,
   onRemove,
   hideLike,
+  showAlbumLink,
 }: {
   track: Song;
   index: number;
@@ -36,6 +37,8 @@ export function TrackRow({
   onRemove?: (song: Song) => void;
   /** Drop the like heart (the Liked list, where it duplicates remove). */
   hideLike?: boolean;
+  /** Offer "view album" in the overflow menu (playlist / Liked rows). */
+  showAlbumLink?: boolean;
 }) {
   const t = useTranslations("album");
   const { songs, label, queueId } = useQueuePlayback();
@@ -59,7 +62,11 @@ export function TrackRow({
 
   return (
     <li ref={rowRef}>
-      <div className="group flex min-h-11 items-center gap-2 rounded-xl pr-1 pl-3 transition-colors duration-300 ease-lazy hover:bg-navy/[0.05] dark:hover:bg-white/[0.06]">
+      {/* data-song-id lets a shared-song link (?song=) find + flash this row. */}
+      <div
+        data-song-id={track.id}
+        className="group flex min-h-11 items-center gap-2 rounded-xl pr-1 pl-3 ring-primary/50 ring-inset transition-colors duration-500 ease-lazy hover:bg-navy/[0.05] data-[shared=true]:bg-primary/10 data-[shared=true]:ring-1 dark:hover:bg-white/[0.06]"
+      >
         <button
           type="button"
           aria-label={
@@ -124,6 +131,7 @@ export function TrackRow({
           song={song}
           onRemove={onRemove ? () => onRemove(song) : undefined}
           hideLike={hideLike}
+          showAlbumLink={showAlbumLink}
         />
       </div>
     </li>

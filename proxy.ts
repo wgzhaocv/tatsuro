@@ -1,5 +1,4 @@
-import type { NextRequest } from "next/server";
-import { NextResponse } from "next/server";
+import { type NextRequest, NextResponse, userAgent } from "next/server";
 import createMiddleware from "next-intl/middleware";
 import { routing } from "@/i18n/routing";
 import { verifyToken } from "@/lib/auth";
@@ -11,30 +10,6 @@ import { AUTH_COOKIE_NAME, REDIRECT_URL_COOKIE } from "@/lib/constants";
 // prefixed hop; the gate itself now lives at /{locale}/gate.
 const intlMiddleware = createMiddleware(routing);
 const { locales, defaultLocale } = routing;
-
-// Link-preview bots skip auth so shared links unfurl (same trade-off as the old site).
-const crawlers = [
-  "facebookexternalhit",
-  "twitterbot",
-  "linkedinbot",
-  "whatsapp",
-  "telegram",
-  "slackbot-linkexpanding",
-  "slackbot",
-  "slack",
-  "discordbot",
-  "microsoft teams",
-  "pinterest",
-  "embedly",
-  "googlebot",
-  "bingbot",
-  "snapchat",
-  "redditbot",
-  "qwantify",
-  "applebot",
-  "amazonadbot",
-];
-const CRAWLER_PATTERN = new RegExp(crawlers.join("|"), "i");
 
 const AUTH_COOKIE_OPTIONS = {
   httpOnly: true,
@@ -75,16 +50,15 @@ function resolveRedirect(
 }
 
 export async function proxy(request: NextRequest) {
-  if (CRAWLER_PATTERN.test(request.headers.get("user-agent") ?? "")) {
-    return NextResponse.next();
-  }
-
   const url = request.nextUrl.clone();
   const { pathname } = url;
 
   // /demo is dev-only: gated like everything else, but never localized.
   const isDemo = pathname === "/demo" || pathname.startsWith("/demo/");
   const locale = pathLocale(pathname);
+  // Pass a request through to the app: locale-rewrite it unless it's /demo.
+  const passThrough = () =>
+    isDemo ? NextResponse.next() : intlMiddleware(request);
 
   // Unprefixed localizable path → let next-intl attach a locale prefix
   // (NEXT_LOCALE cookie > Accept-Language). Auth runs on the prefixed hop.
@@ -99,7 +73,6 @@ export async function proxy(request: NextRequest) {
     request.cookies.get(AUTH_COOKIE_NAME)?.value,
   );
   const tokenFromParam = url.searchParams.get(AUTH_COOKIE_NAME);
-  const isParamValid = await verifyToken(tokenFromParam);
 
   if (isVerified) {
     if (isGate) {
@@ -116,11 +89,20 @@ export async function proxy(request: NextRequest) {
       return NextResponse.redirect(url);
     }
     // Pass through; let next-intl set NEXT_LOCALE / rewrite for localized paths.
-    return isDemo ? NextResponse.next() : intlMiddleware(request);
+    return passThrough();
   }
 
+  // Only unverified visitors reach here — validate a share-link token lazily
+  // (the common no-param case skips the HMAC; see verifyToken).
+  const isParamValid = await verifyToken(tokenFromParam);
   if (isParamValid && tokenFromParam) {
-    // share link: adopt the token as the auth cookie and clean the URL
+    // A share link carrying a valid token. Bots don't reliably keep the cookie
+    // across the token-stripping redirect, so serve the page directly with the
+    // token still in the URL — the preview then unfurls the real content OG.
+    // Humans get the clean-URL + cookie treatment.
+    if (userAgent(request).isBot) {
+      return passThrough();
+    }
     const saved = request.cookies.get(REDIRECT_URL_COOKIE)?.value;
     url.searchParams.delete(AUTH_COOKIE_NAME);
     const target = isGate
@@ -133,7 +115,9 @@ export async function proxy(request: NextRequest) {
   }
 
   if (!isGate) {
-    // activeLocale is defaultLocale for demo (which never carries a prefix).
+    // Unauthenticated — send them to the gate. Link-preview bots on a tokenless
+    // share follow this redirect and unfurl the gate's "password required" OG
+    // rather than any real content, so a bare link never leaks what it points to.
     const response = NextResponse.redirect(
       new URL(`/${activeLocale}/gate`, request.url),
     );
@@ -152,11 +136,17 @@ export async function proxy(request: NextRequest) {
   }
 
   // Unverified on the gate itself — render it (localized via the [locale] layout).
-  return isDemo ? NextResponse.next() : intlMiddleware(request);
+  return passThrough();
 }
 
 export const config = {
+  // The negative-lookahead is the single source of truth for what the gate does
+  // NOT guard: Next internals, static assets by extension, and public metadata
+  // routes — icons, sitemap/robots, and the opengraph/twitter image routes
+  // (link-preview bots must fetch a page's og:image without hitting the gate;
+  // the URLs aren't discoverable without an already-served page, and cover art
+  // is already public via the backend).
   matcher: [
-    "/((?!api|_next/static|_next/image|favicon.ico|apple-icon$|sitemap.xml|robots.txt|sw.js|serwist|.*\\.(?:png|jpg|jpeg|gif|ico|svg|js|css|woff|woff2)$).*)",
+    "/((?!api|_next/static|_next/image|favicon.ico|apple-icon$|sitemap.xml|robots.txt|sw.js|serwist|.*opengraph-image|.*twitter-image|.*\\.(?:png|jpg|jpeg|gif|ico|svg|js|css|woff|woff2)$).*)",
   ],
 };

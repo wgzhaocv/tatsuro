@@ -144,8 +144,23 @@
     "hr": "{n}時間",
     "hrMin": "{h}時間{m}分"
   },
+  "song": {
+    "openAlbum": "アルバムを開く"
+  },
+  "share": {
+    "song": "曲をシェア",
+    "copied": "リンクをコピーしました",
+    "shared": "シェアしました",
+    "failed": "共有リンクを作成できませんでした"
+  },
   "metadata": {
     "musicVideos": "ミュージックビデオ",
-    "playlists": "プレイリスト"
+    "playlists": "プレイリスト",
+    "siteDescription": "山下達郎の全ディスコグラフィ — アルバム、歌詞、ミュージックビデオ、プレイリスト。",
+    "mvDescription": "山下達郎のミュージックビデオ。",
+    "playlistsDescription": "あなたの山下達郎プレイリストとお気に入りの曲。",
+    "albumDescription": "山下達郎のアルバム「{name}」。",
+    "gateTitle": "パスワードが必要です",
+    "gateDescription": "山下達郎のプライベートライブラリです。続けるにはパスワードを入力してください。"
   }
 }

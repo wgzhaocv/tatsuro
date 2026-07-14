@@ -1,5 +1,6 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { PlaylistsBrowser } from "@/components/playlists/playlists-browser";
+import { socialMeta } from "@/lib/site";
 
 export async function generateMetadata({
   params,
@@ -9,7 +10,7 @@ export async function generateMetadata({
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations({ locale, namespace: "metadata" });
-  return { title: `${t("playlists")} — Tatsuro Yamashita` };
+  return socialMeta(t("playlists"), t("playlistsDescription"));
 }
 
 export default async function PlaylistsPage({

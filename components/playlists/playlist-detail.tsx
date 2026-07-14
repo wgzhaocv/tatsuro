@@ -127,6 +127,7 @@ export function PlaylistDetail({ id }: { id: string }) {
                       index={i}
                       queueIndex={i}
                       hideLike={isLiked}
+                      showAlbumLink
                       onRemove={(s) => {
                         // Remove immediately (low-stakes, reversible) but offer
                         // an undo that puts the entry back where it was.

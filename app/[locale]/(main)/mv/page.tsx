@@ -2,6 +2,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { MvBrowser } from "@/components/mv/mv-browser";
 import { SectionHero } from "@/components/section-hero";
 import { getMvs } from "@/lib/api/mv";
+import { socialMeta } from "@/lib/site";
 import beachDusk from "../_assets/home-dusk.jpg";
 import beachNoon from "../_assets/home-noon.jpg";
 
@@ -13,7 +14,7 @@ export async function generateMetadata({
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations({ locale, namespace: "metadata" });
-  return { title: `${t("musicVideos")} — Tatsuro Yamashita` };
+  return socialMeta(t("musicVideos"), t("mvDescription"));
 }
 
 export default async function MvPage({

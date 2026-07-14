@@ -4,7 +4,10 @@ import {
   type AlbumDetail,
   type ApiReleaseDetail,
   type ApiReleaseListItem,
+  type Edition,
+  editionQueueSongs,
   type NameLang,
+  type Song,
   toAlbum,
   toAlbumDetail,
 } from "./types";
@@ -47,4 +50,29 @@ export async function getAlbum(
     );
   }
   return toAlbumDetail((await res.json()) as ApiReleaseDetail);
+}
+
+/** Locate the release + edition + queue-ready songs that hold a given source
+ *  album (a disc id — what /music/{songId} returns as `albumId`). The song page
+ *  needs this because the wire song only knows its disc, not the logical release
+ *  (they coincide only for single-disc releases). All fetches are 'use cache'. */
+export async function findReleaseByDisc(
+  discId: string,
+  lang: NameLang = "en",
+): Promise<{ album: AlbumDetail; edition: Edition; songs: Song[] } | null> {
+  "use cache";
+  cacheLife("max");
+  cacheTag("albums", `disc:${discId}`);
+
+  const albums = await getAlbums();
+  const details = await Promise.all(albums.map((a) => getAlbum(a.id, lang)));
+  for (const album of details) {
+    const edition = album.editions.find((e) =>
+      e.discs.some((d) => d.id === discId),
+    );
+    if (edition) {
+      return { album, edition, songs: editionQueueSongs(album, edition) };
+    }
+  }
+  return null;
 }

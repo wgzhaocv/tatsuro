@@ -1,8 +1,9 @@
 import { notFound } from "next/navigation";
-import { setRequestLocale } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 import { EditionView } from "@/components/album/edition-view";
 import { getAlbum, getAlbums } from "@/lib/api/albums";
 import { editionSlug, findEdition, nameLang } from "@/lib/api/types";
+import { socialMeta } from "@/lib/site";
 
 // /album/:id/:edition — a specific pressing, addressed by year (e.g.
 // /album/…/1986). The default edition's canonical home is /album/:id, so only
@@ -24,14 +25,13 @@ export async function generateMetadata({
   params: Promise<{ locale: string; id: string; edition: string }>;
 }) {
   const { locale, id, edition: slug } = await params;
+  setRequestLocale(locale);
   const album = await getAlbum(id, nameLang(locale)).catch(() => null);
   const edition = album && findEdition(album, decodeURIComponent(slug));
-  return {
-    title:
-      album && edition
-        ? `${album.name} (${edition.label}) — Tatsuro Yamashita`
-        : "Tatsuro Yamashita",
-  };
+  if (!album || !edition) return {}; // inherit the site defaults
+  const t = await getTranslations({ locale, namespace: "metadata" });
+  const label = `${album.name} (${edition.label})`;
+  return socialMeta(label, t("albumDescription", { name: label }));
 }
 
 export default async function EditionPage({

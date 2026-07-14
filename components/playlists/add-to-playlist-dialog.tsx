@@ -77,7 +77,7 @@ export function AddToPlaylistButton({
   );
 }
 
-function AddToPlaylistBody({ song }: { song: Song }) {
+export function AddToPlaylistBody({ song }: { song: Song }) {
   const t = useTranslations("playlists");
   const playlists = useVisiblePlaylists().filter((p) => p.kind === "user");
   const addSong = usePlaylistStore((s) => s.addSong);

@@ -1,8 +1,9 @@
 import { notFound } from "next/navigation";
-import { setRequestLocale } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 import { EditionView } from "@/components/album/edition-view";
 import { getAlbum, getAlbums } from "@/lib/api/albums";
 import { defaultEdition, nameLang } from "@/lib/api/types";
+import { socialMeta } from "@/lib/site";
 
 // /album/:id — the release's default (latest) edition. Reissues live at
 // /album/:id/:year (see [edition]/page.tsx). The catalog is a fixed
@@ -20,10 +21,12 @@ export async function generateMetadata({
   params: Promise<{ locale: string; id: string }>;
 }) {
   const { locale, id } = await params;
+  setRequestLocale(locale);
   const album = await getAlbum(id, nameLang(locale)).catch(() => null);
-  return {
-    title: album ? `${album.name} — Tatsuro Yamashita` : "Tatsuro Yamashita",
-  };
+  if (!album) return {}; // inherit the site defaults (title, brand OG)
+  const t = await getTranslations({ locale, namespace: "metadata" });
+  // og:image comes from the sibling opengraph-image.tsx (cover card).
+  return socialMeta(album.name, t("albumDescription", { name: album.name }));
 }
 
 export default async function AlbumPage({

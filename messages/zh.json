@@ -144,8 +144,23 @@
     "hr": "{n} 小时",
     "hrMin": "{h} 小时 {m} 分钟"
   },
+  "song": {
+    "openAlbum": "打开专辑"
+  },
+  "share": {
+    "song": "分享歌曲",
+    "copied": "链接已复制",
+    "shared": "已分享",
+    "failed": "无法创建分享链接"
+  },
   "metadata": {
     "musicVideos": "音乐视频",
-    "playlists": "歌单"
+    "playlists": "歌单",
+    "siteDescription": "山下达郎完整作品集 — 专辑、歌词、音乐视频与歌单。",
+    "mvDescription": "山下达郎的音乐视频。",
+    "playlistsDescription": "你的山下达郎歌单与喜欢的歌曲。",
+    "albumDescription": "山下达郎的专辑《{name}》。",
+    "gateTitle": "需要密码",
+    "gateDescription": "这是一个私享的山下达郎音乐库，输入密码后继续。"
   }
 }

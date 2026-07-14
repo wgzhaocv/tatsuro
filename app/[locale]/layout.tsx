@@ -1,6 +1,7 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { hasLocale, NextIntlClientProvider } from "next-intl";
-import { setRequestLocale } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 import { HtmlLang } from "@/components/i18n/html-lang";
 import {
   getMessagesFor,
@@ -9,10 +10,38 @@ import {
   TIME_ZONE,
 } from "@/i18n/messages";
 import { routing } from "@/i18n/routing";
+import { ARTIST } from "@/lib/constants";
+import { ogLocale } from "@/lib/site";
 
 // One static branch per locale; inner pages' generateStaticParams compose with this.
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
+}
+
+// Locale-level metadata defaults: a localized description + og:locale for every
+// page in this locale. Pages override title (via the root template) and, for
+// releases, the description + og:image. Explicit locale keeps getTranslations
+// off request-scoped config (uncached under cacheComponents).
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  setRequestLocale(locale);
+  const t = await getTranslations({ locale, namespace: "metadata" });
+  const description = t("siteDescription");
+  return {
+    description,
+    openGraph: {
+      type: "website",
+      siteName: ARTIST,
+      title: ARTIST,
+      description,
+      locale: ogLocale(locale),
+    },
+    twitter: { card: "summary_large_image", title: ARTIST, description },
+  };
 }
 
 export default async function LocaleLayout({

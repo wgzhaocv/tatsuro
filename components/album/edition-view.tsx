@@ -17,6 +17,7 @@ import { AlbumAmbient } from "./album-ambient";
 import { DiscSection } from "./disc-section";
 import { EditionSwitch } from "./edition-switch";
 import { FadeImage } from "./fade-image";
+import { SharedSongHighlight } from "./shared-song-highlight";
 
 /**
  * One edition of a release, rendered fully on the server: the cover's ambient
@@ -76,6 +77,7 @@ export async function EditionView({
       queueId={edition.id}
     >
       <AlbumAmbient cover={cover} />
+      <SharedSongHighlight />
 
       <div className="mx-auto w-full max-w-6xl px-5 pt-2 pb-20 sm:px-8 lg:grid lg:grid-cols-[18.5rem_1fr] lg:items-start lg:gap-12 lg:pt-6">
         {/* ── Identity rail. Phones/tablets: cover-beside-identity grid row,

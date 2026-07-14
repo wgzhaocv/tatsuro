@@ -170,7 +170,7 @@ components:
 ## 3. Typography
 
 **Brand Font:** Jost(Futura 系几何无衬线,fallback: Futura, sans-serif)。**只用于品牌字标**(导航 TATSURO、Gate 页 TATSURO YAMASHITA):全大写 + 大字距(导航 0.3em / Gate 大标题 0.06em)+ 字重 500——经典高端 wordmark 配方(LV/Futura 式)。不用于任何正文/标题/UI 文案。
-**Monogram(小尺寸兜底):** favicon / 触屏图标用单字母 **T**——Futura 式平切几何 T(呼应导航 Jost 字标),**透明底、无色块**(填充色块+白字母那种默认头像感已否决),T 本身填海天渐变(顶 `#4BC5DE` 天青 → 底 `#0A8473` 深水,即"上天下海"),`prefers-color-scheme: dark` 下整体提亮以在深色标签页可读。三件套:`app/icon.svg`(矢量,含双主题变体,现代浏览器首选)+ `app/favicon.ico`(32px PNG-in-ICO 兜底)+ `app/apple-icon.tsx`(180px;触屏图标须不透明——iOS 把透明渲染成黑,故仅此一处 T 坐浅色 Sea Glass 底,而非饱和色块)。改设计要三处同步。
+**Monogram(小尺寸兜底):** favicon / 触屏图标用单字母 **T**——Futura 式平切几何 T(横杠 18/32 宽,呼应导航 Jost 字标),**透明底、无色块、单色**(填充色块+白字母那种默认头像感已否决;渐变彩色也否决,不够利落)。单色自适应:浅色标签页用深海军蓝 `#0B3A53`(设计系统"代替纯黑"色,favicon 尺寸下近黑但保品牌感),深色标签页翻白——没有任何单一固定色能同时压住两种底,故用 `prefers-color-scheme`。三件套:`app/icon.svg`(矢量,含双主题变体,现代浏览器首选)+ `app/favicon.ico`(32px PNG-in-ICO 兜底,静态取深色态)+ `app/apple-icon.tsx`(180px;触屏图标须不透明——iOS 把透明渲染成黑,故白 T 坐深海军蓝底,即 favicon 深色态的反相)。改设计要三处同步。
 **Display Font:** Quicksand(圆润几何无衬线,fallback: ui-rounded, sans-serif)
 **Body Font:** Inter(正文与数据,fallback: system-ui)
 **Japanese Font:** 标准黑体系统栈(Hiragino Sans / Yu Gothic / Noto Sans JP),**所有日文统一**——标题与长文不再区分。圆体 Zen Maru Gothic 已整体退役:圆体日文与设计氛围不搭(站主拍板 2026-07-13),且系统栈零下载。

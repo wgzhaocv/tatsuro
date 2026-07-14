@@ -3,10 +3,10 @@ import { ImageResponse } from "next/og";
 export const size = { width: 180, height: 180 };
 export const contentType = "image/png";
 
-// Home-screen icon: the sky→ocean gradient T on a sea-glass ground. Unlike the
-// favicon it needs an opaque fill — iOS renders transparent areas black — so
-// this is the one place the monogram sits on a tile (a pale, premium one, not
-// the saturated block we rejected). Keep the T in sync with icon.svg.
+// Home-screen icon: white monogram T on a deep-navy tile (matches the favicon's
+// dark-tab state). iOS renders transparency black, so this one gets an opaque
+// ground — a restrained navy #0B3A53, not the saturated block we rejected.
+// Keep the T geometry in sync with icon.svg.
 export default function AppleIcon() {
   return new ImageResponse(
     <div
@@ -15,7 +15,7 @@ export default function AppleIcon() {
         height: "100%",
         display: "flex",
         position: "relative",
-        background: "#E9F7F2",
+        background: "#0B3A53",
       }}
     >
       {/* horizontal bar */}
@@ -26,7 +26,7 @@ export default function AppleIcon() {
           top: 31,
           width: 102,
           height: 29,
-          background: "linear-gradient(180deg, #4BC5DE, #0A8473)",
+          background: "#FFFFFF",
         }}
       />
       {/* vertical stem */}
@@ -37,7 +37,7 @@ export default function AppleIcon() {
           top: 31,
           width: 30,
           height: 118,
-          background: "linear-gradient(180deg, #29AECB, #0A8473)",
+          background: "#FFFFFF",
         }}
       />
     </div>,

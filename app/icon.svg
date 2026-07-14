@@ -1,9 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
   <!-- Wordmark monogram: a bold Futura-style T (flat terminals, matches the
-       Jost nav wordmark) on transparent ground — no tile. Filled with a
-       sky→ocean gradient (top #4BC5DE = sky, bottom #0A8473 = deep water),
-       brightened under prefers-color-scheme: dark so it reads on dark tabs.
-       Keep in sync with apple-icon.tsx + favicon.ico (DESIGN.md § Favicon). -->
+       Jost nav wordmark) on transparent ground — no tile. Monochrome and
+       theme-adaptive: near-black navy (#0B3A53, the design system's black
+       replacement) on light tabs, white on dark tabs. No single fixed color
+       reads on both, hence prefers-color-scheme. Keep in sync with
+       apple-icon.tsx + favicon.ico (DESIGN.md § Favicon). -->
   <style>
     .dark { display: none; }
     @media (prefers-color-scheme: dark) {
@@ -11,16 +12,6 @@
       .dark { display: inline; }
     }
   </style>
-  <defs>
-    <linearGradient id="g-light" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#4BC5DE"/>
-      <stop offset="1" stop-color="#0A8473"/>
-    </linearGradient>
-    <linearGradient id="g-dark" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#6DD9EF"/>
-      <stop offset="1" stop-color="#2FBFA8"/>
-    </linearGradient>
-  </defs>
-  <path class="light" d="M7 5.5h18v5.2H7z M13.4 5.5h5.2v21H13.4z" fill="url(#g-light)"/>
-  <path class="dark" d="M7 5.5h18v5.2H7z M13.4 5.5h5.2v21H13.4z" fill="url(#g-dark)"/>
+  <path class="light" d="M7 5.5h18v5.2H7z M13.4 5.5h5.2v21H13.4z" fill="#0B3A53"/>
+  <path class="dark" d="M7 5.5h18v5.2H7z M13.4 5.5h5.2v21H13.4z" fill="#FFFFFF"/>
 </svg>

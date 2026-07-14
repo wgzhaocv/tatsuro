@@ -34,7 +34,9 @@ export function HomeNav({
         href="/"
         className="flex items-center rounded-full text-white [text-shadow:0_2px_12px_rgba(11,58,83,0.5)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
       >
-        <span className="font-display text-xl font-semibold tracking-[0.08em]">
+        {/* Wordmark: brand font (Jost) + wide tracking — the LV/Futura formula
+            (DESIGN.md § Navigation). */}
+        <span className="font-brand font-medium text-xl tracking-[0.3em]">
           TATSURO
         </span>
       </Link>

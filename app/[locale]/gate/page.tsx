@@ -33,7 +33,7 @@ export default function GatePage() {
           >
             山下達郎
           </p>
-          <h1 className="mt-2 font-semibold text-[clamp(2.75rem,5vw,3.75rem)] text-white leading-[1.08] tracking-[0.01em] [text-shadow:0_2px_10px_rgba(11,58,83,0.45),0_6px_30px_rgba(11,58,83,0.5)]">
+          <h1 className="mt-2 font-brand font-medium text-[clamp(2.75rem,5vw,3.75rem)] text-white leading-[1.08] tracking-[0.06em] [text-shadow:0_2px_10px_rgba(11,58,83,0.45),0_6px_30px_rgba(11,58,83,0.5)]">
             TATSURO YAMASHITA
           </h1>
         </header>

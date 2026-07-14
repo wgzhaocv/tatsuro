@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, Quicksand } from "next/font/google";
+import { Inter, Jost, Quicksand } from "next/font/google";
 import "./globals.css";
 import { AudioEngine } from "@/components/player/audio-engine";
 import { QueryProvider } from "@/components/query-provider";
@@ -15,6 +15,13 @@ const quicksand = Quicksand({
 
 const inter = Inter({
   variable: "--font-inter",
+  subsets: ["latin"],
+});
+
+// Brand wordmark only (nav / gate) — a Futura-style geometric sans; the
+// rounded Quicksand reads friendly, not brand. Never for running text.
+const jost = Jost({
+  variable: "--font-jost",
   subsets: ["latin"],
 });
 
@@ -36,6 +43,7 @@ export default function RootLayout({
         "h-full antialiased font-sans",
         quicksand.variable,
         inter.variable,
+        jost.variable,
       )}
     >
       <body className="min-h-full flex flex-col">

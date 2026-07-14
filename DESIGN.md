@@ -23,6 +23,11 @@ colors:
   dusk-slate: "#3A4A6B"
   dusk-plum: "#C4739A"
 typography:
+  wordmark:
+    fontFamily: "Jost, Futura, sans-serif"
+    fontWeight: 500
+    letterSpacing: "0.3em"
+    textTransform: uppercase
   display:
     fontFamily: "Quicksand, ui-rounded, sans-serif"
     fontSize: "clamp(2.75rem, 5vw, 3.75rem)"
@@ -164,6 +169,8 @@ components:
 
 ## 3. Typography
 
+**Brand Font:** Jost(Futura 系几何无衬线,fallback: Futura, sans-serif)。**只用于品牌字标**(导航 TATSURO、Gate 页 TATSURO YAMASHITA):全大写 + 大字距(导航 0.3em / Gate 大标题 0.06em)+ 字重 500——经典高端 wordmark 配方(LV/Futura 式)。不用于任何正文/标题/UI 文案。
+**Monogram(小尺寸兜底):** favicon / 触屏图标用单字母 **T**——Futura 式平切几何 T(呼应导航 Jost 字标),**透明底、无色块**(填充色块+白字母那种默认头像感已否决),T 本身填海天渐变(顶 `#4BC5DE` 天青 → 底 `#0A8473` 深水,即"上天下海"),`prefers-color-scheme: dark` 下整体提亮以在深色标签页可读。三件套:`app/icon.svg`(矢量,含双主题变体,现代浏览器首选)+ `app/favicon.ico`(32px PNG-in-ICO 兜底)+ `app/apple-icon.tsx`(180px;触屏图标须不透明——iOS 把透明渲染成黑,故仅此一处 T 坐浅色 Sea Glass 底,而非饱和色块)。改设计要三处同步。
 **Display Font:** Quicksand(圆润几何无衬线,fallback: ui-rounded, sans-serif)
 **Body Font:** Inter(正文与数据,fallback: system-ui)
 **Japanese Font:** 标准黑体系统栈(Hiragino Sans / Yu Gothic / Noto Sans JP),**所有日文统一**——标题与长文不再区分。圆体 Zen Maru Gothic 已整体退役:圆体日文与设计氛围不搭(站主拍板 2026-07-13),且系统栈零下载。
@@ -227,7 +234,7 @@ components:
 - **Focus:** 描边转 Ocean Cyan + 2px ring(`rgba(28,167,196,0.35)`);focus-visible 永远可见。
 
 ### Navigation
-- **Style:** 顶部轻导航(TATSURO 字标 + Albums / Songs / MV / Playlists),Quicksand 500,Deep Navy;激活项文字用 Ocean Deep (#0C8097,≥4.5:1),下方 2px 浅水渐变短线做装饰。移动端收纳为底部标签栏(Home / Search / Library),图标 + 13px 标签,触控 ≥44px。
+- **Style:** 顶部轻导航(TATSURO 字标用 Brand Font:Jost 500 全大写 tracking 0.3em;section 链接 Quicksand 500),Deep Navy;激活项文字用 Ocean Deep (#0C8097,≥4.5:1),下方 2px 浅水渐变短线做装饰。移动端收纳为底部标签栏(Home / Search / Library),图标 + 13px 标签,触控 ≥44px。
 - 照片背景上的导航条用磨砂玻璃托底;平涂背景上直接透明或实色。
 
 ### Glass chrome(照片上的浮层:首页 hero 的 nav / 筛选 chips / 搜索)

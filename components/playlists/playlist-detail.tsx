@@ -4,6 +4,7 @@ import { ArrowLeft } from "@phosphor-icons/react";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo } from "react";
 import { toast } from "sonner";
+import { AlbumAmbient } from "@/components/album/album-ambient";
 import { GlassPanel } from "@/components/glass-panel";
 import { ThemeToggle } from "@/components/theme-toggle";
 import {
@@ -14,6 +15,7 @@ import { TrackRow } from "@/components/track/track-row";
 import { buttonVariants } from "@/components/ui/button";
 import { Link } from "@/components/ui/link";
 import { useRouter } from "@/i18n/navigation";
+import { coverUrl } from "@/lib/api/urls";
 import { durationLabel } from "@/lib/format";
 import {
   useHasHydrated,
@@ -26,10 +28,12 @@ import { PlaylistCover } from "./playlist-cover";
 import { PlaylistHeaderActions } from "./playlist-header-actions";
 
 /**
- * One playlist over the section's beach hero: a back bar, an identity block
- * (cover + name + count/duration + Play all + the ⋯ menu), and the frosted
- * tracklist sheet. Client-rendered off the persisted store; a missing id (bad
- * link, or a just-deleted list) bounces back to the index once hydrated.
+ * One playlist over its cover's ambient wash (album-style; the section's beach
+ * hero shows through only when no song has a cover yet): a back bar, an
+ * identity block (cover + name + count/duration + Play all + the ⋯ menu), and
+ * the frosted tracklist sheet. Client-rendered off the persisted store; a
+ * missing id (bad link, or a just-deleted list) bounces back to the index once
+ * hydrated.
  */
 export function PlaylistDetail({ id }: { id: string }) {
   const t = useTranslations("playlists");
@@ -50,6 +54,13 @@ export function PlaylistDetail({ id }: { id: string }) {
     () => playlist?.entries.map((e) => e.song) ?? [],
     [playlist],
   );
+  // Artwork-lit background, mirroring the album detail: the playlist's cover
+  // (explicit, else the first song that carries one — same rule as
+  // PlaylistCover) blurred huge under a noon/dusk dissolve. When nothing has a
+  // cover yet (fresh/empty list) we fall through to the section's beach hero.
+  const ambientCoverId =
+    playlist?.coverId ??
+    playlist?.entries.find((e) => e.song.coverFrontId)?.song.coverFrontId;
   const seconds = songs.reduce((s, x) => s + (x.duration ?? 0), 0);
   const meta = [
     t("songCount", { n: songs.length }),
@@ -60,6 +71,9 @@ export function PlaylistDetail({ id }: { id: string }) {
 
   return (
     <div className="relative z-10 flex min-h-dvh flex-col">
+      {/* Sits in this z-10 stacking context, so the fixed -z-10 wash paints
+          over the section's beach hero (z-0) yet under the chrome below. */}
+      {ambientCoverId && <AlbumAmbient cover={coverUrl(ambientCoverId)} />}
       <header className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-5 py-4 sm:px-8 sm:py-5">
         <Link
           href="/playlists"
@@ -79,8 +93,9 @@ export function PlaylistDetail({ id }: { id: string }) {
           <div className="mx-auto w-full max-w-6xl px-5 pt-2 pb-20 sm:px-8 lg:grid lg:grid-cols-[18.5rem_1fr] lg:items-start lg:gap-12 lg:pt-6">
             {/* Identity rail — same structure as the album detail:
                 cover-beside-identity on phones/tablets, a sticky column on
-                desktop so long lists keep the cover in view. It floats over the
-                beach hero (no ambient wash), so the text stays white. */}
+                desktop so long lists keep the cover in view. Text is ink over
+                the cover wash (album-style); white only in the beach-hero
+                fallback when no song carries a cover yet. */}
             <aside className="grid grid-cols-[8rem_1fr] items-center gap-x-5 sm:grid-cols-[14rem_1fr] sm:gap-x-7 lg:sticky lg:top-8 lg:flex lg:flex-col lg:items-start">
               <PlaylistCover
                 playlist={playlist}
@@ -91,11 +106,23 @@ export function PlaylistDetail({ id }: { id: string }) {
               <div className="flex min-w-0 flex-col items-start">
                 <h1
                   lang={!isLiked && isJapanese(name) ? "ja" : undefined}
-                  className="font-display text-2xl font-semibold leading-[1.15] text-white [text-shadow:0_4px_24px_rgba(11,58,83,0.5)] sm:text-[2.375rem] sm:leading-[1.12] lg:mt-6"
+                  className={cn(
+                    "font-display text-2xl font-semibold leading-[1.15] sm:text-[2.375rem] sm:leading-[1.12] lg:mt-6",
+                    ambientCoverId
+                      ? "text-foreground"
+                      : "text-white [text-shadow:0_4px_24px_rgba(11,58,83,0.5)]",
+                  )}
                 >
                   {name}
                 </h1>
-                <p className="mt-2 text-sm text-white/90 [text-shadow:0_2px_10px_rgba(11,58,83,0.5)]">
+                <p
+                  className={cn(
+                    "mt-2 text-sm",
+                    ambientCoverId
+                      ? "text-foreground/85"
+                      : "text-white/90 [text-shadow:0_2px_10px_rgba(11,58,83,0.5)]",
+                  )}
+                >
                   {meta}
                 </p>
                 <div className="mt-5 flex items-center gap-2.5 sm:mt-6">

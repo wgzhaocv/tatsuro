@@ -41,7 +41,9 @@ export function PlaylistsBrowser() {
       </div>
 
       <BrowseGrid
-        columns="[grid-template-columns:repeat(auto-fill,minmax(190px,1fr))]"
+        // Phones: a single-column compact list (tighter row gap than the
+        // default). sm+: the postcard grid that matches the album/MV screens.
+        columns="grid-cols-1 max-sm:gap-y-1 sm:[grid-template-columns:repeat(auto-fill,minmax(190px,1fr))]"
         isEmpty={hydrated && playlists.length === 0}
         emptyBody={t("emptyListBody")}
       >

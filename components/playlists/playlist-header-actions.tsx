@@ -1,6 +1,6 @@
 "use client";
 
-import { PencilSimple, Trash } from "@phosphor-icons/react";
+import { DotsThreeVertical, PencilSimple, Trash } from "@phosphor-icons/react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -13,13 +13,18 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Menu, MenuContent, MenuItem, MenuTrigger } from "@/components/ui/menu";
 import { useRouter } from "@/i18n/navigation";
 import { usePlaylistStore } from "@/lib/playlists/store";
 import type { Playlist } from "@/lib/playlists/types";
 import { PlaylistNameDialog } from "./name-dialog";
 
-/** Rename + delete for a user playlist, over the hero photo (frosted glass).
- *  Delete confirms first, then tombstones the list and returns to the index. */
+/**
+ * The user-playlist overflow menu (⋯) beside Play all — rename + delete today,
+ * with room for share / keep-offline later without crowding the identity block.
+ * Over the hero photo, so the trigger is frosted glass. Delete confirms first,
+ * then tombstones the list and returns to the index.
+ */
 export function PlaylistHeaderActions({ playlist }: { playlist: Playlist }) {
   const t = useTranslations("playlists");
   const [renaming, setRenaming] = useState(false);
@@ -29,29 +34,33 @@ export function PlaylistHeaderActions({ playlist }: { playlist: Playlist }) {
   const router = useRouter();
 
   return (
-    <div className="flex items-center gap-2">
-      <Button
-        type="button"
-        variant="glass"
-        size="icon"
-        className="rounded-full"
-        aria-label={t("rename")}
-        title={t("rename")}
-        onClick={() => setRenaming(true)}
-      >
-        <PencilSimple weight="bold" aria-hidden />
-      </Button>
-      <Button
-        type="button"
-        variant="glass"
-        size="icon"
-        className="rounded-full"
-        aria-label={t("delete")}
-        title={t("delete")}
-        onClick={() => setDeleting(true)}
-      >
-        <Trash weight="bold" aria-hidden />
-      </Button>
+    <>
+      <Menu>
+        <MenuTrigger
+          render={
+            <Button
+              type="button"
+              variant="glass"
+              size="icon"
+              className="size-11 rounded-full"
+              aria-label={t("moreActions")}
+              title={t("moreActions")}
+            />
+          }
+        >
+          <DotsThreeVertical weight="bold" aria-hidden />
+        </MenuTrigger>
+        <MenuContent>
+          <MenuItem onClick={() => setRenaming(true)}>
+            <PencilSimple weight="bold" aria-hidden />
+            {t("rename")}
+          </MenuItem>
+          <MenuItem variant="destructive" onClick={() => setDeleting(true)}>
+            <Trash weight="bold" aria-hidden />
+            {t("delete")}
+          </MenuItem>
+        </MenuContent>
+      </Menu>
 
       <PlaylistNameDialog
         open={renaming}
@@ -87,6 +96,6 @@ export function PlaylistHeaderActions({ playlist }: { playlist: Playlist }) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </>
   );
 }

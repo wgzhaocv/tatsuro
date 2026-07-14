@@ -15,7 +15,8 @@ export function BrowseGrid({
   emptyBody,
   children,
 }: {
-  /** Tailwind `grid-template-columns` arbitrary-property class(es). */
+  /** Grid layout classes for the `<ul>`: column template plus any gap /
+   *  responsive overrides (merged over the default `gap-x-5 gap-y-8`). */
   columns: string;
   isEmpty: boolean;
   emptyBody: string;

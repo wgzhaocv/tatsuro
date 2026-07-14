@@ -12,18 +12,24 @@ import type { Song } from "@/lib/api/types";
  * a remove button only where removing makes sense (a playlist detail passes
  * onRemove). Siblings of the row's play button — never nested inside it — so
  * the controls stay valid, independently focusable buttons.
+ *
+ * In the Liked list the heart is dropped (`hideLike`): every row is liked, so
+ * the heart would only ever unlike — exactly what the remove (×) already does,
+ * and remove carries the undo.
  */
 export function TrackActions({
   song,
   onRemove,
+  hideLike,
 }: {
   song: Song;
   onRemove?: () => void;
+  hideLike?: boolean;
 }) {
   const t = useTranslations("playlists");
   return (
     <div className="flex shrink-0 items-center">
-      <LikeButton song={song} />
+      {!hideLike && <LikeButton song={song} />}
       <AddToPlaylistButton song={song} />
       {onRemove && (
         <Button

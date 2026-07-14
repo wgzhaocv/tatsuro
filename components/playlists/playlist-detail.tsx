@@ -3,6 +3,7 @@
 import { ArrowLeft } from "@phosphor-icons/react";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo } from "react";
+import { toast } from "sonner";
 import { GlassPanel } from "@/components/glass-panel";
 import { ThemeToggle } from "@/components/theme-toggle";
 import {
@@ -26,7 +27,7 @@ import { PlaylistHeaderActions } from "./playlist-header-actions";
 
 /**
  * One playlist over the section's beach hero: a back bar, an identity block
- * (cover + name + count/duration + Play all + rename/delete), and the frosted
+ * (cover + name + count/duration + Play all + the ⋯ menu), and the frosted
  * tracklist sheet. Client-rendered off the persisted store; a missing id (bad
  * link, or a just-deleted list) bounces back to the index once hydrated.
  */
@@ -36,6 +37,7 @@ export function PlaylistDetail({ id }: { id: string }) {
   const hydrated = useHasHydrated();
   const playlist = usePlaylist(id);
   const removeSong = usePlaylistStore((s) => s.removeSong);
+  const restoreSong = usePlaylistStore((s) => s.restoreSong);
   const router = useRouter();
 
   useEffect(() => {
@@ -75,23 +77,25 @@ export function PlaylistDetail({ id }: { id: string }) {
       {hydrated && playlist && (
         <QueuePlaybackProvider songs={songs} label={name} queueId={playlist.id}>
           <div className="mx-auto w-full max-w-4xl px-5 pb-24 sm:px-8">
-            <div className="flex flex-col items-center gap-5 py-2 text-center sm:flex-row sm:items-end sm:text-left">
+            {/* Compact cover-beside-identity, mirroring the album detail: a
+                small cover left of left-aligned title, meta, and Play all. */}
+            <div className="flex items-center gap-4 py-2 sm:gap-6">
               <PlaylistCover
                 playlist={playlist}
-                sizes="200px"
-                className="size-40 shrink-0 rounded-[18px] shadow-postcard sm:size-48"
+                sizes="(max-width: 639px) 112px, 192px"
+                className="size-28 shrink-0 rounded-[14px] shadow-postcard sm:size-48 sm:rounded-[18px]"
               />
-              <div className="flex min-w-0 flex-col items-center sm:items-start">
+              <div className="flex min-w-0 flex-col items-start">
                 <h1
                   lang={!isLiked && isJapanese(name) ? "ja" : undefined}
-                  className="font-display text-4xl font-semibold text-white [text-shadow:0_4px_24px_rgba(11,58,83,0.5)] sm:text-5xl"
+                  className="font-display text-2xl font-semibold leading-[1.15] text-white [text-shadow:0_4px_24px_rgba(11,58,83,0.5)] sm:text-[2.375rem] sm:leading-[1.12]"
                 >
                   {name}
                 </h1>
-                <p className="mt-2.5 text-sm text-white/90 [text-shadow:0_2px_10px_rgba(11,58,83,0.5)]">
+                <p className="mt-2 text-sm text-white/90 [text-shadow:0_2px_10px_rgba(11,58,83,0.5)]">
                   {meta}
                 </p>
-                <div className="mt-5 flex items-center gap-2.5">
+                <div className="mt-4 flex items-center gap-2.5 sm:mt-6">
                   <PlayQueueButton
                     playText={t("playAll")}
                     pauseText={tRoot("album.pause")}
@@ -122,7 +126,22 @@ export function PlaylistDetail({ id }: { id: string }) {
                       track={song}
                       index={i}
                       queueIndex={i}
-                      onRemove={(s) => removeSong(playlist.id, s.id)}
+                      hideLike={isLiked}
+                      onRemove={(s) => {
+                        // Remove immediately (low-stakes, reversible) but offer
+                        // an undo that puts the entry back where it was.
+                        const entry = playlist.entries[i];
+                        removeSong(playlist.id, s.id);
+                        toast(t("removedFromPlaylist"), {
+                          // A touch longer than the default so there's a real
+                          // window to hit undo.
+                          duration: 6000,
+                          action: {
+                            label: t("undo"),
+                            onClick: () => restoreSong(playlist.id, entry, i),
+                          },
+                        });
+                      }}
                     />
                   ))}
                 </ol>

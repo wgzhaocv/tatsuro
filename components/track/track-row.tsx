@@ -26,6 +26,7 @@ export function TrackRow({
   index,
   queueIndex,
   onRemove,
+  hideLike,
 }: {
   track: Song;
   index: number;
@@ -33,6 +34,8 @@ export function TrackRow({
   queueIndex: number;
   /** When set, the row shows a remove button (playlist detail). */
   onRemove?: (song: Song) => void;
+  /** Drop the like heart (the Liked list, where it duplicates remove). */
+  hideLike?: boolean;
 }) {
   const t = useTranslations("album");
   const { songs, label, queueId } = useQueuePlayback();
@@ -120,6 +123,7 @@ export function TrackRow({
         <TrackActions
           song={song}
           onRemove={onRemove ? () => onRemove(song) : undefined}
+          hideLike={hideLike}
         />
       </div>
     </li>

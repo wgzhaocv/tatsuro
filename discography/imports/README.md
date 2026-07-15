@@ -30,6 +30,31 @@
 - 1 首 → opus 256k;封面用 **FLAC 内嵌图**(1440×1440,优于网上 640×640)提取
 - 建为 `category='single'` 单曲 Release;releases 31→32,songs 519→520;播放/出图均 HTTP 200
 
+### flac-backfill → 本地无损库 → R2 复原 — 2026-07-15 ✅
+
+发现**最初的旧服务器→Cloudflare 迁移只搬了 opus,flac 全部留在旧机**(R2 迁移后 flac 对象数=0)。经过一轮探索后定案:**R2 保持纯 opus,flac 只做本地无损归档**。
+
+- `flac_backfill.py`:曾给 10 张新专辑(batch-01)回填 114 个 flac 进 R2 + 加 `songs.flac_encoded_filename` 列(migration 0008)+ 改 `/stream/download` 有 flac 下 flac。**后已复原**:114 个 R2 flac 全删、列清回 NULL、下载回退 opus。migration 0008/schema/路由代码保留(列 NULL 时恒走 opus,将来想再上 flac 直接回填)。
+- `flac_library.py`:构建**全库本地无损库** `~/Downloads/tatsuro-flac`(13 GB)。以新模型(D1)为权威结构,`年份 - 名字 [版本]`,多 CD 分 `CD{n}`,每张 front/back.jpg。flac 来源:114 新歌本地 `~/Downloads/added` + 405 老歌走 **opi 旧 API**(`http://192.168.0.106:8091/player_api`,旧 albumId==新 album_id,`/music/album_songs/:id`→downloadId→`/stream/download`)+ Let It Be Me 走 mora 本地。**508/520 首**入库(魔数全过、逐专辑曲数比对一致)。
+- **数据损坏(已修复)**:opi `/home/zwg/storage/` 上 **Cozy(1998)track 04-15 共 12 个 flac 是 0 字节**(其余全库无损坏)。已用用户备份 `~/Downloads/cozy/1st`(AccurateRip 校验的 EAC rip)补齐 Cozy 全 15 首,时长逐首吻合。**本地库现 520/520 齐全**。
+
+### batch-03 · オノマトペISLAND／MOVE ON — 2026-07-16 ✅
+
+2025 双 A 面单曲(`~/Desktop/山下達郎 - オノマトペISLAND／MOVE ON`)。脚本 `add_single_onomatope.py`(plan/apply)。
+
+- **6 首**:オノマトペISLAND / MOVE ON / Santé + 3 首 KARAOKE。**复用文件夹里已转好的 `opus/`**(259k=libopus 256k,时长逐首吻合,未重转)。
+- 建 `category='single'` release(id=7167079766655044)+ album + 6 songs + 2 covers(front=オノマトペISLAND.jpg 1200²,back=moveon.jpg)。releases 32→33,重算 sort。
+- 验证:D1 6 曲、流播 opus 200、封面 200。**flac 已归档** `~/Downloads/tatsuro-flac/2025 - オノマトペISLAND／MOVE ON [Standard]/`(库 520→526)。
+
+### edition-zip · 按版本 m4a 下载 — 2026-07-16 ✅
+
+给每个 edition 做「点击下载整版 m4a」。脚本:`transcode_aac.py`(flac→aac_at,做了 256/192/128 三档本地库 `~/Downloads/tatsuro-aac{256,192,128}`)、`zip_upload.py`(plan/apply,按 edition 打 zip→R2→回填 D1 指针)、`r2_put.py`(S3 PutObject,传超 wrangler 300MiB 上限的大文件)、`r2_size.py`(S3 ListObjectsV2 求真实用量)。
+
+- 选定 **192k**(近乎透明、通用、3.4GB 能进 R2 免费额度)。每个 edition 一个 zip(存储模式,含各碟 m4a + front/back.jpg),**38 editions = 38 zip**。
+- D1:migration 0009 给 `albums` 加 `zip_encoded_filename` + `zip_size`(写在 edition 第1碟行);R2 传 `<enc>.zip`;后端 `/music/edition_zip/:editionId` 下发(Content-Disposition 带「名 [版本].zip」);`/music/release/:id` 每个 edition 加 `download:{editionId,size}`。前端读它显示按钮(本地开发接)。
+- **Opus 4CD zip=341MiB 超 wrangler 300MiB 上限** → 用 `r2_put.py`(S3,写 token)单独传。其余 37 个 wrangler 传。
+- 验证:Sonorite / Opus 下载均 200 + `PK` 魔数 + 正确文件名。**R2 现 9.20GB/10GB,真实剩余仅 ~0.8GB**(近满,后续加专辑要留意)。凭据见 [[local-flac-library]]。
+
 ## 遗留(用户侧)
 
 - 前端重部署(`revalidateTag` 或重建)后新专辑/封面才在网格显示——后端 API 直连已是新数据。

@@ -51,6 +51,13 @@ export type Disc = {
   tracks: Song[];
 };
 
+/** A downloadable full-edition archive (all discs' AAC-192k m4a + covers),
+ *  present only when the backend has built the zip. `size` is bytes. */
+export type EditionDownload = {
+  editionId: string;
+  size: number;
+};
+
 /** A physical edition/pressing of a release. */
 export type Edition = {
   id: string;
@@ -59,6 +66,8 @@ export type Edition = {
   coverFrontId: string;
   coverBackId: string;
   discs: Disc[];
+  /** Present iff a zip archive exists for this edition (see EditionDownload). */
+  download?: EditionDownload;
 };
 
 /** Full release detail (editions + discs), for the album screen + edition switch. */
@@ -171,6 +180,7 @@ export type ApiReleaseDetail = {
     year: number | null;
     coverFrontId: string;
     coverBackId: string;
+    download?: { editionId: string; size: number };
     discs: {
       discId: string;
       number: number;
@@ -248,6 +258,7 @@ export function toAlbumDetail(r: ApiReleaseDetail): AlbumDetail {
       year: e.year ?? undefined,
       coverFrontId: e.coverFrontId,
       coverBackId: e.coverBackId,
+      download: e.download,
       discs: e.discs.map((d) => ({
         id: d.discId,
         number: d.number,

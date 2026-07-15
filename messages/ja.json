@@ -54,7 +54,10 @@
     "play": "再生",
     "pause": "一時停止",
     "playNamed": "{name}を再生",
-    "pauseNamed": "{name}を一時停止"
+    "pauseNamed": "{name}を一時停止",
+    "download": "ダウンロード",
+    "downloadMeta": "{size} · AAC 192 kbps · m4a",
+    "downloadNamed": "{name}をダウンロード({size})"
   },
   "mv": {
     "download": "ダウンロード",
@@ -149,6 +152,7 @@
   },
   "share": {
     "song": "曲をシェア",
+    "album": "アルバムをシェア",
     "copied": "リンクをコピーしました",
     "shared": "シェアしました",
     "failed": "共有リンクを作成できませんでした"

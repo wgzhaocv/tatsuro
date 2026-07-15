@@ -21,6 +21,13 @@ export function songDownloadUrl(songId: string): string {
   return `${API}/stream/download/${songId}`;
 }
 
+/** Downloadable full-edition zip (all discs' AAC-192k m4a + covers). `editionId`
+ *  is EditionDownload.editionId. The Worker sets Content-Disposition, so the
+ *  browser saves it — hand it straight to an <a href>/window.location. */
+export function editionZipUrl(editionId: string): string {
+  return `${API}/music/edition_zip/${editionId}`;
+}
+
 /** Downloadable MV video file. Streaming + thumbnails come pre-built from
  *  /mv/list (public bucket domain); only the attachment download stays a
  *  Worker route (for the Content-Disposition filename). */

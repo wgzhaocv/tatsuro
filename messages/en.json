@@ -54,7 +54,10 @@
     "play": "Play",
     "pause": "Pause",
     "playNamed": "Play {name}",
-    "pauseNamed": "Pause {name}"
+    "pauseNamed": "Pause {name}",
+    "download": "Download",
+    "downloadMeta": "{size} · AAC 192 kbps · m4a",
+    "downloadNamed": "Download {name} ({size})"
   },
   "mv": {
     "download": "Download",
@@ -149,6 +152,7 @@
   },
   "share": {
     "song": "Share song",
+    "album": "Share album",
     "copied": "Link copied to clipboard",
     "shared": "Shared",
     "failed": "Couldn't create a share link"

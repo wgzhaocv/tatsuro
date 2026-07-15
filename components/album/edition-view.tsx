@@ -1,22 +1,26 @@
+import { DownloadSimpleIcon } from "@phosphor-icons/react/dist/ssr";
 import { getTranslations } from "next-intl/server";
 import { GlassPanel } from "@/components/glass-panel";
 import {
   PlayQueueButton,
   QueuePlaybackProvider,
 } from "@/components/track/playback-context";
+import { buttonVariants } from "@/components/ui/button";
 import {
   type AlbumDetail,
   type Edition,
   editionQueueSongs,
+  editionSlug,
 } from "@/lib/api/types";
-import { coverUrl } from "@/lib/api/urls";
+import { coverUrl, editionZipUrl } from "@/lib/api/urls";
 import { ARTIST } from "@/lib/constants";
-import { durationLabel } from "@/lib/format";
+import { durationLabel, formatFileSize } from "@/lib/format";
 import { isJapanese } from "@/lib/text";
 import { AlbumAmbient } from "./album-ambient";
 import { DiscSection } from "./disc-section";
 import { EditionSwitch } from "./edition-switch";
 import { FadeImage } from "./fade-image";
+import { ShareEditionButton } from "./share-edition-button";
 import { SharedSongHighlight } from "./shared-song-highlight";
 
 /**
@@ -69,6 +73,10 @@ export async function EditionView({
     hasEditions && edition.year != null
       ? `${album.name} (${edition.year})`
       : album.name;
+  // Share targets this edition's own route: null slug = the default edition
+  // (/album/:id), reissues carry their slug (/album/:id/:slug).
+  const shareSlug =
+    edition.id === album.defaultEditionId ? null : editionSlug(edition);
 
   return (
     <QueuePlaybackProvider
@@ -104,11 +112,44 @@ export async function EditionView({
             </p>
             <p className="mt-1.5 text-sm text-foreground/85">{metaLine}</p>
 
-            <div className="mt-5 sm:mt-6">
-              <PlayQueueButton
-                playText={t("album.play")}
-                pauseText={t("album.pause")}
-              />
+            <div className="mt-5 flex flex-col items-start gap-3 sm:mt-6">
+              <div className="flex items-center gap-2">
+                <PlayQueueButton
+                  playText={t("album.play")}
+                  pauseText={t("album.pause")}
+                />
+                <ShareEditionButton
+                  albumId={album.id}
+                  slug={shareSlug}
+                  title={queueLabel}
+                />
+              </div>
+              {edition.download && (
+                <div className="flex flex-col items-start gap-1.5">
+                  <a
+                    href={editionZipUrl(edition.download.editionId)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={t("album.downloadNamed", {
+                      name: album.name,
+                      size: formatFileSize(edition.download.size),
+                    })}
+                    className={buttonVariants({ variant: "glass-ink" })}
+                  >
+                    <DownloadSimpleIcon
+                      size={16}
+                      data-icon="inline-start"
+                      aria-hidden
+                    />
+                    {t("album.download")}
+                  </a>
+                  <span className="pl-1 text-xs text-muted-foreground">
+                    {t("album.downloadMeta", {
+                      size: formatFileSize(edition.download.size),
+                    })}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
 

@@ -3,7 +3,7 @@
 import { ShareNetwork } from "@phosphor-icons/react";
 import { useLocale, useTranslations } from "next-intl";
 import { useCallback } from "react";
-import { toast } from "sonner";
+import { useShareLink } from "@/components/share/use-share";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -21,34 +21,19 @@ import { cn } from "@/lib/utils";
  * standalone button and the track-row overflow menu share one implementation.
  */
 export function useShareSong(song: Song): () => Promise<void> {
-  const t = useTranslations("share");
+  const share = useShareLink();
   const locale = useLocale();
-  return useCallback(async () => {
-    try {
-      const link = song.albumId
-        ? await getSongShareLink(song.albumId, song.id, locale)
-        : null;
-      if (!link) {
-        toast.error(t("failed"));
-        return;
-      }
-      const url = `${window.location.origin}/${locale}${link}`;
-      // Native share sheet on touch devices; clipboard on desktop.
-      if (
-        typeof navigator.share === "function" &&
-        navigator.maxTouchPoints > 0
-      ) {
-        await navigator.share({ title: song.name, url });
-      } else {
-        await navigator.clipboard.writeText(url);
-        toast.success(t("copied"));
-      }
-    } catch (err) {
-      // User dismissed the native share sheet — not an error.
-      if (err instanceof DOMException && err.name === "AbortError") return;
-      toast.error(t("failed"));
-    }
-  }, [song.albumId, song.id, song.name, locale, t]);
+  return useCallback(
+    () =>
+      share(
+        () =>
+          song.albumId
+            ? getSongShareLink(song.albumId, song.id, locale)
+            : Promise.resolve(null),
+        song.name,
+      ),
+    [share, locale, song.albumId, song.id, song.name],
+  );
 }
 
 /** Standalone icon button — the roomy surfaces (full player). */

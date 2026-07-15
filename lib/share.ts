@@ -42,3 +42,20 @@ export async function getSongShareLink(
   const token = await signToken();
   return `${href}?song=${songId}&${AUTH_COOKIE_NAME}=${token}`;
 }
+
+/**
+ * Build a shareable deep link to an album edition: its release route (the
+ * default edition at /album/:id, reissues at /album/:id/:slug — see
+ * EditionSwitch) plus a freshly minted auth token (`?argot=…`) so the recipient
+ * — and link-preview bots — open straight in without the gate. `slug` is null
+ * for the default edition. Locale-less path; the caller prepends origin + locale.
+ */
+export async function getEditionShareLink(
+  albumId: string,
+  slug: string | null,
+): Promise<string> {
+  const token = await signToken();
+  const base = `/album/${albumId}`;
+  const href = slug ? `${base}/${slug}` : base;
+  return `${href}?${AUTH_COOKIE_NAME}=${token}`;
+}

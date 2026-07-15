@@ -54,7 +54,10 @@
     "play": "播放",
     "pause": "暂停",
     "playNamed": "播放 {name}",
-    "pauseNamed": "暂停 {name}"
+    "pauseNamed": "暂停 {name}",
+    "download": "下载",
+    "downloadMeta": "{size} · AAC 192 kbps · m4a",
+    "downloadNamed": "下载 {name}（{size}）"
   },
   "mv": {
     "download": "下载",
@@ -149,6 +152,7 @@
   },
   "share": {
     "song": "分享歌曲",
+    "album": "分享专辑",
     "copied": "链接已复制",
     "shared": "已分享",
     "failed": "无法创建分享链接"

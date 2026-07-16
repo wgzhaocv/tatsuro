@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse, userAgent } from "next/server";
 import createMiddleware from "next-intl/middleware";
 import { routing } from "@/i18n/routing";
-import { verifyToken } from "@/lib/auth";
+import { signToken, verifyToken } from "@/lib/auth";
 import { AUTH_COOKIE_NAME, REDIRECT_URL_COOKIE } from "@/lib/constants";
 
 // next-intl handles locale routing (/ → /{locale}, Accept-Language + NEXT_LOCALE
@@ -92,10 +92,14 @@ export async function proxy(request: NextRequest) {
     return passThrough();
   }
 
-  // Only unverified visitors reach here — validate a share-link token lazily
-  // (the common no-param case skips the HMAC; see verifyToken).
+  // Only unverified visitors reach here — accept a share link that carries either
+  // a valid signed token or, for backward-compat with the old site, the raw gate
+  // password as the param value (old links wrote the password straight into the
+  // URL). The common no-param case skips the HMAC (see verifyToken).
   const isParamValid = await verifyToken(tokenFromParam);
-  if (isParamValid && tokenFromParam) {
+  const isLegacyPasswordParam =
+    !isParamValid && !!tokenFromParam && tokenFromParam === process.env.ARGOT;
+  if ((isParamValid || isLegacyPasswordParam) && tokenFromParam) {
     // A share link carrying a valid token. Bots don't reliably keep the cookie
     // across the token-stripping redirect, so serve the page directly with the
     // token still in the URL — the preview then unfurls the real content OG.
@@ -103,13 +107,16 @@ export async function proxy(request: NextRequest) {
     if (userAgent(request).isBot) {
       return passThrough();
     }
+    // The cookie must be a signed token: reuse the valid one, or mint a fresh
+    // token for a legacy password link — never store the raw password in a cookie.
+    const cookieValue = isParamValid ? tokenFromParam : await signToken();
     const saved = request.cookies.get(REDIRECT_URL_COOKIE)?.value;
     url.searchParams.delete(AUTH_COOKIE_NAME);
     const target = isGate
       ? resolveRedirect(saved, request.url, activeLocale)
       : url;
     const response = NextResponse.redirect(target);
-    response.cookies.set(AUTH_COOKIE_NAME, tokenFromParam, AUTH_COOKIE_OPTIONS);
+    response.cookies.set(AUTH_COOKIE_NAME, cookieValue, AUTH_COOKIE_OPTIONS);
     response.cookies.delete(REDIRECT_URL_COOKIE);
     return response;
   }

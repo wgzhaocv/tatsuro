@@ -133,8 +133,7 @@ export async function EditionView({
                 <PinButton
                   albumId={album.id}
                   name={album.name}
-                  variant="glass-ink"
-                  size="icon"
+                  surface="page"
                 />
               </div>
               {edition.download && (

@@ -55,7 +55,10 @@ export function MiniPlayer() {
         // layer, glued to the viewport through the iOS URL-bar show/hide rather
         // than detaching from a stale layout-viewport bottom (composes with the
         // translate-y show/hide below).
-        "pointer-events-none fixed inset-x-0 bottom-0 z-40 transform-gpu px-3 pb-[calc(env(safe-area-inset-bottom)+3.5rem+0.5rem)] transition-transform duration-500 ease-lazy [-webkit-backface-visibility:hidden] [backface-visibility:hidden] sm:px-4 lg:pb-[calc(env(safe-area-inset-bottom)+0.75rem)]",
+        // Own view-transition-name so a page-level View Transition (the pin
+        // reorder) treats this fixed bar as a stable group instead of folding it
+        // into the root snapshot and blinking it out mid-animation.
+        "pointer-events-none fixed inset-x-0 bottom-0 z-40 transform-gpu px-3 pb-[calc(env(safe-area-inset-bottom)+3.5rem+0.5rem)] transition-transform duration-500 ease-lazy [view-transition-name:mini-player] [-webkit-backface-visibility:hidden] [backface-visibility:hidden] sm:px-4 lg:pb-[calc(env(safe-area-inset-bottom)+0.75rem)]",
         song ? "translate-y-0" : "translate-y-[130%]",
       )}
     >

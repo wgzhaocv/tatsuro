@@ -9,56 +9,55 @@ import { cn } from "@/lib/utils";
 import { withViewTransition } from "@/lib/view-transition";
 
 /**
- * Pin/unpin a release. Two surfaces share it: the grid card (variant "glass"
- * over the cover photo — Deep Water Rule: white glass over a scrimmed image)
- * and the album page action row (variant "glass-ink" over the bright ambient
- * wash). A sonner toast confirms every toggle, since the album page has no
- * visible reorder to signal the change (the grid does — the card floats up).
+ * Pin/unpin a release. One `surface` prop picks the whole preset, since look
+ * and feedback co-vary:
  *
- * On the card it's a sibling of the cover Link (never nested — a button inside
- * an anchor is invalid HTML), so its own click never navigates.
+ * - "card" — the grid cover. White glass over the scrimmed image (Deep Water
+ *   Rule), hidden until hover/focus on desktop (shown on touch + when pinned),
+ *   a sibling of the cover Link (never nested — a button inside an anchor is
+ *   invalid HTML). Toggling runs inside a View Transition so the card visibly
+ *   slides to the front; that reorder IS the feedback, so no toast.
+ * - "page" — the album action row. Ink glass over the bright ambient wash, a
+ *   permanent button. Nothing moves here, so a toast is the only confirmation
+ *   (and no View Transition — there's nothing to slide).
  */
 export function PinButton({
   albumId,
   name,
-  variant = "glass",
-  size = "icon-sm",
-  reveal = false,
+  surface,
   className,
 }: {
   albumId: string;
   name: string;
-  variant?: "glass" | "glass-ink";
-  size?: "icon-sm" | "icon";
-  /** Grid card: hidden until hover (desktop) / always shown (touch + when
-   *  pinned). The album page passes false — it's a permanent action-row button. */
-  reveal?: boolean;
+  surface: "card" | "page";
   className?: string;
 }) {
   const t = useTranslations("pins");
   const pinned = useIsPinned(albumId);
   const togglePin = usePinStore((s) => s.togglePin);
+  const isCard = surface === "card";
 
   const toggle = () => {
-    // View Transition so the grid reorder slides (the pinned card floats to the
-    // front) instead of teleporting; degrades to an instant update elsewhere.
-    withViewTransition(() => togglePin(albumId));
-    toast.success(pinned ? t("unpinned", { name }) : t("pinned", { name }));
+    if (isCard) {
+      withViewTransition(() => togglePin(albumId));
+    } else {
+      togglePin(albumId);
+      toast.success(pinned ? t("unpinned", { name }) : t("pinned", { name }));
+    }
   };
 
-  // Cards default to a shown pin (filled when pinned). The only special case is
-  // an unpinned card on desktop, which hides its (outline) pin until the card is
-  // hovered/focused — on touch there's no hover, so it stays visible.
+  // Only an unpinned card hides its (outline) pin until hover/focus on desktop;
+  // pinned cards and the page button are always visible.
   const revealCls =
-    reveal && !pinned
+    isCard && !pinned
       ? "transition-opacity duration-300 lg:opacity-0 lg:group-hover/card:opacity-100 lg:group-focus-within/card:opacity-100 lg:focus-visible:opacity-100"
       : "";
 
   return (
     <Button
       type="button"
-      variant={variant}
-      size={size}
+      variant={isCard ? "glass" : "glass-ink"}
+      size={isCard ? "icon-sm" : "icon"}
       aria-pressed={pinned}
       aria-label={pinned ? t("unpin", { name }) : t("pin", { name })}
       onClick={toggle}

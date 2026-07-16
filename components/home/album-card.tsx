@@ -85,7 +85,7 @@ export function AlbumCard({
       <PinButton
         albumId={album.id}
         name={album.name}
-        reveal
+        surface="card"
         className="absolute left-2 top-2"
       />
     </div>

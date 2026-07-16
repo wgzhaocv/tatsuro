@@ -69,6 +69,12 @@ export function PlaylistDetail({ id }: { id: string }) {
     .filter(Boolean)
     .join(" · ");
 
+  // Loading (store not yet rehydrated) or about to redirect (no such playlist):
+  // show one skeleton for the whole load so nothing flashes blank. The same
+  // component backs the route's Suspense fallback (page.tsx), so the server-
+  // streamed hole and the client hydration phase render identically.
+  if (!hydrated || !playlist) return <PlaylistDetailSkeleton />;
+
   return (
     <div className="relative z-10 flex min-h-dvh flex-col">
       {/* Sits in this z-10 stacking context, so the fixed -z-10 wash paints
@@ -88,140 +94,142 @@ export function PlaylistDetail({ id }: { id: string }) {
         <ThemeToggle />
       </header>
 
-      {/* Local store rehydrates after mount (skipHydration), so the first paint
-          has no playlist yet — show a skeleton instead of a blank body. */}
-      {!hydrated && <PlaylistDetailSkeleton />}
-
-      {hydrated && playlist && (
-        <QueuePlaybackProvider songs={songs} label={name} queueId={playlist.id}>
-          <div className="mx-auto w-full max-w-6xl px-5 pt-2 pb-20 sm:px-8 lg:grid lg:grid-cols-[18.5rem_1fr] lg:items-start lg:gap-12 lg:pt-6">
-            {/* Identity rail — same structure as the album detail:
+      <QueuePlaybackProvider songs={songs} label={name} queueId={playlist.id}>
+        <div className="mx-auto w-full max-w-6xl px-5 pt-2 pb-20 sm:px-8 lg:grid lg:grid-cols-[18.5rem_1fr] lg:items-start lg:gap-12 lg:pt-6">
+          {/* Identity rail — same structure as the album detail:
                 cover-beside-identity on phones/tablets, a sticky column on
                 desktop so long lists keep the cover in view. Text is ink over
                 the cover wash (album-style); white only in the beach-hero
                 fallback when no song carries a cover yet. */}
-            <aside className="grid grid-cols-[8rem_1fr] items-center gap-x-5 sm:grid-cols-[14rem_1fr] sm:gap-x-7 lg:sticky lg:top-8 lg:flex lg:flex-col lg:items-start">
-              <PlaylistCover
-                playlist={playlist}
-                sizes="(max-width: 640px) 128px, (max-width: 1024px) 224px, 296px"
-                className="aspect-square w-full rounded-[14px] shadow-postcard sm:rounded-[20px]"
-              />
+          <aside className="grid grid-cols-[8rem_1fr] items-center gap-x-5 sm:grid-cols-[14rem_1fr] sm:gap-x-7 lg:sticky lg:top-8 lg:flex lg:flex-col lg:items-start">
+            <PlaylistCover
+              playlist={playlist}
+              sizes="(max-width: 640px) 128px, (max-width: 1024px) 224px, 296px"
+              className="aspect-square w-full rounded-[14px] shadow-postcard sm:rounded-[20px]"
+            />
 
-              <div className="flex min-w-0 flex-col items-start">
-                <h1
-                  lang={!isLiked && isJapanese(name) ? "ja" : undefined}
-                  className={cn(
-                    "font-display text-2xl font-semibold leading-[1.15] sm:text-[2.375rem] sm:leading-[1.12] lg:mt-6",
-                    ambientCoverId
-                      ? "text-foreground"
-                      : "text-white [text-shadow:0_4px_24px_rgba(11,58,83,0.5)]",
-                  )}
-                >
-                  {name}
-                </h1>
-                <p
-                  className={cn(
-                    "mt-2 text-sm",
-                    ambientCoverId
-                      ? "text-foreground/85"
-                      : "text-white/90 [text-shadow:0_2px_10px_rgba(11,58,83,0.5)]",
-                  )}
-                >
-                  {meta}
-                </p>
-                <div className="mt-5 flex items-center gap-2.5 sm:mt-6">
-                  <PlayQueueButton
-                    playText={t("playAll")}
-                    pauseText={tRoot("album.pause")}
-                  />
-                  {!isLiked && <PlaylistHeaderActions playlist={playlist} />}
-                </div>
-              </div>
-            </aside>
-
-            {songs.length === 0 ? (
-              <GlassPanel className="mt-10 rounded-[28px] px-6 py-16 text-center shadow-postcard lg:mt-0">
-                <p className="font-display text-lg font-medium text-foreground">
-                  {t("emptyDetail")}
-                </p>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {isLiked ? t("emptyLikedBody") : t("emptyDetailBody")}
-                </p>
-              </GlassPanel>
-            ) : (
-              <GlassPanel
-                as="main"
-                className="mt-10 rounded-[28px] px-3 py-6 shadow-postcard sm:px-6 lg:mt-0"
+            <div className="flex min-w-0 flex-col items-start">
+              <h1
+                lang={!isLiked && isJapanese(name) ? "ja" : undefined}
+                className={cn(
+                  "font-display text-2xl font-semibold leading-[1.15] sm:text-[2.375rem] sm:leading-[1.12] lg:mt-6",
+                  ambientCoverId
+                    ? "text-foreground"
+                    : "text-white [text-shadow:0_4px_24px_rgba(11,58,83,0.5)]",
+                )}
               >
-                <ol>
-                  {songs.map((song, i) => (
-                    <TrackRow
-                      key={song.id}
-                      track={song}
-                      index={i}
-                      queueIndex={i}
-                      hideLike={isLiked}
-                      showAlbumLink
-                      onRemove={(s) => {
-                        // Remove immediately (low-stakes, reversible) but offer
-                        // an undo that puts the entry back where it was.
-                        const entry = playlist.entries[i];
-                        removeSong(playlist.id, s.id);
-                        toast(t("removedFromPlaylist"), {
-                          // A touch longer than the default so there's a real
-                          // window to hit undo.
-                          duration: 6000,
-                          action: {
-                            label: t("undo"),
-                            onClick: () => restoreSong(playlist.id, entry, i),
-                          },
-                        });
-                      }}
-                    />
-                  ))}
-                </ol>
+                {name}
+              </h1>
+              <p
+                className={cn(
+                  "mt-2 text-sm",
+                  ambientCoverId
+                    ? "text-foreground/85"
+                    : "text-white/90 [text-shadow:0_2px_10px_rgba(11,58,83,0.5)]",
+                )}
+              >
+                {meta}
+              </p>
+              <div className="mt-5 flex items-center gap-2.5 sm:mt-6">
+                <PlayQueueButton
+                  playText={t("playAll")}
+                  pauseText={tRoot("album.pause")}
+                />
+                {!isLiked && <PlaylistHeaderActions playlist={playlist} />}
+              </div>
+            </div>
+          </aside>
 
-                <p className="mt-8 border-t border-border/70 px-3 pt-5 text-[13px] text-muted-foreground">
-                  {meta}
-                </p>
-              </GlassPanel>
-            )}
-          </div>
-        </QueuePlaybackProvider>
-      )}
+          {songs.length === 0 ? (
+            <GlassPanel className="mt-10 rounded-[28px] px-6 py-16 text-center shadow-postcard lg:mt-0">
+              <p className="font-display text-lg font-medium text-foreground">
+                {t("emptyDetail")}
+              </p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {isLiked ? t("emptyLikedBody") : t("emptyDetailBody")}
+              </p>
+            </GlassPanel>
+          ) : (
+            <GlassPanel
+              as="main"
+              className="mt-10 rounded-[28px] px-3 py-6 shadow-postcard sm:px-6 lg:mt-0"
+            >
+              <ol>
+                {songs.map((song, i) => (
+                  <TrackRow
+                    key={song.id}
+                    track={song}
+                    index={i}
+                    queueIndex={i}
+                    hideLike={isLiked}
+                    showAlbumLink
+                    onRemove={(s) => {
+                      // Remove immediately (low-stakes, reversible) but offer
+                      // an undo that puts the entry back where it was.
+                      const entry = playlist.entries[i];
+                      removeSong(playlist.id, s.id);
+                      toast(t("removedFromPlaylist"), {
+                        // A touch longer than the default so there's a real
+                        // window to hit undo.
+                        duration: 6000,
+                        action: {
+                          label: t("undo"),
+                          onClick: () => restoreSong(playlist.id, entry, i),
+                        },
+                      });
+                    }}
+                  />
+                ))}
+              </ol>
+
+              <p className="mt-8 border-t border-border/70 px-3 pt-5 text-[13px] text-muted-foreground">
+                {meta}
+              </p>
+            </GlassPanel>
+          )}
+        </div>
+      </QueuePlaybackProvider>
     </div>
   );
 }
 
 /**
- * Placeholder shown while the local playlist store rehydrates — mirrors the real
- * layout (identity rail + track rows) so the detail doesn't flash a blank body.
- * White-tint blocks read over the section's beach hero (no cover ambient yet);
- * the global reduced-motion switch stills the pulse.
+ * Full-page placeholder for the playlist detail — header chrome + identity rail +
+ * track rows. Used both as the route's Suspense fallback (page.tsx, while the
+ * dynamic params hole streams) and as PlaylistDetail's own loading state (while
+ * the local store rehydrates), so the whole load shows one steady skeleton with
+ * no blank flash. White-tint blocks read over the section's beach hero; the
+ * global reduced-motion switch stills the pulse.
  */
-function PlaylistDetailSkeleton() {
+export function PlaylistDetailSkeleton() {
   return (
-    <div className="mx-auto w-full max-w-6xl px-5 pt-2 pb-20 sm:px-8 lg:grid lg:grid-cols-[18.5rem_1fr] lg:items-start lg:gap-12 lg:pt-6">
-      <aside className="grid grid-cols-[8rem_1fr] items-center gap-x-5 sm:grid-cols-[14rem_1fr] sm:gap-x-7 lg:flex lg:flex-col lg:items-start">
-        <div className="aspect-square w-full animate-pulse rounded-[14px] bg-white/20 shadow-postcard sm:rounded-[20px]" />
-        <div className="flex min-w-0 flex-col items-start gap-3 lg:mt-6 lg:w-full">
-          <div className="h-8 w-40 animate-pulse rounded-md bg-white/20 sm:h-10 sm:w-56" />
-          <div className="h-4 w-28 animate-pulse rounded bg-white/20" />
-          <div className="mt-2 h-11 w-32 animate-pulse rounded-full bg-white/20" />
-        </div>
-      </aside>
-      <ol className="mt-8 flex flex-col gap-1 lg:mt-0">
-        {["a", "b", "c", "d", "e", "f", "g", "h"].map((k) => (
-          <li key={k} className="flex items-center gap-3 px-3 py-2">
-            <div className="size-11 shrink-0 animate-pulse rounded-md bg-white/20" />
-            <div className="flex min-w-0 grow flex-col gap-1.5">
-              <div className="h-3.5 w-1/2 animate-pulse rounded bg-white/20" />
-              <div className="h-3 w-1/3 animate-pulse rounded bg-white/20" />
-            </div>
-            <div className="h-3 w-10 animate-pulse rounded bg-white/20" />
-          </li>
-        ))}
-      </ol>
+    <div className="relative z-10 flex min-h-dvh flex-col">
+      <header className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-5 py-4 sm:px-8 sm:py-5">
+        <div className="h-11 w-32 animate-pulse rounded-full bg-white/20" />
+        <div className="size-11 animate-pulse rounded-full bg-white/20" />
+      </header>
+      <div className="mx-auto w-full max-w-6xl px-5 pt-2 pb-20 sm:px-8 lg:grid lg:grid-cols-[18.5rem_1fr] lg:items-start lg:gap-12 lg:pt-6">
+        <aside className="grid grid-cols-[8rem_1fr] items-center gap-x-5 sm:grid-cols-[14rem_1fr] sm:gap-x-7 lg:flex lg:flex-col lg:items-start">
+          <div className="aspect-square w-full animate-pulse rounded-[14px] bg-white/20 shadow-postcard sm:rounded-[20px]" />
+          <div className="flex min-w-0 flex-col items-start gap-3 lg:mt-6 lg:w-full">
+            <div className="h-8 w-40 animate-pulse rounded-md bg-white/20 sm:h-10 sm:w-56" />
+            <div className="h-4 w-28 animate-pulse rounded bg-white/20" />
+            <div className="mt-2 h-11 w-32 animate-pulse rounded-full bg-white/20" />
+          </div>
+        </aside>
+        <ol className="mt-8 flex flex-col gap-1 lg:mt-0">
+          {["a", "b", "c", "d", "e", "f", "g", "h"].map((k) => (
+            <li key={k} className="flex items-center gap-3 px-3 py-2">
+              <div className="size-11 shrink-0 animate-pulse rounded-md bg-white/20" />
+              <div className="flex min-w-0 grow flex-col gap-1.5">
+                <div className="h-3.5 w-1/2 animate-pulse rounded bg-white/20" />
+                <div className="h-3 w-1/3 animate-pulse rounded bg-white/20" />
+              </div>
+              <div className="h-3 w-10 animate-pulse rounded bg-white/20" />
+            </li>
+          ))}
+        </ol>
+      </div>
     </div>
   );
 }

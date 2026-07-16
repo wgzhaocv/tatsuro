@@ -1,6 +1,9 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Suspense } from "react";
-import { PlaylistDetail } from "@/components/playlists/playlist-detail";
+import {
+  PlaylistDetail,
+  PlaylistDetailSkeleton,
+} from "@/components/playlists/playlist-detail";
 
 export async function generateMetadata({
   params,
@@ -23,7 +26,7 @@ export default function PlaylistDetailPage({
   params: Promise<{ locale: string; id: string }>;
 }) {
   return (
-    <Suspense>
+    <Suspense fallback={<PlaylistDetailSkeleton />}>
       <PlaylistDetailRoute params={params} />
     </Suspense>
   );

@@ -275,6 +275,23 @@ export function AudioEngine() {
     };
   }, [song]);
 
+  // ── MediaSession playbackState: tell the OS play vs pause ──
+  // Browsers do NOT infer this from the <audio> element — it must be set
+  // explicitly (MDN), and without it the session sits at "none", which leaves
+  // the lock-screen / AirPods play·pause icon wrong and makes iOS likelier to
+  // drop the remote-control target. Mirror the store's playing INTENT, not the
+  // raw element: during the iOS auto-pause fight the element pauses for a beat
+  // while isPlaying stays true, and the controls should stay "playing" through
+  // it rather than flicker. (It can't un-suspend a frozen background tab — that
+  // needs the standalone PWA process — but it keeps the session correct and
+  // resumable for as long as the tab lives.)
+  useEffect(() => {
+    if (!("mediaSession" in navigator)) return;
+    let state: MediaSessionPlaybackState = "none";
+    if (song) state = isPlaying ? "playing" : "paused";
+    navigator.mediaSession.playbackState = state;
+  }, [isPlaying, song]);
+
   useEffect(() => {
     try {
       // iOS 16.4+: keep the audio session alive in the background.

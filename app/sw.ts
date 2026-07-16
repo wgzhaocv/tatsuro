@@ -3,11 +3,11 @@
 // Service worker. Bundled by @serwist/turbopack's route handler
 // (app/serwist/[path]/route.ts) and served at /serwist/sw.js — Turbopack has
 // no webpack plugins, so the official @serwist/next integration doesn't apply
-// here. Only audio streams get runtime caching (see sw/audio-cache); pages,
-// covers, and static assets already have their own caching stories.
+// here. Runtime caching: audio streams (see sw/audio-cache) and album covers
+// (cache-first below); pages and static assets keep their own caching stories.
 
 import type { PrecacheEntry, SerwistGlobalConfig } from "serwist";
-import { Serwist } from "serwist";
+import { CacheFirst, ExpirationPlugin, Serwist } from "serwist";
 import { audioStreamHandler } from "./sw/audio-cache";
 
 declare global {
@@ -27,6 +27,33 @@ const serwist = new Serwist({
 serwist.registerCapture(
   ({ url }) => url.pathname.includes("/stream/new_play"),
   audioStreamHandler,
+);
+
+// Album covers, cache-first. next/image renders same-origin image requests to
+// /_next/image?url=<encoded backend url>&w=…&q=… — the backend cover URL rides
+// inside the `url` param, so we match on it to catch only covers (not the beach
+// hero photos or MV thumbnails, which also route through /_next/image). A plain
+// browser refresh downgrades HTTP cache to conditional (304) round-trips; the SW
+// short-circuits that with a local hit, so covers reappear instantly on reload.
+//
+// Fully independent of the audio cache: its own cache store, its own eviction.
+// Bounded by entry count (each optimized cover is only tens of KB, so a few
+// hundred is a handful of MB); purgeOnQuotaError lets it self-evict rather than
+// throw if the audio cache has consumed the origin's storage budget.
+serwist.registerCapture(
+  ({ url }) =>
+    url.pathname === "/_next/image" &&
+    (url.searchParams.get("url") ?? "").includes("/stream/img/"),
+  new CacheFirst({
+    cacheName: "cover-cache",
+    plugins: [
+      new ExpirationPlugin({
+        maxEntries: 300,
+        maxAgeSeconds: 30 * 24 * 60 * 60, // 30d, mirrors the upstream max-age
+        purgeOnQuotaError: true,
+      }),
+    ],
+  }),
 );
 
 serwist.addEventListeners();

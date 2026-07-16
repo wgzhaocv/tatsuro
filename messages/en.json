@@ -163,6 +163,12 @@
     "shared": "Shared",
     "failed": "Couldn't create a share link"
   },
+  "pins": {
+    "pin": "Pin {name}",
+    "unpin": "Unpin {name}",
+    "pinned": "Pinned {name}",
+    "unpinned": "Unpinned {name}"
+  },
   "account": {
     "label": "Sync playlists",
     "labelConnected": "Playlists synced",

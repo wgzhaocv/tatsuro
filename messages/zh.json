@@ -163,6 +163,12 @@
     "shared": "已分享",
     "failed": "无法创建分享链接"
   },
+  "pins": {
+    "pin": "置顶 {name}",
+    "unpin": "取消置顶 {name}",
+    "pinned": "已置顶 {name}",
+    "unpinned": "已取消置顶 {name}"
+  },
   "account": {
     "label": "同步歌单",
     "labelConnected": "歌单已同步",

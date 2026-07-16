@@ -163,6 +163,12 @@
     "shared": "シェアしました",
     "failed": "共有リンクを作成できませんでした"
   },
+  "pins": {
+    "pin": "{name}をピン留め",
+    "unpin": "{name}のピン留めを解除",
+    "pinned": "{name}をピン留めしました",
+    "unpinned": "{name}のピン留めを解除しました"
+  },
   "account": {
     "label": "プレイリストを同期",
     "labelConnected": "プレイリスト同期済み",

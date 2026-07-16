@@ -1,6 +1,7 @@
 import { DownloadSimpleIcon } from "@phosphor-icons/react/dist/ssr";
 import { getTranslations } from "next-intl/server";
 import { GlassPanel } from "@/components/glass-panel";
+import { PinButton } from "@/components/pins/pin-button";
 import {
   PlayQueueButton,
   QueuePlaybackProvider,
@@ -128,6 +129,12 @@ export async function EditionView({
                   albumId={album.id}
                   slug={shareSlug}
                   title={queueLabel}
+                />
+                <PinButton
+                  albumId={album.id}
+                  name={album.name}
+                  variant="glass-ink"
+                  size="icon"
                 />
               </div>
               {edition.download && (

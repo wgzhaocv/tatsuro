@@ -3,6 +3,7 @@
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import type { Album } from "@/lib/api/types";
+import { usePinnedIds } from "@/lib/pins/store";
 import { AlbumFilters, type FilterKey } from "./album-filters";
 import { AlbumGrid } from "./album-grid";
 import { CommandSearch } from "./command-search";
@@ -16,12 +17,21 @@ import { HomeNav } from "./home-nav";
 export function AlbumBrowser({ albums }: { albums: Album[] }) {
   const t = useTranslations("browse");
   const [filter, setFilter] = useState<FilterKey>("all");
+  const pinnedIds = usePinnedIds();
 
-  const shown = useMemo(
-    () =>
-      filter === "all" ? albums : albums.filter((a) => a.category === filter),
-    [albums, filter],
-  );
+  const shown = useMemo(() => {
+    const filtered =
+      filter === "all" ? albums : albums.filter((a) => a.category === filter);
+    if (pinnedIds.length === 0) return filtered;
+    // Float pinned albums to the front (in pin order); the rest keep their order.
+    // Pins only reorder — they never bypass the active category filter, so a
+    // pinned album that doesn't match the current chip simply stays hidden.
+    const rank = new Map(pinnedIds.map((id, i) => [id, i]));
+    const pinned = filtered
+      .filter((a) => rank.has(a.id))
+      .sort((a, b) => (rank.get(a.id) ?? 0) - (rank.get(b.id) ?? 0));
+    return [...pinned, ...filtered.filter((a) => !rank.has(a.id))];
+  }, [albums, filter, pinnedIds]);
 
   // Subtitle reflects the current view (count + span), so the one count stays
   // consistent whether or not a filter is active.

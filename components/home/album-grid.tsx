@@ -14,7 +14,9 @@ export function AlbumGrid({ albums }: { albums: Album[] }) {
     >
       {albums.map((album) => (
         <li key={album.id}>
-          <AlbumCard album={album} />
+          {/* This grid owns the reorder (pins float to the front), so it opts
+              the cards into the slot-to-slot view transition. */}
+          <AlbumCard album={album} reorderable />
         </li>
       ))}
     </BrowseGrid>

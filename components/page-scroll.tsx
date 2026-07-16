@@ -24,6 +24,13 @@ import { useLayoutEffect, useRef } from "react";
  * navigations land somewhere arbitrary; with one owner they land where the
  * listener left off.
  *
+ * The offset is mirrored to sessionStorage, keyed by pathname, not just held
+ * in a ref. iOS Chrome's swipe-back gesture doesn't restore via bfcache like
+ * the toolbar back button does — it re-runs the page, so the in-memory ref is
+ * gone and a ref-only scheme snaps to the top. sessionStorage survives that
+ * reload, so a fresh mount reads the last offset back and lands where the user
+ * left off, matching the SPA back button.
+ *
  * Mount once per scroll scope: in a page, or in a layout when sibling routes
  * (an album's editions) should share one position.
  */
@@ -36,10 +43,17 @@ export function PageScroll() {
     if (!el) return;
     window.history.scrollRestoration = "manual";
 
+    // Key by the path captured at mount (locale prefix included is fine — it's
+    // stable across a reload). A swipe-back reload remounts here and reads it.
+    const key = `page-scroll:${window.location.pathname}`;
+    const stored = sessionStorage.getItem(key);
+    if (stored != null) saved.current = Number(stored) || 0;
     window.scrollTo(0, saved.current);
 
     const record = () => {
-      if (el.checkVisibility()) saved.current = window.scrollY;
+      if (!el.checkVisibility()) return;
+      saved.current = window.scrollY;
+      sessionStorage.setItem(key, String(window.scrollY));
     };
     window.addEventListener("scroll", record, { passive: true });
     return () => window.removeEventListener("scroll", record);

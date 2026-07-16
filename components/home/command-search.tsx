@@ -3,11 +3,10 @@
 import { MagnifyingGlassIcon } from "@phosphor-icons/react";
 import Image from "next/image";
 import { useLocale, useTranslations } from "next-intl";
-import { useEffect, useMemo, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Command,
-  CommandEmpty,
   CommandGroup,
   CommandInput,
   CommandItem,
@@ -44,7 +43,7 @@ export function CommandSearch() {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
 
-  const { data } = useSearchIndex();
+  const { data, isLoading } = useSearchIndex();
   const results = useMemo(() => filterIndex(data, query), [data, query]);
   const lang = nameLang(locale);
   const hasQuery = query.trim().length > 0;
@@ -102,8 +101,14 @@ export function CommandSearch() {
               onValueChange={setQuery}
               placeholder={ts("placeholder")}
             />
-            <CommandList>
-              {noResults && <CommandEmpty>{ts("empty")}</CommandEmpty>}
+            <CommandList className="max-h-[60vh]">
+              {isLoading ? (
+                <Message>{ts("loading")}</Message>
+              ) : !hasQuery ? (
+                <Message>{ts("hint")}</Message>
+              ) : noResults ? (
+                <Message>{ts("empty")}</Message>
+              ) : null}
 
               {results.albums.length > 0 && (
                 <CommandGroup heading={ts("albumsHeading")}>
@@ -167,6 +172,16 @@ export function CommandSearch() {
         </DialogContent>
       </Dialog>
     </>
+  );
+}
+
+/** Centered muted line for the idle / loading / empty states — keeps the list
+ *  from collapsing to a sliver when there are no rows. */
+function Message({ children }: { children: ReactNode }) {
+  return (
+    <div className="py-10 text-center text-sm text-muted-foreground">
+      {children}
+    </div>
   );
 }
 

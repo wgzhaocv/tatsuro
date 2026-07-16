@@ -27,6 +27,8 @@
     "title": "搜索",
     "description": "搜索整个曲库",
     "empty": "没有匹配的结果",
+    "hint": "输入关键词搜索专辑和歌名",
+    "loading": "加载中…",
     "albumsHeading": "专辑",
     "songsHeading": "歌曲"
   },

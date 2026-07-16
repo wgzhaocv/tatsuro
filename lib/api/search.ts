@@ -24,13 +24,16 @@ export function normalize(s: string): string {
   return foldForSearch(s).trim();
 }
 
-const CAP = 50;
+// Albums are capped low so the Songs section stays visible without scrolling
+// when both match; songs get the taller budget (the list scrolls for the tail).
+const ALBUM_CAP = 6;
+const SONG_CAP = 50;
 
 export type SearchResults = { albums: SearchAlbum[]; songs: SearchSong[] };
 
 /** In-memory substring search. Albums match their name; songs match ja / en /
- *  bare name (any). Empty query → no results. Each list capped so the palette
- *  never renders more than a screenful (no virtualization needed). */
+ *  bare name (any). Empty query → no results. Capped so the palette renders only
+ *  a screenful (no virtualization needed). */
 export function filterIndex(
   index: SearchIndex | undefined,
   query: string,
@@ -39,7 +42,7 @@ export function filterIndex(
   if (!index || !q) return { albums: [], songs: [] };
   const albums = index.albums
     .filter((a) => normalize(a.name).includes(q))
-    .slice(0, CAP);
+    .slice(0, ALBUM_CAP);
   const songs = index.songs
     .filter(
       (s) =>
@@ -47,7 +50,7 @@ export function filterIndex(
         normalize(s.en).includes(q) ||
         normalize(s.n).includes(q),
     )
-    .slice(0, CAP);
+    .slice(0, SONG_CAP);
   return { albums, songs };
 }
 

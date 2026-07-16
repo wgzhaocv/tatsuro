@@ -27,6 +27,8 @@
     "title": "Search",
     "description": "Search across the catalogue.",
     "empty": "No matches",
+    "hint": "Type to search albums and songs",
+    "loading": "Loading…",
     "albumsHeading": "Albums",
     "songsHeading": "Songs"
   },

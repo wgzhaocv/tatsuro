@@ -9,19 +9,8 @@ import { isJapanese } from "@/lib/text";
 
 /** A postcard: square cover + name + year, links to the album. The pin toggle
  *  is a sibling of the Link (not nested — a button inside an anchor is invalid),
- *  overlaid on the cover's top-left corner.
- *
- *  `reorderable` tags the card with data-flip-id so a grid that reorders (the
- *  home grid, when a pin floats an album to the front) can FLIP-animate it
- *  between slots (see useFlipReorder). Off by default — the animation is the
- *  grid's concern, not this reusable leaf's. */
-export function AlbumCard({
-  album,
-  reorderable,
-}: {
-  album: Album;
-  reorderable?: boolean;
-}) {
+ *  overlaid on the cover's top-left corner. */
+export function AlbumCard({ album }: { album: Album }) {
   const tc = useTranslations("category");
   const ta = useTranslations("album");
   const isJa = isJapanese(album.name);
@@ -33,10 +22,7 @@ export function AlbumCard({
         : null;
 
   return (
-    <div
-      className="group/card relative"
-      data-flip-id={reorderable ? album.id : undefined}
-    >
+    <div className="group/card relative">
       <Link
         href={`/album/${album.id}`}
         aria-label={album.year ? `${album.name}, ${album.year}` : album.name}

@@ -73,7 +73,10 @@ export function BottomNav() {
         aria-label="Sections"
         // Same frosted glass as the nav / mini bar (heavier fill for chrome),
         // carried on a hairline top border; solid-ish so it reads over photos.
-        className="fixed inset-x-0 bottom-0 z-30 border-white/55 border-t bg-white/80 pb-[env(safe-area-inset-bottom)] backdrop-blur-md lg:hidden dark:border-white/12 dark:bg-dusk-navy/85"
+        // bottom rides --dock-inset-bottom (set by ViewportDockSync) so the bar
+        // hugs the *visual* viewport's edge through iOS URL-bar show/hide,
+        // instead of detaching from a stale layout-viewport bottom:0.
+        className="fixed inset-x-0 bottom-[var(--dock-inset-bottom,0px)] z-30 border-white/55 border-t bg-white/80 pb-[env(safe-area-inset-bottom)] backdrop-blur-md lg:hidden dark:border-white/12 dark:bg-dusk-navy/85"
       >
         <ul className="flex h-14 items-stretch">
           {SECTIONS.map((s) => {

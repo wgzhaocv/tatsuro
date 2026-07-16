@@ -51,7 +51,10 @@ export function MiniPlayer() {
         // The wrapper never catches pointer events — its transparent padding
         // overlaps the BottomNav below it (z-40 over z-30), and would otherwise
         // eat the tab bar's clicks. Only the bar itself is interactive.
-        "pointer-events-none fixed inset-x-0 bottom-0 z-40 px-3 pb-[calc(env(safe-area-inset-bottom)+3.5rem+0.5rem)] transition-transform duration-500 ease-lazy sm:px-4 lg:pb-[calc(env(safe-area-inset-bottom)+0.75rem)]",
+        // bottom rides --dock-inset-bottom (ViewportDockSync) so the bar tracks
+        // the visual viewport through iOS URL-bar show/hide, moving in lockstep
+        // with the BottomNav it floats above.
+        "pointer-events-none fixed inset-x-0 bottom-[var(--dock-inset-bottom,0px)] z-40 px-3 pb-[calc(env(safe-area-inset-bottom)+3.5rem+0.5rem)] transition-transform duration-500 ease-lazy sm:px-4 lg:pb-[calc(env(safe-area-inset-bottom)+0.75rem)]",
         song ? "translate-y-0" : "translate-y-[130%]",
       )}
     >

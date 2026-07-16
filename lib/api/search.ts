@@ -5,7 +5,6 @@
 
 import { foldForSearch } from "@/lib/text";
 import { fetchJson } from "./client";
-import { CATALOG_REV } from "./rev";
 import type { NameLang, SearchAlbum, SearchIndex, SearchSong } from "./types";
 
 const API = process.env.NEXT_PUBLIC_API_URL;
@@ -15,10 +14,7 @@ const API = process.env.NEXT_PUBLIC_API_URL;
  *  immutable Cache-Control means one real download per browser per 30 days.
  *  Language-neutral (raw ja + en), so a single cache entry serves every locale. */
 export function fetchSearchIndex(): Promise<SearchIndex> {
-  return fetchJson<SearchIndex>(
-    `${API}/music/search-index?rev=${CATALOG_REV}`,
-    "search index",
-  );
+  return fetchJson<SearchIndex>(`${API}/music/search-index`, "search index");
 }
 
 /** Fold + trim to a comparable form (see foldForSearch): a query in any

@@ -67,10 +67,31 @@
 
 **至此官方作品 100% 收全。**
 
+## 补数据后怎么让前端刷新(缓存两层,踩过大坑,务必按此做)
+
+灌完 D1/R2,**后端 API 直连已是新数据,但两层缓存都会挡在前面**,要分别刷:
+
+### 第 ① 层 — Cloudflare(后端 worker 前置缓存)
+后端 `../yamashita-api` 在 `wrangler.jsonc` 开了 **Workers 原生前置缓存**(`"cache": { "enabled": true }`),`/music/releases`、`/music/albums`、`/music/search-index` 三个目录级列表端点又发 `Cache-Control: immutable, s-maxage=30d`(见 `src/routes/music.ts` 的 `CACHE_CONTROL`)。所以边缘会把旧列表**锁 30 天且不会自己失效**。
+
+- ✅ **正确清法:重新部署 worker** —— `cd ../yamashita-api && npx wrangler deploy`。这层缓存跟部署版本绑,deploy 会把它刷掉(2026-07 实测:deploy 后裸 `/music/releases` 从 33 → 34)。
+- ❌ **别用 purge**:面板按 URL / hostname、甚至 API `purge_everything`(返回 `success:true`)**都清不动这层 Workers 缓存**——2026-07 全部实测无效,`age` 从不归零。别再在 Cloudflare 面板上浪费时间。
+- 按 id 的端点(`/music/release/:id`、`/music/album_songs/:id`)不受影响:新 id 天然是新 key,本就是新的。
+
+### 第 ② 层 — Vercel(Next `'use cache'`)
+`lib/api/albums.ts` 的 `getAlbums`、`lib/api/search.ts` 用了 `'use cache' + cacheLife('max') + cacheTag('albums')`,**可能跨 Vercel 构建保留**(这是"重新 built 也没用"的第二个真凶)。
+
+- 触发一次 `revalidateTag('albums')`(歌相关用 `'songs'`,MV 用 `'mv'`)。**目前没有现成的 HTTP 触发口(待建:一个受保护的 revalidate route handler)**;在有之前,靠**重新部署前端**顶上(推 `main` 触发 Vercel;若重建后仍旧,才是这层没刷掉,需要补 revalidate route)。
+
+### 顺序
+**先 ①(`wrangler deploy`)再 ②(前端重部署)** —— 否则前端刷新后从边缘还是拿到旧的。
+
+> 备忘:曾经加过 `lib/api/rev.ts` 用 `?rev=` 版本号一次打穿两层,后按站主决定移除(改动罕见,不值得在代码里常驻旁路);统一走上面"deploy 刷 ① + 重部署刷 ②"。
+
 ## 遗留(用户侧)
 
-- 前端重部署(`revalidateTag('albums')` 或重建)后新专辑/封面才在网格显示——后端 API 直连已是新数据。
 - 缺口已清零(见 batch-04)。R2 近满(~0.68GB),后续若再加内容需先腾空间或扩容。
+- **待建**:前端受保护的 `revalidateTag` route,省掉靠重部署刷第 ② 层。
 
 ## 复现要点
 

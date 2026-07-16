@@ -92,6 +92,8 @@
     "repeatOne": "Repeat one — disable repeat",
     "mute": "Mute",
     "unmute": "Unmute",
+    "playNext": "Play next",
+    "queuedNext": "Playing next",
     "seek": "Seek",
     "volume": "Volume"
   },

@@ -41,6 +41,10 @@ export type PlayerState = {
    *  from the display label so a rename or locale switch can't change *which*
    *  queue is loaded. Used to tell "is this queue playing?". */
   contextId: string | null;
+  /** Locale-less route back to where the context came from (album edition /
+   *  playlist), so the player can link "playing from" to its source. Null for
+   *  restored/direct plays that never carried one. */
+  contextHref: string | null;
   /** "Play next" queue, consumed before the context advances. */
   userQueue: Song[];
   /** Recently played (newest last, capped at 100). */
@@ -67,8 +71,13 @@ export type PlayerState = {
     startIndex?: number,
     contextLabel?: string,
     contextId?: string,
+    contextHref?: string,
   ): void;
   addToQueue(songs: Song | Song[]): void;
+  /** Insert right after the current song (front of userQueue), so it plays
+   *  next. With nothing playing, just starts it. Distinct from addToQueue,
+   *  which appends to the end. */
+  playNext(song: Song): void;
   removeFromQueue(songId: string): void;
   clearUserQueue(): void;
   /** Current song + userQueue + rest of the context, for the queue screen. */
@@ -141,6 +150,7 @@ export const usePlayerStore = create<PlayerState>()(
       current: null,
       contextLabel: null,
       contextId: null,
+      contextHref: null,
       userQueue: [],
       history: [],
       isPlaying: false,
@@ -152,7 +162,7 @@ export const usePlayerStore = create<PlayerState>()(
       expanded: false,
       videoStage: false,
 
-      playQueue(songs, startIndex = 0, contextLabel, contextId) {
+      playQueue(songs, startIndex = 0, contextLabel, contextId, contextHref) {
         if (songs.length === 0) return;
         const start = Math.min(Math.max(startIndex, 0), songs.length - 1);
         const { shuffle, history, current } = get();
@@ -167,6 +177,7 @@ export const usePlayerStore = create<PlayerState>()(
           current: songs[order[position]],
           contextLabel: contextLabel ?? null,
           contextId: contextId ?? null,
+          contextHref: contextHref ?? null,
           userQueue: [],
           history: pushHistory(history, current),
           isPlaying: true,
@@ -185,6 +196,21 @@ export const usePlayerStore = create<PlayerState>()(
         const queued = new Set(userQueue.map((s) => s.id));
         const fresh = toAdd.filter((s) => !queued.has(s.id));
         if (fresh.length > 0) set({ userQueue: [...userQueue, ...fresh] });
+      },
+
+      playNext(song) {
+        const { current, userQueue } = get();
+        if (!current) {
+          get().playQueue([song], 0);
+          return;
+        }
+        // Already the current track: nothing to queue (would replay it).
+        if (current.id === song.id) return;
+        // Move to the front, de-duping any existing copy, so it's the very
+        // next thing played (next() consumes userQueue's head first).
+        set({
+          userQueue: [song, ...userQueue.filter((s) => s.id !== song.id)],
+        });
       },
 
       removeFromQueue(songId) {
@@ -389,6 +415,7 @@ export const usePlayerStore = create<PlayerState>()(
         current: s.current,
         contextLabel: s.contextLabel,
         contextId: s.contextId,
+        contextHref: s.contextHref,
         userQueue: s.userQueue,
         history: s.history,
         shuffle: s.shuffle,

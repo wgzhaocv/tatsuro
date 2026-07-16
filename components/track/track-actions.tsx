@@ -3,12 +3,14 @@
 import {
   DotsThreeVertical,
   Plus,
+  Queue,
   ShareNetwork,
   VinylRecord,
   X,
 } from "@phosphor-icons/react";
 import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
+import { toast } from "sonner";
 import { AddToPlaylistBody } from "@/components/playlists/add-to-playlist-dialog";
 import { LikeButton } from "@/components/playlists/like-button";
 import { useShareSong } from "@/components/track/share-button";
@@ -22,6 +24,8 @@ import {
 import { Menu, MenuContent, MenuItem, MenuTrigger } from "@/components/ui/menu";
 import { useRouter } from "@/i18n/navigation";
 import type { Song } from "@/lib/api/types";
+import { jumpToSong } from "@/lib/player/highlight";
+import { usePlayerStore } from "@/lib/player/store";
 import { getAlbumHref } from "@/lib/share";
 
 /**
@@ -51,15 +55,26 @@ export function TrackActions({
   const t = useTranslations("playlists");
   const ts = useTranslations("share");
   const tg = useTranslations("song");
+  const tp = useTranslations("player");
   const locale = useLocale();
   const router = useRouter();
+  const playNext = usePlayerStore((s) => s.playNext);
   const [addOpen, setAddOpen] = useState(false);
   const share = useShareSong(song);
+
+  const queueNext = () => {
+    const { current } = usePlayerStore.getState();
+    if (current?.id === song.id) return; // already the current track — no-op
+    playNext(song);
+    // With something already playing this queues behind it; with nothing
+    // playing it just starts, and the appearing player is its own feedback.
+    if (current) toast.success(tp("queuedNext"));
+  };
 
   const viewAlbum = async () => {
     if (!song.albumId) return;
     const href = await getAlbumHref(song.albumId, locale);
-    if (href) router.push(href);
+    if (href) jumpToSong(router, href, song.id);
   };
 
   return (
@@ -85,6 +100,10 @@ export function TrackActions({
           />
         </MenuTrigger>
         <MenuContent>
+          <MenuItem onClick={queueNext}>
+            <Queue weight="bold" aria-hidden />
+            {tp("playNext")}
+          </MenuItem>
           <MenuItem onClick={() => setAddOpen(true)}>
             <Plus weight="bold" aria-hidden />
             {t("addToPlaylist")}

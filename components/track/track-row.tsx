@@ -41,7 +41,7 @@ export function TrackRow({
   showAlbumLink?: boolean;
 }) {
   const t = useTranslations("album");
-  const { songs, label, queueId } = useQueuePlayback();
+  const { songs, label, queueId, href } = useQueuePlayback();
   // The enriched queue song (cover + album baked in) backs the actions, so a
   // playlist entry it creates renders without a refetch; fall back to `track`.
   const song = songs[queueIndex] ?? track;
@@ -77,7 +77,7 @@ export function TrackRow({
           aria-current={isCurrent ? "true" : undefined}
           onClick={() => {
             if (isCurrent) toggle();
-            else playQueue(songs, queueIndex, label, queueId);
+            else playQueue(songs, queueIndex, label, queueId, href);
           }}
           className="flex min-w-0 flex-1 items-center gap-4 rounded-xl py-2 text-left outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
         >

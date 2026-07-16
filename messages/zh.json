@@ -92,6 +92,8 @@
     "repeatOne": "单曲循环 — 关闭循环",
     "mute": "静音",
     "unmute": "取消静音",
+    "playNext": "下一首播放",
+    "queuedNext": "已插到下一首",
     "seek": "跳转",
     "volume": "音量"
   },

@@ -13,7 +13,9 @@ import {
   SkipForward,
   SpeakerHigh,
   SpeakerSlash,
+  VinylRecord,
 } from "@phosphor-icons/react";
+import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 import { AlbumAmbient } from "@/components/album/album-ambient";
@@ -26,12 +28,14 @@ import { nameLang, type Song } from "@/lib/api/types";
 import { coverUrl } from "@/lib/api/urls";
 import { ARTIST } from "@/lib/constants";
 import { formatDuration } from "@/lib/format";
+import { jumpToSong } from "@/lib/player/highlight";
 import {
   useDuration,
   usePlayerStore,
   useProgressStore,
 } from "@/lib/player/store";
 import { useSong } from "@/lib/queries/song";
+import { getAlbumHref } from "@/lib/share";
 import { isJapanese } from "@/lib/text";
 import { cn } from "@/lib/utils";
 import { LyricsPanel } from "./lyrics-panel";
@@ -50,7 +54,10 @@ export function FullPlayer() {
   const setExpanded = usePlayerStore((s) => s.setExpanded);
   const song = usePlayerStore((s) => s.current);
   const contextLabel = usePlayerStore((s) => s.contextLabel);
+  const contextHref = usePlayerStore((s) => s.contextHref);
+  const router = useRouter();
   const t = useTranslations("player");
+  const tSong = useTranslations("song");
   // Cover ⇄ lyrics flip; kept while the player stays open so a listener can
   // follow along across an album.
   const [showLyrics, setShowLyrics] = useState(false);
@@ -75,6 +82,24 @@ export function FullPlayer() {
     albumName: albumName ?? song.albumName,
   };
 
+  // Jump to a page and flash this song there: collapse the player, then push +
+  // fire the highlight (?song= covers a cold load, the event a warm re-show of
+  // an <Activity>-cached page). "View album" is the song's own release; "go to
+  // source" is wherever the queue came from (may be a playlist / album).
+  const jumpAndHighlight = (href: string) => {
+    setExpanded(false);
+    // Plain next/navigation router: this lives in the (main) static shell, where
+    // next-intl's useRouter would read request-time locale during prerender and
+    // break the build. hrefs from the store/getAlbumHref are locale-less, so
+    // prepend the active locale (a safe static-context read) here.
+    jumpToSong(router, `/${locale}${href}`, song.id);
+  };
+  const viewAlbum = async () => {
+    if (!song.albumId) return;
+    const href = await getAlbumHref(song.albumId, locale);
+    if (href) jumpAndHighlight(href);
+  };
+
   return (
     <DialogPrimitive.Root open={expanded} onOpenChange={setExpanded}>
       <DialogPrimitive.Portal>
@@ -87,7 +112,7 @@ export function FullPlayer() {
           {cover && <AlbumAmbient cover={coverUrl(cover)} />}
 
           {/* ── Chrome: collapse + context ──
-              flex-wrap so on phones the four action buttons stay up on the
+              flex-wrap so on phones the action buttons stay up on the
               close button's row and the "playing from" caption folds onto its
               own full-width line below (basis-full) — legible, not squeezed to
               an ellipsis between the buttons. On lg the caption goes back inline
@@ -105,17 +130,46 @@ export function FullPlayer() {
             >
               <CaretDown size={20} weight="bold" aria-hidden />
             </DialogPrimitive.Close>
-            {contextLabel && (
-              <p
-                lang={isJapanese(contextLabel) ? "ja" : undefined}
-                className="order-last basis-full truncate text-center text-[13px] font-medium text-foreground/80 lg:order-none lg:min-w-0 lg:flex-1 lg:basis-auto"
-              >
-                {t("playingFrom", { context: contextLabel })}
-              </p>
-            )}
+            {contextLabel &&
+              (contextHref ? (
+                // Tap to return to where the queue is playing from — the album
+                // or playlist — landing on the current song. Full-width own row
+                // on phones (basis-full) so the tap target stays generous.
+                <button
+                  type="button"
+                  onClick={() => jumpAndHighlight(contextHref)}
+                  lang={isJapanese(contextLabel) ? "ja" : undefined}
+                  className="order-last flex min-h-11 basis-full items-center justify-center gap-1.5 rounded-full text-center text-[13px] font-medium text-foreground/80 outline-none transition-colors duration-500 ease-lazy hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50 lg:order-none lg:min-h-0 lg:min-w-0 lg:flex-1 lg:basis-auto"
+                >
+                  <span className="truncate">
+                    {t("playingFrom", { context: contextLabel })}
+                  </span>
+                </button>
+              ) : (
+                <p
+                  lang={isJapanese(contextLabel) ? "ja" : undefined}
+                  className="order-last basis-full truncate text-center text-[13px] font-medium text-foreground/80 lg:order-none lg:min-w-0 lg:flex-1 lg:basis-auto"
+                >
+                  {t("playingFrom", { context: contextLabel })}
+                </p>
+              ))}
             <div className="ml-auto flex shrink-0 items-center gap-1">
               <LikeButton song={enrichedSong} className="size-11" />
               <AddToPlaylistButton song={enrichedSong} className="size-11" />
+              {song.albumId && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label={tSong("openAlbum")}
+                  onClick={viewAlbum}
+                  className="size-11 rounded-full"
+                >
+                  <VinylRecord
+                    className="size-[18px] text-muted-foreground group-hover/button:text-foreground"
+                    aria-hidden
+                  />
+                </Button>
+              )}
               <ShareButton song={enrichedSong} className="size-11" />
               <Button
                 variant={showLyrics ? "action" : "glass-ink"}

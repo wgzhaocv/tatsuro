@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { useEffect, useMemo } from "react";
 import { toast } from "sonner";
 import { AlbumAmbient } from "@/components/album/album-ambient";
+import { SharedSongHighlight } from "@/components/album/shared-song-highlight";
 import { GlassPanel } from "@/components/glass-panel";
 import { ThemeToggle } from "@/components/theme-toggle";
 import {
@@ -80,6 +81,8 @@ export function PlaylistDetail({ id }: { id: string }) {
       {/* Sits in this z-10 stacking context, so the fixed -z-10 wash paints
           over the section's beach hero (z-0) yet under the chrome below. */}
       {ambientCoverId && <AlbumAmbient cover={coverUrl(ambientCoverId)} />}
+      {/* Flash the track a "go to source" jump (from the player) points at. */}
+      <SharedSongHighlight />
       <header className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-5 py-4 sm:px-8 sm:py-5">
         <Link
           href="/playlists"
@@ -94,7 +97,12 @@ export function PlaylistDetail({ id }: { id: string }) {
         <ThemeToggle />
       </header>
 
-      <QueuePlaybackProvider songs={songs} label={name} queueId={playlist.id}>
+      <QueuePlaybackProvider
+        songs={songs}
+        label={name}
+        queueId={playlist.id}
+        href={`/playlists/${playlist.id}`}
+      >
         <div className="mx-auto w-full max-w-6xl px-5 pt-2 pb-20 sm:px-8 lg:grid lg:grid-cols-[18.5rem_1fr] lg:items-start lg:gap-12 lg:pt-6">
           {/* Identity rail — same structure as the album detail:
                 cover-beside-identity on phones/tablets, a sticky column on

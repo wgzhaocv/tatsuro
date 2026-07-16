@@ -15,10 +15,16 @@ import { usePlayerStore } from "@/lib/player/store";
  *
  * `queueId` is the queue's *stable* identity (edition id / playlist id), kept
  * separate from the display `label`: renaming a playlist or switching locale
- * changes the label but not which queue is loaded.
+ * changes the label but not which queue is loaded. `href` is the locale-less
+ * route back to this queue's source, so the player can link "playing from".
  */
 
-type QueuePlayback = { songs: Song[]; label: string; queueId: string };
+type QueuePlayback = {
+  songs: Song[];
+  label: string;
+  queueId: string;
+  href: string;
+};
 
 const QueueContext = createContext<QueuePlayback | null>(null);
 
@@ -26,10 +32,11 @@ export function QueuePlaybackProvider({
   songs,
   label,
   queueId,
+  href,
   children,
 }: QueuePlayback & { children: React.ReactNode }) {
   return (
-    <QueueContext.Provider value={{ songs, label, queueId }}>
+    <QueueContext.Provider value={{ songs, label, queueId, href }}>
       {children}
     </QueueContext.Provider>
   );
@@ -62,7 +69,7 @@ export function PlayQueueButton({
   pauseText: string;
   disabled?: boolean;
 }) {
-  const { songs, label, queueId } = useQueuePlayback();
+  const { songs, label, queueId, href } = useQueuePlayback();
   const isThisQueue = useIsThisQueue(queueId);
   const isPlaying = usePlayerStore((s) => s.isPlaying) && isThisQueue;
   const playQueue = usePlayerStore((s) => s.playQueue);
@@ -75,7 +82,7 @@ export function PlayQueueButton({
       disabled={disabled || songs.length === 0}
       onClick={() => {
         if (isThisQueue) toggle();
-        else playQueue(songs, 0, label, queueId);
+        else playQueue(songs, 0, label, queueId, href);
       }}
       className="h-12 gap-2 rounded-full pr-6 pl-5 text-[15px] font-semibold shadow-lift-ocean"
     >

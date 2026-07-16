@@ -77,12 +77,18 @@ export async function EditionView({
   // (/album/:id), reissues carry their slug (/album/:id/:slug).
   const shareSlug =
     edition.id === album.defaultEditionId ? null : editionSlug(edition);
+  // The route back to this edition — where "playing from" links, and where a
+  // shared song lands (same shape as getEditionShareLink, minus the token).
+  const queueHref = shareSlug
+    ? `/album/${album.id}/${shareSlug}`
+    : `/album/${album.id}`;
 
   return (
     <QueuePlaybackProvider
       songs={queueSongs}
       label={queueLabel}
       queueId={edition.id}
+      href={queueHref}
     >
       <AlbumAmbient cover={cover} />
       <SharedSongHighlight />

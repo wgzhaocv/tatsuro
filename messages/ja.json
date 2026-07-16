@@ -92,6 +92,8 @@
     "repeatOne": "1曲リピート — リピート解除",
     "mute": "ミュート",
     "unmute": "ミュート解除",
+    "playNext": "次に再生",
+    "queuedNext": "次に再生します",
     "seek": "シーク",
     "volume": "音量"
   },

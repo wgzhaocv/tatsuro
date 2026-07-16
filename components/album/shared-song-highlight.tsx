@@ -1,44 +1,33 @@
 "use client";
 
 import { useEffect } from "react";
+import { onHighlightSong, scrollAndFlash } from "@/lib/player/highlight";
 
 /**
- * A shared-song link lands on the album with `?song=<id>` (old-site style, no
- * dedicated route). This scrolls that track into view and briefly flashes it so
- * the recipient sees which song the link was for.
+ * Flashes the track a "which song?" jump points at, on the album *and* playlist
+ * screens (both render track rows carrying `data-song-id`).
  *
- * Reads the query straight off `window.location` in an effect rather than
- * `useSearchParams()` on purpose: the album page is statically generated
- * (generateStaticParams), and useSearchParams would opt the route into dynamic
- * rendering under Cache Components. A runtime DOM read is invisible to the
- * prerender. Renders nothing.
+ * Two entry paths: a cold open — a shared link, or a full page load — carries
+ * the id in `?song=` and mounts this fresh; an in-app jump ("view album", "go
+ * to source") fires a highlight event after navigating, because the target page
+ * may already be cached by <Activity> and won't remount. See lib/player/highlight.
+ * Renders nothing.
  */
 export function SharedSongHighlight() {
   useEffect(() => {
-    const songId = new URLSearchParams(window.location.search).get("song");
-    if (!songId) return;
-    const el = document.querySelector<HTMLElement>(
-      `[data-song-id="${CSS.escape(songId)}"]`,
-    );
-    if (!el) return;
+    const fromUrl = new URLSearchParams(window.location.search).get("song");
+    const cleanupMount = fromUrl ? scrollAndFlash(fromUrl) : undefined;
 
-    const smooth = !window.matchMedia("(prefers-reduced-motion: reduce)")
-      .matches;
-    // Let the tracklist paint + any route-restore scroll settle first.
-    const enter = setTimeout(() => {
-      el.scrollIntoView({
-        behavior: smooth ? "smooth" : "auto",
-        block: "center",
-      });
-      el.dataset.shared = "true";
-    }, 250);
-    const leave = setTimeout(() => {
-      delete el.dataset.shared;
-    }, 4500);
+    let cleanupEvent: (() => void) | undefined;
+    const off = onHighlightSong((id) => {
+      cleanupEvent?.();
+      cleanupEvent = scrollAndFlash(id);
+    });
 
     return () => {
-      clearTimeout(enter);
-      clearTimeout(leave);
+      cleanupMount?.();
+      cleanupEvent?.();
+      off();
     };
   }, []);
 

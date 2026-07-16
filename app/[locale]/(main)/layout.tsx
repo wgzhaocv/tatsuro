@@ -2,7 +2,6 @@ import { Suspense } from "react";
 import { AccountBootstrap } from "@/components/account/account-bootstrap";
 import { BottomNav } from "@/components/bottom-nav";
 import { PlayerDock } from "@/components/player/player-dock";
-import { ViewportDockSync } from "@/components/player/viewport-dock-sync";
 import { PlaylistsHydration } from "@/components/playlists/hydration";
 
 /**
@@ -26,7 +25,6 @@ export default function MainLayout({
   return (
     <>
       {children}
-      <ViewportDockSync />
       <PlayerDock />
       {/* BottomNav reads the pathname (usePathname) to mark the active tab —
           dynamic under Cache Components. A Suspense boundary lets it stream as a

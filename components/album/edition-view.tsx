@@ -130,11 +130,7 @@ export async function EditionView({
                   slug={shareSlug}
                   title={queueLabel}
                 />
-                <PinButton
-                  albumId={album.id}
-                  name={album.name}
-                  surface="page"
-                />
+                <PinButton albumId={album.id} name={album.name} />
               </div>
               {edition.download && (
                 <div className="flex flex-col items-start gap-1.5">

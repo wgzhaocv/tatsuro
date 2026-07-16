@@ -11,7 +11,12 @@ import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { useShallow } from "zustand/react/shallow";
 import type { Song } from "@/lib/api/types";
-import { LIKED_ID, type Playlist, type PlaylistEntry } from "./types";
+import {
+  LIKED_ID,
+  type Playlist,
+  type PlaylistEntry,
+  type WirePlaylist,
+} from "./types";
 
 export const PLAYLISTS_STORAGE_KEY = "tatsuro-playlists";
 
@@ -42,6 +47,19 @@ type PlaylistsState = {
   /** Merge migrated legacy playlists in (dedupe by id; liked folds into liked). */
   importLegacy(legacy: Playlist[]): void;
   setHasHydrated(v: boolean): void;
+
+  // cloud sync (see lib/account/sync.ts) ──────────────────────────────────────
+  /** Replace the library with the server's authoritative snapshot after a sync.
+   *  The server merged with LWW already, so this adopts it wholesale. Entries are
+   *  rebuilt from the thin rows, reusing any Song we already know by id (so this
+   *  device's own playlists keep their rich cover/name/duration) and thin-stubbing
+   *  the rest. Returns the song ids that had to be stubbed, for the caller to
+   *  hydrate via the song cache. Does NOT bump updatedAt (not a user edit). */
+  adoptRemote(remote: WirePlaylist[]): string[];
+  /** Fill richer Song data into any entry matching by id (post-adopt hydration
+   *  of stubbed songs). Pure metadata refresh — leaves updatedAt untouched so it
+   *  never triggers a re-sync. */
+  hydrateSongs(songs: Song[]): void;
 };
 
 function now(): number {
@@ -237,6 +255,52 @@ export const usePlaylistStore = create<PlaylistsState>()(
           }
           return { playlists: [...byId.values()] };
         });
+      },
+
+      adoptRemote(remote) {
+        // Build a lookup of every Song we already hold, so adopted playlists
+        // reuse rich local data (cover/name/duration) instead of stubs. Common
+        // case (this device's own playlists round-tripping) resolves fully.
+        const known = new Map<string, Song>();
+        for (const p of get().playlists)
+          for (const e of p.entries) known.set(e.song.id, e.song);
+
+        const stubbed: string[] = [];
+        const playlists: Playlist[] = remote.map((r) => ({
+          id: r.id,
+          kind: r.kind,
+          name: r.name,
+          coverId: r.coverId ?? undefined,
+          createdAt: r.createdAt,
+          updatedAt: r.updatedAt,
+          ...(r.deletedAt != null && { deletedAt: r.deletedAt }),
+          entries: [...r.songs]
+            .sort((a, b) => a.position - b.position)
+            .map((s) => {
+              const song = known.get(s.songId);
+              if (!song) stubbed.push(s.songId);
+              return {
+                song: song ?? { id: s.songId, name: "" },
+                addedAt: s.addedAt,
+              };
+            }),
+        }));
+
+        set({ playlists });
+        return stubbed;
+      },
+
+      hydrateSongs(songs) {
+        const bySong = new Map(songs.map((s) => [s.id, s]));
+        set((s) => ({
+          playlists: s.playlists.map((p) => ({
+            ...p,
+            entries: p.entries.map((e) => {
+              const fresh = bySong.get(e.song.id);
+              return fresh ? { ...e, song: fresh } : e;
+            }),
+          })),
+        }));
       },
 
       setHasHydrated(v) {

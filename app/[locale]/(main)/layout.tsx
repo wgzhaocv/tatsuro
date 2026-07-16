@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { AccountBootstrap } from "@/components/account/account-bootstrap";
 import { BottomNav } from "@/components/bottom-nav";
 import { PlayerDock } from "@/components/player/player-dock";
 import { PlaylistsHydration } from "@/components/playlists/hydration";
@@ -33,6 +34,7 @@ export default function MainLayout({
         <BottomNav />
       </Suspense>
       <PlaylistsHydration />
+      <AccountBootstrap />
     </>
   );
 }

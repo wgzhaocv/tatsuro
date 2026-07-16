@@ -157,6 +157,20 @@
     "shared": "シェアしました",
     "failed": "共有リンクを作成できませんでした"
   },
+  "account": {
+    "label": "プレイリストを同期",
+    "labelConnected": "プレイリスト同期済み",
+    "connectTitle": "プレイリストを同期",
+    "connectBody": "Google でログインすると、プレイリストとお気に入りの曲をすべての端末で同じに保てます。ログインするまではこの端末内だけに保存されます。",
+    "notNow": "今はしない",
+    "continueWithGoogle": "Google で続ける",
+    "connectedTitle": "アカウント",
+    "syncing": "同期中…",
+    "synced": "プレイリストは同期されています。",
+    "syncError": "同期できませんでした。次の変更時に再試行します。",
+    "close": "閉じる",
+    "disconnect": "ログアウト"
+  },
   "metadata": {
     "musicVideos": "ミュージックビデオ",
     "playlists": "プレイリスト",

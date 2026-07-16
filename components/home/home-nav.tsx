@@ -1,5 +1,6 @@
 import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
+import { AccountButton } from "@/components/account/account-button";
 import { LanguageSwitcher } from "@/components/i18n/language-switcher";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Link } from "@/components/ui/link";
@@ -82,6 +83,7 @@ export function HomeNav({
 
       <div className="flex items-center gap-3">
         {search}
+        <AccountButton />
         <LanguageSwitcher />
         <ThemeToggle />
       </div>

@@ -77,6 +77,13 @@ export type PlaylistSongRow = {
   addedAt: number;
 };
 
+/** The shape POST /me/sync exchanges in both directions (backend API.md §8): a
+ *  PlaylistRow with its membership inlined. Isomorphic to toWireRows() output;
+ *  the response omits playlistId from each song (it's implied by the parent). */
+export type WirePlaylist = PlaylistRow & {
+  songs: { songId: string; position: number; addedAt: number }[];
+};
+
 /** Flatten a playlist into the thin rows a future sync would upload. Pure — no
  *  backend call. Kept here so the projection lives next to the shape it mirrors. */
 export function toWireRows(p: Playlist): {

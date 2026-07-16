@@ -157,6 +157,20 @@
     "shared": "Shared",
     "failed": "Couldn't create a share link"
   },
+  "account": {
+    "label": "Sync playlists",
+    "labelConnected": "Playlists synced",
+    "connectTitle": "Sync your playlists",
+    "connectBody": "Sign in with Google to keep your playlists and liked songs on every device. Until then, your library stays on this device only.",
+    "notNow": "Not now",
+    "continueWithGoogle": "Continue with Google",
+    "connectedTitle": "Account",
+    "syncing": "Syncing…",
+    "synced": "Your playlists are synced.",
+    "syncError": "Couldn't sync — it'll retry on your next change.",
+    "close": "Close",
+    "disconnect": "Disconnect"
+  },
   "metadata": {
     "musicVideos": "Music Videos",
     "playlists": "Playlists",

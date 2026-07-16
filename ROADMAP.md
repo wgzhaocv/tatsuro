@@ -43,7 +43,7 @@
 - [ ] **7. 播放队列 / 历史**(抽屉或侧栏)
 - [x] **8. MV 页**(2026-07-13)— 视频卡片网格(缩略图/名称/时长/文件大小/下载)。**只下载、不做站内流播**(站主拍板:`<video>` 流播的 Range 请求会大量消耗 Worker 免费额度);下载与旧站同约定——`<a target="_blank">` 新 tab 把 GET 交给浏览器,后端 `content-disposition: attachment` 直接落盘。数据:`lib/api/mv.ts`(`/mv/list`,`'use cache'` + `cacheTag('mv')`)+ `types.ts` 的 `Mv` 域模型。界面复用首页浏览面签名:同一张海景照片 + 浅罩 + `GlassPanel`,16:9 缩略图 postcard 卡、时长白丸徽标、`· MB` 副行、44px `secondary` 圆形下载钮(icon-only,`aria-label` 带片名),日文片名 `lang="ja"`;顶栏 `HomeNav` 泛化(`current` prop,MV 成真链接,Songs/Playlists 仍占位)+ 通用搜索过滤 + 副标题「N videos · 总大小」。双主题/390 无溢出/生产构建全过。移动端入口依赖 #10 底部标签栏(现阶段手机只能直接进 /mv)
 - [x] **9. 404 / 空状态**(2026-07-13)— 站主拍板:私享站不需要 404 落地页,全局未匹配路由 `app/not-found.tsx` 直接 `redirect("/")`(实测 /does-not-exist → /)。已知路由的语义化 miss 保留自己的页面(`album/not-found.tsx`);列表空状态已在各屏内置(首页/MV 的 No results)
-- [ ] **10. 导航/信息架构定稿** — 顶部轻导航 + 移动底部标签栏(Home / Search / Library)
+- [x] **10. 导航/信息架构定稿**(2026-07)— 桌面居中 pill 导航(`components/home/home-nav.tsx`,`current` prop)+ **手机/平板底部标签栏** `components/bottom-nav.tsx`(Spotify 式,`lg:hidden`)。四段 Albums / Discover / MV / Playlists,镜像桌面 pill:有 href = 活屏(`Link`,locale-aware),无 href(Discover)= 占位不可点(`aria-disabled` + comingSoon tooltip)。当前段判定按路由(`/album/*`→Albums、`/mv/*`→MV,`usePathname` 已去 locale 前缀),active = 前景色 + `fill` 图标(深水律,无浅水色文字)。磨砂玻璃(暗色 dusk-navy)+ hairline 顶边,fixed 到视觉视口(collapsing 地址栏不埋)、`env(safe-area-inset-bottom)` 避刘海、flow spacer 占位防盖页尾;视频舞台(`videoStage`)隐藏,与 mini 条错层堆叠(不重叠)。三语 i18n。这补齐了 #8 MV 页遗留的移动端入口。
 
 ## 阶段 3 — 主题与打磨
 
@@ -56,11 +56,11 @@
 
 ## Backlog — 站主想法(2026-07-13 记,未排期)
 
-1. **账号登录 + 云端歌单**。目的:保存歌单/Liked 跨设备(#5 歌单的云同步前提)。登录方式调研结论:
-   - **微信登录:个人不可行** — 网站应用的微信登录要走微信开放平台,需**企业主体资质** + 300元/次开发者认证,个人开发者注册不了网站应用 → 排除
-   - **手机短信验证码:没有免费档** — 阿里云/腾讯云按条计费,还要实名签名+模板审核 → 排除
-   - **Google OAuth:免费但大陆直连不可达** — 只对海外/翻墙用户有效,可作补充入口,不能当主路
-   - **倾向方案:自托管账号(email 或用户名 + 密码,或 passkey)**,存到后端 D1,零成本、全球可用;站点本来有 Gate 密码挡在前面,是熟人小站,不需要重型 IdP。将来想加社交登录再叠 Google
+1. **账号登录 + 云端歌单(2026-07 已落地 ✅ — Google OAuth,非自托管)** — 保存歌单/Liked 跨设备(#5 歌单的云同步)。**最终选了 Google OAuth**(不是原倾向的自托管账号):登录本就是可选、独立于 Gate 密码的加分项,Google 零后端密码管理成本;大陆直连问题接受(熟人小站、翻墙用户 + 海外用户覆盖够)。落地:
+   - **前端**:`lib/account/store.ts`(zustand persist,token + user + syncStatus)、`components/account/account-button.tsx`(浏览页顶栏磨砂圆钮,cloud-up 未连 / cloud-check 已同步,dialog 提供 Google 登录或显示已连账号 + 断开)、`account-bootstrap.tsx`(挂载时消费 OAuth 回跳的 `#token`、`fetchMe`、启动 `startAutoSync`)、`google-icon.tsx`。
+   - **同步引擎** `lib/account/sync.ts`:桥接本地优先歌单 store 与后端 `POST /me/sync`(**整歌单 LWW 合并,只增不覆盖** — 见 8608efe 文案)。zustand 仍是真相源:本地快照 push → 采纳服务端权威 merge → 合并拉来的异设备曲目走同一 TanStack Query 缓存补水(不重复 fetch)。无轮询,只在连接/开 app/(debounced 3s)用户增删改时触发;`applyingRemote` 守卫防止 adopt/hydrate 被当成用户编辑回弹。
+   - **后端**:Worker `/auth/google/login`(带 `redirect` 302 回带 `#token`)+ `/me` + `/me/sync`;数据落 D1(见 `../yamashita-api`)。登录态是 httpOnly cookie 之外的 bearer token(账号同步用),与 Gate 密码 cookie 独立。
+   - 调研备忘(为什么没选别的):微信个人主体不可行、短信无免费档、自托管账号要自管密码/找回流程 → Google 最省。将来想叠自托管或其他社交登录仍可加。
 2. **歌名双语(英↔日)(2026-07-13 前端已落地 ✅,数据待补齐)** — 后端 song-name 接口已带 `?lang=en|ja`(默认 en),返回 `name_{lang}`(保留 `NN - ` 轨号前缀)。前端串通:`lib/api/types.ts` 加 `NameLang` + `nameLang(locale)`(ja→ja,en/zh→en,**中文用英文名**);`getAlbum(id, lang)`(lang 进 `'use cache'` 键,`cacheTag` 保持 lang 无关,一次 revalidate 刷两语);`fetchSong`/`useSong` 带 lang(query key 含之,en↔zh 稳定、只 ja↔en 重取);播放器由 `useLocale()` 取 lang;专辑页 `getAlbum(id, nameLang(locale))`,版本枚举 lang-neutral(按年份 slug)。**SSG 实测**:43 专辑 × 3 语全预渲染完整歌单,`/ja` 出日文曲名、`/en`+`/zh` 出英文名(提交 `9da23d4`)。**数据已大体就位**:后端 `name_ja` 520 全有、`name_en` 487/520(33 首纯日文 live 版空);纯英文曲名如 DOWN TOWN 三语一致是数据本身如此。剩余补译/校订随歌词 studio 工具同一入口。专辑名双语暂未纳入(接口未提供),需要时再说
 3. **UI 多语言(i18n),中日英三语(2026-07-13 已落地 ✅)** — UI chrome 三语(en/ja/zh),**内容(专辑名/歌名/歌词)保持日文**(内容中英化是 #2,后端活,另算)。**用 `next-intl` v4**(不是手搓——`spike` 验证 next-intl + `cacheComponents` 静态化零冲突后,加上「demo 待删 + gate 也本地化 → 整站入 `[locale]`」,主流框架更划算)。已落地:
    - **结构**:`app/(main)` 与 `app/gate` 都迁进 `app/[locale]/`(gate 也本地化);`app/demo` 暂留根、不译(待删);根 `app/layout.tsx` 保留 `<html>`+provider,`[locale]/layout.tsx` 挂 `NextIntlClientProvider`+`setRequestLocale`+`HtmlLang`(客户端 effect 修 `<html lang>`)。
@@ -100,11 +100,15 @@
 
 9. **Discover 页(策展合集)**(2026-07-13 记,未排期)— 内容底稿已成型:见 **[DISCOVER.md](./DISCOVER.md)**(曲目全部对着真实库核对、能播)。两类内容:**情绪明信片**(8+ 张 10–13 首,用来逛/挑心情,呼应 The Noon Postcard)+ **长途 Mix**(3 张 60+ 分,开车/循环用,全程中高能量零慢板,防犯困)。**待拍板**(见 DISCOVER.md 尾):①策展方式(纯手工倾向 / mood 标签自动聚需 D1 加字段 / 混合)②明信片封面形态 ③点进去可播(接 #5 歌单)+ 可离线跑长途(接 #8)才闭环。**依赖 #5 歌单基建**——discover 合集本质就是编辑部歌单,建议 #5 落地后顺势做。
 
-10. **专辑下载(整张打包下载到本地)**(2026-07-14 记,未排期)— 站主想法:在专辑详情给一个「下载整张」入口,把这张 release 的曲目下载到本地设备(区别于 #8 的 SW 离线缓存——那是站内后台缓存、不落用户可见文件;这里是主动把音频文件交给浏览器落盘,像 MV 页的下载那样)。**待定**:①打包形态——逐首触发下载 vs 服务端打 zip(后端目前无打包接口,zip 要 Worker 现拉现打,成本待估)②文件命名(轨号+歌名、按 edition/disc 分目录?)③音频是 opus-only(见 [[backend-ingestion-workflow]]),下载给用户的是 `.opus`,通用性差,可能要评估容器/转码 ④和迷你条/播放器的关系(是否也给单曲下载)。参考 MV 页已有的 `<a target="_blank">` + 后端 `content-disposition: attachment` 直连下载模式(Backlog #4)。
+10. **专辑下载(整张打包下载到本地)(2026-07 已落地 ✅)** — 专辑详情的 Play/Share 一行下方给「下载整张」入口:主动把整张 edition 交给浏览器落盘(区别于 #8 的 SW 后台缓存)。落地:
+   - **形态 = 服务端 zip**:后端新增 `/music/edition_zip/:editionId`(Worker 现拉现打,`Content-Disposition: attachment`);前端 `editionZipUrl()`(`lib/api/urls.ts`)+ `edition-view.tsx` 的 `<a target="_blank" download>`(glass-ink 按钮 + 大小副行,`formatFileSize`),仅当 `edition.download` 存在时露出。
+   - **音频转码解决通用性**:zip 里是 **AAC-192k `.m4a`(不是 opus-only)+ 封面**——离线转码在 `discography/` 工具里预生成 AAC/本地 flac/aac 库(见 1e23e33),`EditionDownload{editionId,size}` 由后端下发。
+   - **配套:整张专辑分享**(原 Backlog #6 待做项)也一起做了 — `components/album/share-edition-button.tsx` + `getEditionShareLink()`(`lib/share.ts`),分享 edition 深链带 minted token 免 gate,与单曲分享同机制。
+   - **未做**:单曲下载入口进迷你条/播放器(`songDownloadUrl` helper 已备,UI 未接)。
 
 ## 阶段 4 — 上线
 
-- [ ] 生产部署(旧站 `Dockerfile` / `deploy_opi.sh` 可参考)
+- [x] 生产部署(2026-07)— **Vercel**(不是旧站的 Docker/opi 路子):`vercel.json` 固定 `regions: ["hnd1"]`(东京,贴近后端 Worker + 用户);`@vercel/analytics` + `@vercel/speed-insights` 已接入 `app/layout.tsx`。部署时需设 `NEXT_PUBLIC_SITE_URL`(OG/metadataBase,见 Backlog #7)
 - [ ] 数据回归验证:29–34 张专辑、歌词、MV 全通
 - [ ] 旧站下线或跳转到新站
 

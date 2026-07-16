@@ -24,6 +24,11 @@ import { AddToPlaylistButton } from "@/components/playlists/add-to-playlist-dial
 import { LikeButton } from "@/components/playlists/like-button";
 import { ShareButton } from "@/components/track/share-button";
 import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { nameLang, type Song } from "@/lib/api/types";
 import { coverUrl } from "@/lib/api/urls";
 import { ARTIST } from "@/lib/constants";
@@ -157,18 +162,25 @@ export function FullPlayer() {
               <LikeButton song={enrichedSong} className="size-11" />
               <AddToPlaylistButton song={enrichedSong} className="size-11" />
               {song.albumId && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  aria-label={tSong("openAlbum")}
-                  onClick={viewAlbum}
-                  className="size-11 rounded-full"
-                >
-                  <VinylRecord
-                    className="size-[18px] text-muted-foreground group-hover/button:text-foreground"
-                    aria-hidden
+                <Tooltip>
+                  <TooltipTrigger
+                    render={
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label={tSong("openAlbum")}
+                        onClick={viewAlbum}
+                        className="size-11 rounded-full"
+                      >
+                        <VinylRecord
+                          className="size-[18px] text-muted-foreground group-hover/button:text-foreground"
+                          aria-hidden
+                        />
+                      </Button>
+                    }
                   />
-                </Button>
+                  <TooltipContent>{tSong("openAlbum")}</TooltipContent>
+                </Tooltip>
               )}
               <ShareButton song={enrichedSong} className="size-11" />
               <Button

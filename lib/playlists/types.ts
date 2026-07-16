@@ -23,7 +23,8 @@ export const LIKED_ID = "liked";
 /** One membership: a denormalized Song (cover/album baked in for render) plus
  *  when it was added (drives order, and future last-write-wins on the row).
  *  Fresh adds are always full; entries imported from the old site (see
- *  ./migrate) may be thin (id + name only) until played. */
+ *  ./migrate) start thin (id + name only) and are backfilled to full on the
+ *  next load by PlaylistsHydration (components/playlists/hydration). */
 export type PlaylistEntry = { song: Song; addedAt: number };
 
 export type Playlist = {

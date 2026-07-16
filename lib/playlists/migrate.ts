@@ -34,10 +34,10 @@ function cleanName(raw: string): string {
 /**
  * Read + map the legacy playlists, or null when there's nothing to import or
  * the blob is unreadable. Entries carry only a *thin* Song (id + name) — the
- * old store never stored covers/durations — so migrated rows list with a
- * placeholder cover and a "—" duration until edited. Playback is unaffected:
- * the id resolves to audio and the full player fills in cover/album via
- * useSong. Never throws.
+ * old store never stored covers/durations — so migrated rows would list with a
+ * placeholder cover and a "—" duration; PlaylistsHydration backfills them with
+ * full song details right after import (see components/playlists/hydration).
+ * Playback is unaffected either way: the id resolves to audio. Never throws.
  */
 export function migrateLegacyPlaylists(): Playlist[] | null {
   if (typeof window === "undefined") return null;

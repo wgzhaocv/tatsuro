@@ -88,6 +88,10 @@ export function PlaylistDetail({ id }: { id: string }) {
         <ThemeToggle />
       </header>
 
+      {/* Local store rehydrates after mount (skipHydration), so the first paint
+          has no playlist yet — show a skeleton instead of a blank body. */}
+      {!hydrated && <PlaylistDetailSkeleton />}
+
       {hydrated && playlist && (
         <QueuePlaybackProvider songs={songs} label={name} queueId={playlist.id}>
           <div className="mx-auto w-full max-w-6xl px-5 pt-2 pb-20 sm:px-8 lg:grid lg:grid-cols-[18.5rem_1fr] lg:items-start lg:gap-12 lg:pt-6">
@@ -185,6 +189,39 @@ export function PlaylistDetail({ id }: { id: string }) {
           </div>
         </QueuePlaybackProvider>
       )}
+    </div>
+  );
+}
+
+/**
+ * Placeholder shown while the local playlist store rehydrates — mirrors the real
+ * layout (identity rail + track rows) so the detail doesn't flash a blank body.
+ * White-tint blocks read over the section's beach hero (no cover ambient yet);
+ * the global reduced-motion switch stills the pulse.
+ */
+function PlaylistDetailSkeleton() {
+  return (
+    <div className="mx-auto w-full max-w-6xl px-5 pt-2 pb-20 sm:px-8 lg:grid lg:grid-cols-[18.5rem_1fr] lg:items-start lg:gap-12 lg:pt-6">
+      <aside className="grid grid-cols-[8rem_1fr] items-center gap-x-5 sm:grid-cols-[14rem_1fr] sm:gap-x-7 lg:flex lg:flex-col lg:items-start">
+        <div className="aspect-square w-full animate-pulse rounded-[14px] bg-white/20 shadow-postcard sm:rounded-[20px]" />
+        <div className="flex min-w-0 flex-col items-start gap-3 lg:mt-6 lg:w-full">
+          <div className="h-8 w-40 animate-pulse rounded-md bg-white/20 sm:h-10 sm:w-56" />
+          <div className="h-4 w-28 animate-pulse rounded bg-white/20" />
+          <div className="mt-2 h-11 w-32 animate-pulse rounded-full bg-white/20" />
+        </div>
+      </aside>
+      <ol className="mt-8 flex flex-col gap-1 lg:mt-0">
+        {["a", "b", "c", "d", "e", "f", "g", "h"].map((k) => (
+          <li key={k} className="flex items-center gap-3 px-3 py-2">
+            <div className="size-11 shrink-0 animate-pulse rounded-md bg-white/20" />
+            <div className="flex min-w-0 grow flex-col gap-1.5">
+              <div className="h-3.5 w-1/2 animate-pulse rounded bg-white/20" />
+              <div className="h-3 w-1/3 animate-pulse rounded bg-white/20" />
+            </div>
+            <div className="h-3 w-10 animate-pulse rounded bg-white/20" />
+          </li>
+        ))}
+      </ol>
     </div>
   );
 }

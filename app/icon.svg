@@ -1,8 +1,16 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
   <!-- Wordmark monogram: a bold Futura-style T (flat terminals, matches the Jost
-       nav wordmark) on transparent ground — no tile. Fixed light-mode mark:
-       near-black navy (#0B3A53, the design system's black replacement) in every
-       theme (site owner's call — no dark-tab white variant). Keep the T geometry
-       in sync with apple-icon.tsx (DESIGN.md § Favicon). -->
-  <path d="M7 5.5h18v5.2H7z M13.4 5.5h5.2v21H13.4z" fill="#0B3A53"/>
+       nav wordmark) on transparent ground — no tile. Theme-adaptive: near-black
+       navy (#0B3A53, the design system's black replacement) on light tabs, white
+       on dark tabs (prefers-color-scheme). Keep the T geometry in sync with
+       apple-icon.tsx (DESIGN.md § Favicon). -->
+  <style>
+    .dark { display: none; }
+    @media (prefers-color-scheme: dark) {
+      .light { display: none; }
+      .dark { display: inline; }
+    }
+  </style>
+  <path class="light" d="M7 5.5h18v5.2H7z M13.4 5.5h5.2v21H13.4z" fill="#0B3A53"/>
+  <path class="dark" d="M7 5.5h18v5.2H7z M13.4 5.5h5.2v21H13.4z" fill="#FFFFFF"/>
 </svg>

@@ -110,7 +110,11 @@ export function FullPlayer() {
       <DialogPrimitive.Portal>
         <DialogPrimitive.Popup
           aria-label={t("nowPlaying", { name: song.name })}
-          className="fixed inset-0 isolate z-50 flex flex-col overflow-y-auto bg-background outline-none duration-500 ease-lazy data-closed:animate-out data-closed:fade-out-0 data-closed:slide-out-to-bottom-8 data-open:animate-in data-open:fade-in-0 data-open:slide-in-from-bottom-8"
+          // pb-[env(safe-area-inset-bottom)]: the header already clears the top
+          // notch; this keeps the bottom transport row (the lowest control on
+          // phones) above the home indicator / gesture bar, matching BottomNav
+          // and MiniPlayer. 0 on desktop where the inset resolves to 0.
+          className="fixed inset-0 isolate z-50 flex flex-col overflow-y-auto bg-background pb-[env(safe-area-inset-bottom)] outline-none duration-500 ease-lazy data-closed:animate-out data-closed:fade-out-0 data-closed:slide-out-to-bottom-8 data-open:animate-in data-open:fade-in-0 data-open:slide-in-from-bottom-8"
         >
           {/* ── Ambient: the cover's own colour fills the room — the same
               Cover Ambient material as the album screen, one recipe ── */}

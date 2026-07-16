@@ -167,7 +167,8 @@
     "pin": "{name}をピン留め",
     "unpin": "{name}のピン留めを解除",
     "pinned": "{name}をピン留めしました",
-    "unpinned": "{name}のピン留めを解除しました"
+    "unpinned": "{name}のピン留めを解除しました",
+    "pinnedBadge": "先頭にピン留め"
   },
   "account": {
     "label": "プレイリストを同期",

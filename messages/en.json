@@ -167,7 +167,8 @@
     "pin": "Pin {name}",
     "unpin": "Unpin {name}",
     "pinned": "Pinned {name}",
-    "unpinned": "Unpinned {name}"
+    "unpinned": "Unpinned {name}",
+    "pinnedBadge": "Pinned to front"
   },
   "account": {
     "label": "Sync playlists",

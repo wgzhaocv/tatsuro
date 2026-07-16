@@ -167,7 +167,8 @@
     "pin": "置顶 {name}",
     "unpin": "取消置顶 {name}",
     "pinned": "已置顶 {name}",
-    "unpinned": "已取消置顶 {name}"
+    "unpinned": "已取消置顶 {name}",
+    "pinnedBadge": "已置顶到前面"
   },
   "account": {
     "label": "同步歌单",

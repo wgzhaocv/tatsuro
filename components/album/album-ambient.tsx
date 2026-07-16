@@ -24,7 +24,13 @@ export function AlbumAmbient({
   return (
     <div
       aria-hidden
-      className={cn("fixed inset-0 -z-10 overflow-hidden", className)}
+      // Constant 100lvh (not inset-0): Chrome Android resizes the fixed viewport
+      // when the URL bar hides on scroll, which would rescale this blurred cover
+      // (visible zoom). Fixed height keeps it steady; bg so bottom crop is fine.
+      className={cn(
+        "fixed inset-x-0 top-0 -z-10 h-[100lvh] overflow-hidden",
+        className,
+      )}
     >
       {/* Decorative and heavily blurred — no priority preload (the crisp
           hero cover deserves that), but eager: it fills the viewport, so

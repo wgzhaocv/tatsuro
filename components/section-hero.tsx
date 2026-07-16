@@ -21,7 +21,14 @@ export function SectionHero({
   return (
     <div className="relative flex min-h-dvh flex-col">
       <PageScroll />
-      <div aria-hidden="true" className="pointer-events-none fixed inset-0 z-0">
+      {/* Constant large-viewport height (not inset-0): Chrome Android grows the
+          fixed viewport when the URL bar retracts on scroll, which would rescale
+          this cover photo (visible zoom). Pinning to 100lvh keeps it fixed size —
+          the bar-visible state just crops a little off the bottom (fine for a bg). */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none fixed inset-x-0 top-0 z-0 h-[100lvh]"
+      >
         <div className="absolute inset-0">
           <ThemeImage
             noon={noon}

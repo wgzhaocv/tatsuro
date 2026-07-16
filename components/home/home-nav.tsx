@@ -30,7 +30,7 @@ export function HomeNav({
 }) {
   const t = useTranslations("nav");
   return (
-    <header className="relative flex items-center justify-between gap-3 px-5 py-4 sm:px-8 sm:py-5">
+    <header className="relative flex flex-wrap items-center gap-3 px-5 py-4 sm:px-8 sm:py-5">
       <Link
         href="/"
         className="flex items-center rounded-full text-white [text-shadow:0_2px_12px_rgba(11,58,83,0.5)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
@@ -81,7 +81,11 @@ export function HomeNav({
         </div>
       </nav>
 
-      <div className="flex items-center gap-3">
+      {/* Below lg the controls flatten into the header's flex flow (display:
+          contents), so they start on the logo's line and wrap one-by-one instead
+          of the whole cluster jumping to a right-aligned second row. At lg they
+          regroup as a right-aligned cluster (ml-auto), beside the centered nav. */}
+      <div className="contents lg:ml-auto lg:flex lg:items-center lg:gap-3">
         {search}
         <AccountButton />
         <LanguageSwitcher />

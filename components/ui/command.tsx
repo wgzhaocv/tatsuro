@@ -74,7 +74,9 @@ function CommandInput({
       <CommandPrimitive.Input
         data-slot="command-input"
         className={cn(
-          "flex h-11 w-full bg-transparent text-sm outline-hidden placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50",
+          // text-base (16px) on mobile so iOS Safari doesn't auto-zoom the page
+          // on focus (which forces a horizontal scrollbar); text-sm from sm: up.
+          "flex h-11 w-full bg-transparent text-base outline-hidden placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 sm:text-sm",
           className,
         )}
         {...props}

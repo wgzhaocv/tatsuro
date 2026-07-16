@@ -79,14 +79,12 @@
 - 按 id 的端点(`/music/release/:id`、`/music/album_songs/:id`)不受影响:新 id 天然是新 key,本就是新的。
 
 ### 第 ② 层 — Vercel(Next `'use cache'`)
-`lib/api/albums.ts` 的 `getAlbums`、`lib/api/search.ts` 用了 `'use cache' + cacheLife('max') + cacheTag('albums')`,**可能跨 Vercel 构建保留**(这是"重新 built 也没用"的第二个真凶)。
-
-- 触发一次 `revalidateTag('albums')`(歌相关用 `'songs'`,MV 用 `'mv'`)。**目前没有现成的 HTTP 触发口(待建:一个受保护的 revalidate route handler)**;在有之前,靠**重新部署前端**顶上(推 `main` 触发 Vercel;若重建后仍旧,才是这层没刷掉,需要补 revalidate route)。
+`lib/api/albums.ts` 的 `getAlbums`、`lib/api/search.ts` 用了 `'use cache' + cacheLife('max') + cacheTag('albums')`,可能存着旧数据。**这层好清**:Vercel 面板 → Project → Settings → **Data Cache → Purge Everything**(或重新部署时选不带缓存)即可;不像 ① 那样难缠。将来若想一键化,可加个受保护的 `revalidateTag` route。
 
 ### 顺序
-**先 ①(`wrangler deploy`)再 ②(前端重部署)** —— 否则前端刷新后从边缘还是拿到旧的。
+**先 ①(`wrangler deploy`)再 ②(Vercel 清 Data Cache / 重部署)** —— 否则前端刷新后从边缘还是拿到旧的。CF(①)是唯一需要 `wrangler deploy` 才清得掉的坑;Vercel(②)随手可清。
 
-> 备忘:曾经加过 `lib/api/rev.ts` 用 `?rev=` 版本号一次打穿两层,后按站主决定移除(改动罕见,不值得在代码里常驻旁路);统一走上面"deploy 刷 ① + 重部署刷 ②"。
+> 备忘:曾经加过 `lib/api/rev.ts` 用 `?rev=` 版本号一次打穿两层,后按站主决定移除(改动罕见 + Vercel 侧本就好清,不值得在代码里常驻旁路);统一走上面"deploy 刷 ① + Vercel 清 ②"。
 
 ## 遗留(用户侧)
 

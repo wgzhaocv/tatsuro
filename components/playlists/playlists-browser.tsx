@@ -48,12 +48,26 @@ export function PlaylistsBrowser() {
         isEmpty={hydrated && playlists.length === 0}
         emptyBody={t("emptyListBody")}
       >
-        {hydrated &&
-          playlists.map((p) => (
-            <li key={p.id}>
-              <PlaylistCard playlist={p} />
-            </li>
-          ))}
+        {hydrated
+          ? playlists.map((p) => (
+              <li key={p.id}>
+                <PlaylistCard playlist={p} />
+              </li>
+            ))
+          : // Store rehydrates after mount — show skeleton cards (matching the
+            // PlaylistCard's phone-row / sm-postcard shapes) so the grid isn't
+            // blank over the hero. Pulse stills under global reduced-motion.
+            ["a", "b", "c", "d", "e", "f"].map((k) => (
+              <li key={k} aria-hidden="true">
+                <div className="flex items-center gap-3 p-2 sm:block sm:p-0">
+                  <div className="aspect-square w-14 shrink-0 animate-pulse rounded-lg bg-white/20 sm:w-full sm:rounded-[14px] sm:shadow-postcard" />
+                  <div className="min-w-0 flex-1 sm:mt-3">
+                    <div className="h-4 w-2/3 animate-pulse rounded bg-white/20" />
+                    <div className="mt-1.5 h-3 w-1/3 animate-pulse rounded bg-white/15" />
+                  </div>
+                </div>
+              </li>
+            ))}
       </BrowseGrid>
     </div>
   );

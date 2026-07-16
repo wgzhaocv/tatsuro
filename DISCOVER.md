@@ -107,6 +107,19 @@ Cheer Up! The Summer · Sync of Summer · Natsu e no Tobira · My Sugar Babe · 
 5. ~~**② 开车待处理**~~ ✅ 已处理(2026-07-16):Lady Blue→Your Eyes、踊ろよフィッシュ→Daydream(B)、Merry-Go-Round→素敵な午後は、Every Night→Dreaming Girl(C)。
 6. **长 Mix 是否再加一张**(如纯放克)。
 
+## ⚠️ 注意点:长 Mix 循环播放 vs SW 音频缓存(实现②前想清楚)
+
+**问题**:② 的长途 Mix 就是拿来 **repeat-all 循环几小时**的。而 SW 音频缓存(阶段 1 已落地,`app/sw/audio-cache.ts`)是 **LRU、上限 = 存储配额一半(300MB 保底)**、按访问时间淘汰。如果**单张 Mix 的音频总量 > 缓存预算**,循环时就会:放到后面的曲子挤掉最前面的 → 转回头重播时最前面几首已被淘汰、要重新下载 → **每循环一圈都在重下开头**(cache thrash),既费流量又可能在信号差的路上卡顿——**恰好打脸"开车/离线"的设计目标**。
+
+**量级估算(先别慌)**:后端是 opus,音乐档 ~128kbps ≈ **~1MB/分钟**。单张 60–70 分钟 Mix ≈ **~60–70MB**,**远低于 300MB 保底**——所以**单张 Mix 单独循环不会 thrash**,安全。真正的风险是**叠加压力**:用户同时缓存了若干专辑 + 多张 Mix,LRU 是全局共享的,合计逼近配额一半时,循环的 Mix 会和浏览过的专辑互相驱逐。
+
+**缓解方向(和 Backlog #8 主动缓存同源,一起做)**:
+1. 给"下载这张 Mix 离线"入口——主动把整张喂进 `audioStreamHandler` 预缓存;
+2. **关键**:被"下载离线"的内容应**豁免 LRU 淘汰**(或单独配额),否则循环时照样被挤掉。现在的 LRU 一视同仁,需要加"钉住(pinned)不淘汰"的一层;
+3. 实现时**实测**:选最长那张 Mix,循环 2–3 圈看 `audio-cache-events`,确认没有对开头曲目的重复 network 拉取。
+
+> 一句话:**单张 Mix 循环本身没事(60MB « 300MB),但"离线下载的东西不能被 LRU 当普通缓存淘汰"这条得在 #8 里补上,否则边下边听长途会 thrash。**
+
 ## 待办(实现,后面找时间)
 
 - 导航点亮:`components/home/home-nav.tsx` + `components/bottom-nav.tsx` 里 `discover` 现为 `aria-disabled` 占位,加 `/discover` href(Compass 图标已在 bottom-nav 备好)。

@@ -52,7 +52,6 @@
 - [ ] a11y pass(`/impeccable audit`):键盘可达、44px 触控、input 边界对比、reduced-motion 全覆盖
 - [ ] 响应式 pass(`/impeccable adapt`):`100dvh`、CSS 断点(不依赖 UA 分支)
 - [ ] 性能:封面懒加载、日文字体加载策略、`/impeccable optimize`
-- [ ] (探索,可不做)金色日出第三主题
 
 ## Backlog — 站主想法(2026-07-13 记,未排期)
 
@@ -92,11 +91,11 @@
    - **鉴权/隐私联动**(`proxy.ts`):bot 判定换成 `userAgent().isBot`(不再手写正则);**未带密码的分享 → 落到 gate 的「需要密码」OG**(不泄露指向哪张专辑),**只有带 token 的分享链接(`?argot=`)才出真内容 OG**(bot 不留 cookie,token 在 URL 里直接放行渲染);OG 图/icon 路由恒公开(bot 能抓到卡)。
    - **验证**:tsc/biome 全过;起了个临时 bun 预览服(job tmp,非仓库)按 bot UA+签名 token 抓 11 屏真实 metadata + OG 卡逐一核对,11/11 og:image、三语 description、noindex、tokenless→gate 全绿。**未做**:单曲深链 OG(等 #6 分享形态);专辑名双语 OG(接口无);部署时记得设 `NEXT_PUBLIC_SITE_URL`。
 
-8. **PWA 形态 + 主动缓存 + 存储设置页**(2026-07-13 记,未排期)— 目标是**车载/离线**场景:手机进支架、蓝牙连车机,屏幕关着也能用。盘点后确认底层已 90% 就位,差的是三块产品化:
-   - **PWA 可安装形态**(投入最小)— SW 已就绪并注册(阶段 1,`@serwist/turbopack` + `sw-provider.tsx`),但**缺 `manifest.webmanifest` + 图标 + layout metadata**,所以装不到主屏、iOS 不 standalone 全屏。要加:`app/manifest.ts`(name/short_name/`display:"standalone"`/`start_url`/`theme_color`/双主题 `background_color`/icons 192·512)、一套图标(192/512/maskable + `apple-touch-icon`)、`layout.tsx` metadata 补 `manifest`/`appleWebApp`/`themeColor`/viewport。**MediaSession 与 iOS 后台播放已全做**(`audio-engine.tsx`:元数据/锁屏控制/positionState/焦点仲裁/`audioSession.type="playback"`),车机中控屏 + 方向盘键开箱可用,不用动。
+8. **PWA 形态 + 主动缓存 + 存储设置页**(2026-07-13 记,未排期)— 目标是**车载/离线**场景:手机进支架、蓝牙连车机,屏幕关着也能用。盘点后确认底层已 90% 就位,差的是三块产品化(第一块已落地,剩两块):
+   - [x] **PWA 可安装形态**(2026-07-16 做)— 加了 `app/manifest.ts`(→ `/manifest.webmanifest`,`display:"standalone"`、`theme_color`/`background_color`=黄昏 dusk-navy `#12263A` 定安装身份+闪屏)、maskable 图标(`app/icons/tile.tsx` 单一几何源:白瘦长 Futura-T on 黄昏底 → `maskable-192/512.png` 路由;`apple-icon` 复用同 tile;`icon.svg` favicon 同比例瘦身、保留主题自适应无底色)、`layout.tsx` metadata 补 `appleWebApp`(iOS standalone,`black-translucent`)+ `viewport.themeColor` 双主题 media 数组(浅 sea-glass `#E9F7F2` / 暗 dusk-navy)。图标路由以 `.png` 结尾 + `manifest.webmanifest` 进 `proxy.ts` matcher,网关不拦浏览器的元数据抓取。生产实测 manifest/图标 200、未被门重定向。**MediaSession 与 iOS 后台播放阶段 1 已全做**(`audio-engine.tsx`),车机中控屏 + 方向盘键开箱可用。
    - **主动缓存(保留被动)** — 现状 `app/sw/audio-cache.ts` 是**被动 opportunistic**:播过才后台存整文件、LRU 到 quota 一半淘汰。对"重复听"够用,但**跑长途听新歌仍会卡**(没听过=没缓存)。要加"下载这张专辑/歌单离线"入口:主动 fetch 队列里各首喂进现成的 `audioStreamHandler`(白送),被动缓存不变。
    - **存储设置页** — "音乐很大"必须让用户看得见、管得了:用量条(已缓存 N 首 / 占 X MB / 上限 = quota 一半)+ 一键清理 + 每张专辑的离线开关状态。数据源现成(`audio-cache-events` 广播 + IndexedDB LRU 元数据),缺前端订阅 + UI。**与 #5(缓存的视觉标记)同源**,可合并一起做。
-   - 决策倾向(讨论已定):**做但克制** — 只在专辑/歌单给下载开关,不做全站"下载所有";PWA 图标待站主定长相。
+   - 决策倾向(讨论已定):**做但克制** — 只在专辑/歌单给下载开关,不做全站"下载所有";PWA 图标已定(白瘦长 T + 黄昏底,2026-07-16)。
 
 9. **Discover 页(策展合集)**(2026-07-13 记,未排期)— 内容底稿已成型:见 **[DISCOVER.md](./DISCOVER.md)**(曲目全部对着真实库核对、能播)。两类内容:**情绪明信片**(8+ 张 10–13 首,用来逛/挑心情,呼应 The Noon Postcard)+ **长途 Mix**(3 张 60+ 分,开车/循环用,全程中高能量零慢板,防犯困)。**待拍板**(见 DISCOVER.md 尾):①策展方式(纯手工倾向 / mood 标签自动聚需 D1 加字段 / 混合)②明信片封面形态 ③点进去可播(接 #5 歌单)+ 可离线跑长途(接 #8)才闭环。**依赖 #5 歌单基建**——discover 合集本质就是编辑部歌单,建议 #5 落地后顺势做。
 

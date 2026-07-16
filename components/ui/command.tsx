@@ -122,7 +122,11 @@ function CommandGroup({
     <CommandPrimitive.Group
       data-slot="command-group"
       className={cn(
-        "overflow-hidden p-1 text-foreground **:[[cmdk-group-heading]]:px-3 **:[[cmdk-group-heading]]:py-2 **:[[cmdk-group-heading]]:text-xs **:[[cmdk-group-heading]]:font-medium **:[[cmdk-group-heading]]:text-muted-foreground",
+        // Section heading sticks to the top of the scroll area so both groups
+        // stay labelled while the list scrolls. No overflow-hidden (it would
+        // trap the sticky), and a solid-ish white/dusk tint — not a second glass
+        // layer (glass discipline) — so rows scrolling under it stay hidden.
+        "p-1 text-foreground **:[[cmdk-group-heading]]:sticky **:[[cmdk-group-heading]]:top-0 **:[[cmdk-group-heading]]:z-10 **:[[cmdk-group-heading]]:bg-white/85 **:[[cmdk-group-heading]]:px-3 **:[[cmdk-group-heading]]:py-2 **:[[cmdk-group-heading]]:text-xs **:[[cmdk-group-heading]]:font-medium **:[[cmdk-group-heading]]:text-muted-foreground dark:**:[[cmdk-group-heading]]:bg-dusk-navy/85",
         className,
       )}
       {...props}

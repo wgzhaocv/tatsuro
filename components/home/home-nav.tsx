@@ -89,9 +89,13 @@ export function HomeNav({
           (grow + justify-end). When they can't fit they wrap within that right
           area (flex-wrap) — folded controls stay on the right, never jumping to
           the screen's left edge. min-w-0 lets the group shrink so the wrap
-          actually triggers instead of overflowing off-screen. */}
+          actually triggers instead of overflowing off-screen. Search is the
+          one sent to a second row when space runs out (order-last below lg) —
+          it keeps its usual left-most spot on the desktop rail (lg:order-none),
+          but on phones the three icon buttons stay up on the logo's row and
+          search folds beneath them, rather than the theme toggle dropping. */}
       <div className="flex min-w-0 grow flex-wrap items-center justify-end gap-3">
-        {search}
+        <div className="order-last lg:order-none">{search}</div>
         <AccountButton />
         <LanguageSwitcher />
         <ThemeToggle />

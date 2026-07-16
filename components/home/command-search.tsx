@@ -101,7 +101,15 @@ export function CommandSearch() {
               onValueChange={setQuery}
               placeholder={ts("placeholder")}
             />
-            <CommandList className="max-h-[60vh]">
+            <CommandList
+              className="max-h-[60vh]"
+              // 手机上拖动结果列表就收起软键盘 —— touchmove 只在触屏触发，
+              // 天然「只在手机生效」。桌面滚动/⌘K 不受影响。
+              onTouchMove={() => {
+                const el = document.activeElement;
+                if (el instanceof HTMLElement) el.blur();
+              }}
+            >
               {isLoading ? (
                 <Message>{ts("loading")}</Message>
               ) : !hasQuery ? (

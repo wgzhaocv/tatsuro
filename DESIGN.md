@@ -257,7 +257,7 @@ components:
 
 ### Cover Ambient(签名材质:专辑页封面环境光)
 - 专辑详情不用海景照片——**每张专辑自己的封面**模糊放大(`blur` ~24px + `saturate 1.35`)铺满视口做环境色,再**溶进正午白光**:白渐变罩 `rgba(255,255,255,0.84 → 0.6 → sea-glass 0.92)`(黄昏 = dusk-navy 同构),文字全程墨色/前景 token——不压深 scrim,深水律与浅罩律天然成立。
-- 每张专辑以自己的颜色浸染整页;环境层带 `animate-breathe` 极慢呼吸,reduced-motion 走全局开关。其上的 chrome 用 `glass-ink`,内容 sheet 用 `GlassPanel`。
+- 每张专辑以自己的颜色浸染整页;环境层**静止**(曾带 `animate-breathe` 呼吸,已移除——无限循环动画即使肉眼不可感也让 GPU 永不空闲、逼上层 backdrop-blur 逐帧重算,手机发热)。其上的 chrome 用 `glass-ink`,内容 sheet 用 `GlassPanel`。
 
 ## 6. Do's and Don'ts
 

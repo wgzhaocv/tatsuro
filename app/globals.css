@@ -81,7 +81,6 @@
 
   /* Motion: lazy and silky (400–600ms); ambient cycles live at 8–20s */
   --ease-lazy: cubic-bezier(0.22, 1, 0.36, 1);
-  --animate-breathe: breathe 12s ease-in-out infinite;
   --animate-glint: glint 14s ease-in-out infinite;
   --animate-shimmer: shimmer 8s ease-in-out infinite;
   /* Now-playing cover: a slow record turn; pause it with animation-play-state
@@ -199,18 +198,9 @@
       "Noto Sans JP", var(--font-inter), sans-serif;
     line-height: 1.7;
   }
-  /* Ambient motion vocabulary — sea light: slow, tiny, nearly imperceptible */
-  @keyframes breathe {
-    0%,
-    100% {
-      transform: scale(1);
-      opacity: 0.85;
-    }
-    50% {
-      transform: scale(1.05);
-      opacity: 1;
-    }
-  }
+  /* Ambient motion vocabulary — sea light: slow, tiny, nearly imperceptible.
+     (breathe was removed: an infinite loop nobody can perceive still burns
+     GPU forever — ambient loops must be visible to earn their power draw.) */
   @keyframes glint {
     0%,
     100% {

@@ -23,10 +23,12 @@
     "single": "单曲"
   },
   "search": {
-    "placeholder": "搜索…",
+    "placeholder": "搜索专辑和歌名…",
     "title": "搜索",
     "description": "搜索整个曲库",
-    "empty": "这里还什么都没有。"
+    "empty": "没有匹配的结果",
+    "albumsHeading": "专辑",
+    "songsHeading": "歌曲"
   },
   "browse": {
     "albumsHeading": "专辑",

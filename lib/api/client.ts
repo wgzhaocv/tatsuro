@@ -13,13 +13,22 @@ import {
 
 const API = process.env.NEXT_PUBLIC_API_URL;
 
+/** Fetch + parse JSON from the API, throwing a labeled error on a non-2xx
+ *  status. Shared by the client-side fetchers; the browser HTTP cache does the
+ *  caching (the API sends CORS * + month-long immutable cache-control). */
+export async function fetchJson<T>(url: string, label: string): Promise<T> {
+  const res = await fetch(url);
+  if (!res.ok) {
+    throw new Error(`Failed to load ${label}: ${res.status} ${res.statusText}`);
+  }
+  return (await res.json()) as T;
+}
+
 /** Full details for a single song (album context, duration, mv link). */
 export async function fetchSong(songId: string, lang: NameLang): Promise<Song> {
-  const res = await fetch(`${API}/music/${songId}?lang=${lang}`);
-  if (!res.ok) {
-    throw new Error(
-      `Failed to load song ${songId}: ${res.status} ${res.statusText}`,
-    );
-  }
-  return toSongFromInfo((await res.json()) as ApiSongInfo);
+  const info = await fetchJson<ApiSongInfo>(
+    `${API}/music/${songId}?lang=${lang}`,
+    `song ${songId}`,
+  );
+  return toSongFromInfo(info);
 }

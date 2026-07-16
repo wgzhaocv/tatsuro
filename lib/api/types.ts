@@ -154,6 +154,43 @@ export type Song = {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Search — the /music/search-index payload (whole catalog, names only). Kept
+// separate from the domain types above: it carries BOTH raw name_ja + name_en
+// (language-neutral, so one cached doc serves every locale) and pre-baked
+// deep-link fields, which the domain Song/Album don't have. Consumed only by the
+// client-side search palette (see lib/api/search.ts).
+// ─────────────────────────────────────────────────────────────────────────────
+
+export type SearchAlbum = {
+  id: string;
+  name: string;
+  /** coverFrontId → coverUrl() */
+  cover: string;
+  year?: number;
+  category?: string;
+};
+
+export type SearchSong = {
+  id: string;
+  /** Raw name_ja (may be ""). */
+  ja: string;
+  /** Raw name_en — already romaji for JP titles (may be ""). */
+  en: string;
+  /** Bare fallback title (track prefix stripped), used when ja + en are empty. */
+  n: string;
+  /** Release id → /album/:rid */
+  rid: string;
+  /** Edition slug, present only for non-default editions → /album/:rid/:slug */
+  slug?: string;
+  /** Release display name (shown on the right of the row). */
+  album: string;
+  /** Disc coverFrontId → coverUrl() */
+  cover: string;
+};
+
+export type SearchIndex = { albums: SearchAlbum[]; songs: SearchSong[] };
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Wire shapes — exactly what the backend returns. Internal to lib/api.
 // ─────────────────────────────────────────────────────────────────────────────
 

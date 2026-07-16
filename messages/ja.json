@@ -23,10 +23,12 @@
     "single": "シングル"
   },
   "search": {
-    "placeholder": "検索…",
+    "placeholder": "アルバム・曲名を検索…",
     "title": "検索",
     "description": "カタログを検索",
-    "empty": "まだ何もありません。"
+    "empty": "一致する項目がありません",
+    "albumsHeading": "アルバム",
+    "songsHeading": "曲"
   },
   "browse": {
     "albumsHeading": "アルバム",

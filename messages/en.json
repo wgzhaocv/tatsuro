@@ -23,10 +23,12 @@
     "single": "Single"
   },
   "search": {
-    "placeholder": "Search…",
+    "placeholder": "Search albums and songs…",
     "title": "Search",
     "description": "Search across the catalogue.",
-    "empty": "Nothing here yet."
+    "empty": "No matches",
+    "albumsHeading": "Albums",
+    "songsHeading": "Songs"
   },
   "browse": {
     "albumsHeading": "Albums",

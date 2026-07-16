@@ -1,3 +1,5 @@
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import type { Metadata } from "next";
 import { Inter, Jost, Quicksand } from "next/font/google";
 import "./globals.css";
@@ -72,6 +74,10 @@ export default function RootLayout({
               remounted <audio> element would ghost-play alongside its
               replacement (the double-audio bug). */}
           <AudioEngine />
+          {/* Vercel free-tier telemetry: page views + Web Vitals. No-ops off
+              Vercel, so dev/self-host stay clean. */}
+          <Analytics />
+          <SpeedInsights />
           {/* Top-center clears the bottom chrome (mobile tab bar + mini
               player); the offset drops it below the page header. mobileOffset
               is separate — sonner uses it under 600px. */}

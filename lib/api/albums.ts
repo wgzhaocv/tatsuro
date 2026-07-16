@@ -16,6 +16,8 @@ import {
 // one-shot revalidateTag('albums'). Ordering, year, category, edition/disc grouping
 // all live server-side (see yamashita-api); the client just maps wire → domain.
 
+import { CATALOG_REV } from "./rev";
+
 const API = process.env.NEXT_PUBLIC_API_URL;
 
 /** All releases, in the backend's chronological order (for the grid). */
@@ -24,7 +26,7 @@ export async function getAlbums(): Promise<Album[]> {
   cacheLife("max");
   cacheTag("albums");
 
-  const res = await fetch(`${API}/music/releases`);
+  const res = await fetch(`${API}/music/releases?rev=${CATALOG_REV}`);
   if (!res.ok) {
     throw new Error(`Failed to load albums: ${res.status} ${res.statusText}`);
   }

@@ -3,10 +3,9 @@ import { ImageResponse } from "next/og";
 export const size = { width: 180, height: 180 };
 export const contentType = "image/png";
 
-// Home-screen icon: white monogram T on a deep-navy tile (matches the favicon's
-// dark-tab state). iOS renders transparency black, so this one gets an opaque
-// ground — a restrained navy #0B3A53, not the saturated block we rejected.
-// Keep the T geometry in sync with icon.svg.
+// Home-screen icon: navy monogram T on a white tile — the light-mode mark (site
+// owner's call; no dark/navy-tile variant). iOS renders transparency black, so
+// this one gets an opaque white ground. Keep the T geometry in sync with icon.svg.
 export default function AppleIcon() {
   return new ImageResponse(
     <div
@@ -15,7 +14,7 @@ export default function AppleIcon() {
         height: "100%",
         display: "flex",
         position: "relative",
-        background: "#0B3A53",
+        background: "#FFFFFF",
       }}
     >
       {/* horizontal bar */}
@@ -26,7 +25,7 @@ export default function AppleIcon() {
           top: 31,
           width: 102,
           height: 29,
-          background: "#FFFFFF",
+          background: "#0B3A53",
         }}
       />
       {/* vertical stem */}
@@ -37,7 +36,7 @@ export default function AppleIcon() {
           top: 31,
           width: 30,
           height: 118,
-          background: "#FFFFFF",
+          background: "#0B3A53",
         }}
       />
     </div>,

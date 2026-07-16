@@ -1,5 +1,7 @@
+import { cacheLife, cacheTag } from "next/cache";
 import { ImageResponse } from "next/og";
 import type { AlbumCategory } from "@/lib/api/types";
+import { coverUrl } from "@/lib/api/urls";
 
 // Shared builders for the site's OpenGraph cards — the previews that unfurl when
 // a link is pasted into Slack / WhatsApp / iMessage / X. Colours are the app's
@@ -15,6 +17,52 @@ import type { AlbumCategory } from "@/lib/api/types";
 export const OG_SIZE = { width: 1200, height: 630 };
 export const OG_CONTENT_TYPE = "image/png";
 
+/** A rendered release card as a base64 PNG. Both the cover fetch AND satori's
+ *  render happen inside this cached boundary, and its output is plain bytes — so
+ *  the OG route that returns them has no uncached IO of its own and can be
+ *  statically prerendered for the whole (fixed) discography. Without this, the
+ *  route exposes ImageResponse's internal uncached fetch at the top level, which
+ *  Cache Components rejects mid-prerender → the route 500s on every unfurl.
+ *  cacheTag keys on the cover so revalidateTag('albums') refreshes cards too. */
+export async function albumOgPng(input: {
+  coverId: string;
+  name: string;
+  year?: number;
+  category?: AlbumCategory;
+}): Promise<string> {
+  "use cache";
+  cacheLife("max");
+  cacheTag("albums", `cover:${input.coverId}`);
+  const res = await fetch(coverUrl(input.coverId));
+  if (!res.ok) throw new Error(`cover ${input.coverId}: HTTP ${res.status}`);
+  const type = res.headers.get("content-type") ?? "image/jpeg";
+  const cover = `data:${type};base64,${Buffer.from(await res.arrayBuffer()).toString("base64")}`;
+  const png = await albumOgImage({
+    cover,
+    name: input.name,
+    year: input.year,
+    category: input.category,
+  }).arrayBuffer();
+  return Buffer.from(png).toString("base64");
+}
+
+/** The brand card as cached base64 PNG — same reason as albumOgPng: keeps the
+ *  fallback path free of uncached IO so the OG routes stay statically
+ *  prerenderable (an unknown-id request at runtime still lands here). */
+export async function brandOgPng(): Promise<string> {
+  "use cache";
+  cacheLife("max");
+  return Buffer.from(await brandOgImage().arrayBuffer()).toString("base64");
+}
+
+/** Wrap cached PNG bytes (albumOgPng / brandOgPng) in a Response for an OG
+ *  route to return. */
+export function pngResponse(base64: string): Response {
+  return new Response(Buffer.from(base64, "base64"), {
+    headers: { "Content-Type": OG_CONTENT_TYPE },
+  });
+}
+
 // Palette (mirrors app/globals.css — DESIGN.md is canonical).
 const SKY = "#BFE9F2"; // --secondary (pale sky) — solid brand ground
 const CREAM = "#FFF6E9"; // --shell, used as ink on the dusk gate card
@@ -23,7 +71,6 @@ const DUSK = "#12263A"; // --color-dusk-navy
 const INK_MIST = "#4C7083"; // --muted-foreground
 const OCEAN_DEEP = "#0C8097"; // --primary
 const CORAL = "#FF8A5B";
-const ACCENT = `linear-gradient(90deg, ${OCEAN_DEEP}, #0A8473)`;
 // Veil over the blurred cover: transparent at the cover side so the ambient
 // shows, ramping to a SOLID pale-sky panel from mid-frame on — so the metadata
 // always sits on a light ground and navy ink stays legible over any cover
@@ -308,16 +355,6 @@ function coverCard({
               {sub}
             </div>
           ) : null}
-          <div
-            style={{
-              display: "flex",
-              width: 132,
-              height: 9,
-              borderRadius: 5,
-              background: ACCENT,
-              marginTop: 40,
-            }}
-          />
         </div>
       </div>
     </div>,

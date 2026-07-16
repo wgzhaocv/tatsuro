@@ -37,7 +37,11 @@ export function AlbumAmbient({
           the browser flags it as LCP and lazy-loading it only delays it.
           A small variant suffices: under blur-xl anything past a few hundred
           pixels is invisible, and the saved bandwidth goes to real content. */}
-      <div className="absolute -inset-[12%] animate-breathe">
+      {/* breathe is desktop-only: the 12s infinite scale/opacity loop keeps the
+          compositor awake forever — imperceptible on screen, but it pins the
+          GPU and forces the fixed backdrop-blur chrome above to re-blur every
+          frame. Phones get the same layer as a still. */}
+      <div className="absolute -inset-[12%] lg:animate-breathe">
         <FadeImage
           src={cover}
           eager

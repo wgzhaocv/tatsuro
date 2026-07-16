@@ -238,14 +238,6 @@
       transform: rotate(1turn);
     }
   }
-  /* View Transitions (the pin reorder): slow the browser's ~250ms default to
-     the house lazy tempo so the card's slide to the front reads. reduced-motion
-     never reaches here — withViewTransition skips startViewTransition entirely
-     (see lib/view-transition), so no reduce guard is needed. */
-  ::view-transition-group(*) {
-    animation-duration: 500ms;
-    animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
-  }
   /* Every animation must have a reduced-motion alternative */
   @media (prefers-reduced-motion: reduce) {
     *,

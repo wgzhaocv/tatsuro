@@ -11,11 +11,10 @@ import { isJapanese } from "@/lib/text";
  *  is a sibling of the Link (not nested — a button inside an anchor is invalid),
  *  overlaid on the cover's top-left corner.
  *
- *  `reorderable` opts the card into a view-transition-name so a grid that
- *  reorders (the home grid, when a pin floats an album to the front) can tween
- *  it between slots. It's off by default: the name must be unique per document
- *  during a transition, a guarantee only the owning surface can make, so it
- *  stays with the grid rather than baked into this reusable leaf. */
+ *  `reorderable` tags the card with data-flip-id so a grid that reorders (the
+ *  home grid, when a pin floats an album to the front) can FLIP-animate it
+ *  between slots (see useFlipReorder). Off by default — the animation is the
+ *  grid's concern, not this reusable leaf's. */
 export function AlbumCard({
   album,
   reorderable,
@@ -36,9 +35,7 @@ export function AlbumCard({
   return (
     <div
       className="group/card relative"
-      style={
-        reorderable ? { viewTransitionName: `album-${album.id}` } : undefined
-      }
+      data-flip-id={reorderable ? album.id : undefined}
     >
       <Link
         href={`/album/${album.id}`}

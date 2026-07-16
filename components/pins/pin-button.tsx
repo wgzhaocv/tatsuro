@@ -6,7 +6,6 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useIsPinned, usePinStore } from "@/lib/pins/store";
 import { cn } from "@/lib/utils";
-import { withViewTransition } from "@/lib/view-transition";
 
 /**
  * Pin/unpin a release. One `surface` prop picks the whole preset, since look
@@ -15,11 +14,10 @@ import { withViewTransition } from "@/lib/view-transition";
  * - "card" — the grid cover. White glass over the scrimmed image (Deep Water
  *   Rule), hidden until hover/focus on desktop (shown on touch + when pinned),
  *   a sibling of the cover Link (never nested — a button inside an anchor is
- *   invalid HTML). Toggling runs inside a View Transition so the card visibly
- *   slides to the front; that reorder IS the feedback, so no toast.
+ *   invalid HTML). Toggling reorders the grid, which the grid FLIP-animates
+ *   (the card slides to the front) — that motion IS the feedback, so no toast.
  * - "page" — the album action row. Ink glass over the bright ambient wash, a
- *   permanent button. Nothing moves here, so a toast is the only confirmation
- *   (and no View Transition — there's nothing to slide).
+ *   permanent button. Nothing moves here, so a toast is the only confirmation.
  */
 export function PinButton({
   albumId,
@@ -38,10 +36,10 @@ export function PinButton({
   const isCard = surface === "card";
 
   const toggle = () => {
-    if (isCard) {
-      withViewTransition(() => togglePin(albumId));
-    } else {
-      togglePin(albumId);
+    togglePin(albumId);
+    // The grid animates the card's move (feedback enough); the album page
+    // doesn't move, so it gets the toast.
+    if (!isCard) {
       toast.success(pinned ? t("unpinned", { name }) : t("pinned", { name }));
     }
   };

@@ -77,10 +77,7 @@ export function BottomNav() {
         // layer, which iOS keeps pinned to the viewport through the URL-bar
         // show/hide instead of freezing/repainting it against a stale layout
         // viewport (the occasional detach-from-bottom).
-        // A stable view-transition-name lifts the fixed bar into its own,
-        // unchanging transition group so a page-level View Transition (the pin
-        // reorder) can't sweep it into the root snapshot and blink it out.
-        className="fixed inset-x-0 bottom-0 z-30 transform-gpu border-white/55 border-t bg-white/80 pb-[env(safe-area-inset-bottom)] backdrop-blur-md [view-transition-name:bottom-nav] lg:hidden [-webkit-backface-visibility:hidden] [backface-visibility:hidden] dark:border-white/12 dark:bg-dusk-navy/85"
+        className="fixed inset-x-0 bottom-0 z-30 transform-gpu border-white/55 border-t bg-white/80 pb-[env(safe-area-inset-bottom)] backdrop-blur-md lg:hidden [-webkit-backface-visibility:hidden] [backface-visibility:hidden] dark:border-white/12 dark:bg-dusk-navy/85"
       >
         <ul className="flex h-14 items-stretch">
           {SECTIONS.map((s) => {

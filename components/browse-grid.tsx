@@ -13,6 +13,7 @@ export function BrowseGrid({
   columns,
   isEmpty,
   emptyBody,
+  listRef,
   children,
 }: {
   /** Grid layout classes for the `<ul>`: column template plus any gap /
@@ -20,6 +21,9 @@ export function BrowseGrid({
   columns: string;
   isEmpty: boolean;
   emptyBody: string;
+  /** Optional handle on the grid `<ul>` — the album grid uses it to FLIP-animate
+   *  card reorders (see useFlipReorder). */
+  listRef?: React.Ref<HTMLUListElement>;
   children: React.ReactNode;
 }) {
   const t = useTranslations("browse");
@@ -33,7 +37,9 @@ export function BrowseGrid({
           <p className="max-w-sm text-sm text-muted-foreground">{emptyBody}</p>
         </div>
       ) : (
-        <ul className={cn("grid gap-x-5 gap-y-8", columns)}>{children}</ul>
+        <ul ref={listRef} className={cn("grid gap-x-5 gap-y-8", columns)}>
+          {children}
+        </ul>
       )}
     </GlassPanel>
   );

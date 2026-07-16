@@ -161,7 +161,7 @@
     "label": "同步歌单",
     "labelConnected": "歌单已同步",
     "connectTitle": "同步你的歌单",
-    "connectBody": "用 Google 登录，让歌单和喜欢的歌曲在所有设备上保持一致。在此之前，数据只保存在本设备。",
+    "connectBody": "用 Google 登录，让歌单和喜欢的歌曲在设备间同步。各设备的内容会合并到一起，不会互相覆盖。",
     "notNow": "暂不",
     "continueWithGoogle": "用 Google 继续",
     "connectedTitle": "账户",

@@ -161,7 +161,7 @@
     "label": "Sync playlists",
     "labelConnected": "Playlists synced",
     "connectTitle": "Sync your playlists",
-    "connectBody": "Sign in with Google to keep your playlists and liked songs on every device. Until then, your library stays on this device only.",
+    "connectBody": "Sign in with Google to sync your playlists and liked songs across devices. Your lists from every device are merged together — nothing is overwritten.",
     "notNow": "Not now",
     "continueWithGoogle": "Continue with Google",
     "connectedTitle": "Account",

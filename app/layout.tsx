@@ -1,6 +1,6 @@
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter, Jost, Quicksand } from "next/font/google";
 import "./globals.css";
 import { AudioEngine } from "@/components/player/audio-engine";
@@ -41,6 +41,17 @@ export const metadata: Metadata = {
   // are set per-locale in app/[locale]/layout.tsx (which, being under the only
   // rendered subtree, always overrides root-level values anyway).
   robots: { index: false, follow: false },
+};
+
+// viewport-fit=cover is required for env(safe-area-inset-*) to resolve to real
+// values on notched iOS — the mini player and tab bar rely on it — and it puts
+// Safari on the full-viewport model that keeps fixed bottom chrome better
+// behaved as the URL bar shows/hides. width/initialScale repeat Next's defaults
+// so exporting viewport doesn't drop them.
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({

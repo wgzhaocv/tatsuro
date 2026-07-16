@@ -7,26 +7,22 @@
 
 > 真实世界清单核对自英文维基 [Tatsuro Yamashita discography](https://en.wikipedia.org/wiki/Tatsuro_Yamashita_discography)。年份以维基为准。
 > **2026-07-13 导入**:Sonorite、Come Along 3、Pacific、Sync of Summer、Christmas Eve(2018/2025)6 张新 Release;Artisan 2021 / Big Wave 2014 / Pocket Music 2020 三个新默认版本;Opus 补第 4 碟(初回限定盤);5 张 2002·BMG 版 relabel。共 +114 首。
+> **2026-07-16 导入**:オノマトペISLAND／MOVE ON(2025 单曲)、**On the Street Corner 3**(1999,无伴奏翻唱系列收官)——至此**官方作品 100% 收全**。
 
 ## 收录进度总览
 
 | 类别 | 已收录 | 主要发行总数 | 差 |
 |---|--:|--:|--:|
-| 录音室(含翻唱系列) | 18 | 19 | **1** |
+| 录音室(含翻唱系列) | 19 | 19 | 0 |
 | 精选集(主要) | 7 | 7 | 0 |
 | 现场 | 2 | 2 | 0 |
-| **合计** | **27** | **28** | **1** |
+| **合计** | **28** | **28** | **0** |
 
-> 另收录 5 项主要清单外的发行:**Pacific**(1978,与细野晴臣/铃木茂合作盘)、**Sync of Summer**(2023 单曲)、**Let It Be Me**(2016,与竹内玛利亚合唱单曲)、**Christmas Eve** 2018/2025 两次单曲再版。乐队/合作盘另见 [collaborations.md](./collaborations.md)。
+> 另收录 6 项主要清单外的发行:**Pacific**(1978,与细野晴臣/铃木茂合作盘)、**Sync of Summer**(2023 单曲)、**Let It Be Me**(2016,与竹内玛利亚合唱单曲)、**Christmas Eve** 2018/2025 两次单曲再版、**オノマトペISLAND／MOVE ON**(2025 单曲,宝可梦礼宾部主题曲)。乐队/合作盘另见 [collaborations.md](./collaborations.md)。
 
-### 还差 2 项,且都已购在途
+### 官方作品已 100% 收全 ✅
 
-| 发行 | 类别 | 年 | 状态 |
-|---|---|--:|---|
-| **On the Street Corner 3** | 录音室(无伴奏翻唱) | 1999 | 🚚 已购在途(到货补,翻唱系列即齐,并解决单曲 Love Can Go the Distance) |
-| **オノマトペISLAND / MOVE ON**(+Santé) | 单曲 | 2025 | 🚚 已购在途(宝可梦礼宾部主题曲) |
-
-> 到这两样到货,**官方作品即 100% 收全**。
+最后两项(**On the Street Corner 3** 1999 / **オノマトペISLAND／MOVE ON** 2025)已于 2026-07-16 入库(见 [imports/](./imports/))。OTSC3 收官后无伴奏翻唱系列齐全,单曲 Love Can Go the Distance 也随之解决。**主要清单 28/28,再无缺口。**
 
 ### 存疑 / 已核实排除
 

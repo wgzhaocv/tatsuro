@@ -55,10 +55,22 @@
 - **Opus 4CD zip=341MiB 超 wrangler 300MiB 上限** → 用 `r2_put.py`(S3,写 token)单独传。其余 37 个 wrangler 传。
 - 验证:Sonorite / Opus 下载均 200 + `PK` 魔数 + 正确文件名。**R2 现 9.20GB/10GB,真实剩余仅 ~0.8GB**(近满,后续加专辑要留意)。凭据见 [[local-flac-library]]。
 
+### batch-04 · On the Street Corner 3 — 2026-07-16 ✅
+
+最后一张缺口专辑(`~/Desktop/山下達郎 - ON THE STREET CORNER 3 (1999)`)。脚本 `add_otsc3.py`(plan/apply,单发行全流程:归档 flac→本地库 + 转 aac192 + 打 zip + 灌 R2/D1)。
+
+- **12 首**无伴奏翻唱。**复用文件夹里已转好的 `opus/`**(实测 250k=libopus 256k,未重转)。歌名从源全大写转**标题式**对齐 OTSC 1/2(如 `01 - Dedicated to the One I Love`)。
+- 建 `category='studio'` release(id=`7958071825351962`)+ album(front=源封面 1082²、back=用户另找 1055×1080)+ 12 songs。releases 33→34,重算 sort。
+- **同批做了下载 zip**:aac192(aac_at,front.jpg 内嵌)→ `~/Downloads/tatsuro-aac192/`,打 Stored zip(51.9MB/54.4M bytes)→ R2,`albums.zip_encoded_filename`+`zip_size` 指针挂上(和 edition-zip 批一致)。
+- 验证:D1 12 曲、流播 opus 200、封面 200、`/music/edition_zip` 200(54413336 bytes 吻合)、release API `originalName` 正确。**flac 已归档** `~/Downloads/tatsuro-flac/1999 - On the Street Corner 3 [Standard]/`(库 526→538)。
+- R2:15 对象 +117MB → **约 9.32GB/10GB**(剩 ~0.68GB,近满)。凭据见 [[local-flac-library]]。
+
+**至此官方作品 100% 收全。**
+
 ## 遗留(用户侧)
 
-- 前端重部署(`revalidateTag` 或重建)后新专辑/封面才在网格显示——后端 API 直连已是新数据。
-- 待入库:On the Street Corner 3(已购在途)、オノマトペISLAND(已购在途);到手按新批次导入,即官方全收。
+- 前端重部署(`revalidateTag('albums')` 或重建)后新专辑/封面才在网格显示——后端 API 直连已是新数据。
+- 缺口已清零(见 batch-04)。R2 近满(~0.68GB),后续若再加内容需先腾空间或扩容。
 
 ## 复现要点
 

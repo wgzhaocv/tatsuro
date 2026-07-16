@@ -1,9 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <!-- Wordmark monogram: a bold Futura-style T (flat terminals, matches the Jost
-       nav wordmark) on transparent ground — no tile. Theme-adaptive: near-black
-       navy (#0B3A53, the design system's black replacement) on light tabs, white
-       on dark tabs (prefers-color-scheme). Keep the T geometry in sync with
-       apple-icon.tsx (DESIGN.md § Favicon). -->
+  <!-- Wordmark monogram: a slender Futura-style T (thin strokes, tall stem —
+       matches the dusk app-icon tile in app/icons/tile.tsx and apple-icon.tsx).
+       No tile: theme-adaptive near-black navy (#0B3A53, the design system's
+       black replacement) on light tabs, white on dark tabs. Keep the T geometry
+       in sync with tile.tsx (DESIGN.md § Favicon). -->
   <style>
     .dark { display: none; }
     @media (prefers-color-scheme: dark) {
@@ -11,6 +11,6 @@
       .dark { display: inline; }
     }
   </style>
-  <path class="light" d="M7 5.5h18v5.2H7z M13.4 5.5h5.2v21H13.4z" fill="#0B3A53"/>
-  <path class="dark" d="M7 5.5h18v5.2H7z M13.4 5.5h5.2v21H13.4z" fill="#FFFFFF"/>
+  <path class="light" d="M9.28 7.04h13.44v2.72H9.28z M14.64 7.04h2.72v17.92H14.64z" fill="#0B3A53"/>
+  <path class="dark" d="M9.28 7.04h13.44v2.72H9.28z M14.64 7.04h2.72v17.92H14.64z" fill="#FFFFFF"/>
 </svg>

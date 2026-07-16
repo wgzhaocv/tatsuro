@@ -41,6 +41,16 @@ export const metadata: Metadata = {
   // are set per-locale in app/[locale]/layout.tsx (which, being under the only
   // rendered subtree, always overrides root-level values anyway).
   robots: { index: false, follow: false },
+  // iOS ignores most of the web manifest, so standalone install ("Add to Home
+  // Screen") is driven from here. black-translucent lets content flow under the
+  // status bar — the pairing viewport-fit=cover + safe-area insets already
+  // assume. Status-bar glyphs are white, which reads on the dusk hero photos;
+  // the same single-window tradeoff as the manifest's dusk theme_color.
+  appleWebApp: {
+    capable: true,
+    title: "Tatsuro",
+    statusBarStyle: "black-translucent",
+  },
 };
 
 // viewport-fit=cover is required for env(safe-area-inset-*) to resolve to real
@@ -52,6 +62,14 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
+  // Live browser/standalone bar tint. Unlike the manifest's single theme_color,
+  // <meta name=theme-color> takes a media array, so the chrome follows the
+  // active theme: sea-glass (--color-sea-glass, the noon --background) in light,
+  // dusk-navy (the .dark --background) in dark.
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#E9F7F2" },
+    { media: "(prefers-color-scheme: dark)", color: "#12263A" },
+  ],
 };
 
 export default function RootLayout({

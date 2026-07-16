@@ -154,6 +154,6 @@ export const config = {
   // the URLs aren't discoverable without an already-served page, and cover art
   // is already public via the backend).
   matcher: [
-    "/((?!api|_next/static|_next/image|favicon.ico|apple-icon$|sitemap.xml|robots.txt|sw.js|serwist|.*opengraph-image|.*twitter-image|.*\\.(?:png|jpg|jpeg|gif|ico|svg|js|css|woff|woff2)$).*)",
+    "/((?!api|_next/static|_next/image|favicon.ico|apple-icon$|manifest.webmanifest|sitemap.xml|robots.txt|sw.js|serwist|.*opengraph-image|.*twitter-image|.*\\.(?:png|jpg|jpeg|gif|ico|svg|js|css|woff|woff2)$).*)",
   ],
 };

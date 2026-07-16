@@ -9,15 +9,24 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { useShallow } from "zustand/react/shallow";
-import type { Pin } from "./types";
+import type { Pin, PinRow } from "./types";
 
 export const PINS_STORAGE_KEY = "tatsuro-pins";
 
 type PinsState = {
   pins: Pin[];
+  /** False until the client has rehydrated. The first cloud sync waits on it so
+   *  an empty snapshot can't overwrite the server (see account-bootstrap). Not
+   *  persisted; read via the store's getState in the bootstrap. */
+  hasHydrated: boolean;
   /** Pin or unpin a release by id. Pinning a live one tombstones it; pinning an
    *  absent or tombstoned one (re)pins it fresh, so it floats back to the front. */
   togglePin(albumId: string): void;
+  setHasHydrated(v: boolean): void;
+  /** Replace pins with the server's authoritative post-merge set (LWW already
+   *  applied server-side). Rebuilt from the thin wire rows; does NOT bump
+   *  updatedAt — it's not a user edit, so it must not trigger a re-sync. */
+  adoptRemote(remote: PinRow[]): void;
 };
 
 function now(): number {
@@ -28,6 +37,7 @@ export const usePinStore = create<PinsState>()(
   persist(
     (set) => ({
       pins: [],
+      hasHydrated: false,
 
       togglePin(albumId) {
         set((s) => {
@@ -52,6 +62,21 @@ export const usePinStore = create<PinsState>()(
               { albumId, pinnedAt: t, updatedAt: t },
             ],
           };
+        });
+      },
+
+      setHasHydrated(v) {
+        set({ hasHydrated: v });
+      },
+
+      adoptRemote(remote) {
+        set({
+          pins: remote.map((r) => ({
+            albumId: r.albumId,
+            pinnedAt: r.pinnedAt,
+            updatedAt: r.updatedAt,
+            deletedAt: r.deletedAt ?? undefined,
+          })),
         });
       },
     }),

@@ -10,6 +10,7 @@ import {
   syncNow,
 } from "@/lib/account/sync";
 import { nameLang } from "@/lib/api/types";
+import { usePinStore } from "@/lib/pins/store";
 import { usePlaylistStore } from "@/lib/playlists/store";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -42,9 +43,12 @@ export function AccountBootstrap() {
       if (captured) useAccountStore.getState().setSession(captured);
       if (!useAccountStore.getState().token) return;
 
-      // Wait for the local library before the first push, or an empty snapshot
-      // would upload and then adopt back over real data.
-      await whenPlaylistsHydrated();
+      // Wait for the local library (playlists + pins) before the first push, or
+      // an empty snapshot would upload and then adopt back over real data.
+      await Promise.all([
+        whenHydrated(usePlaylistStore),
+        whenHydrated(usePinStore),
+      ]);
       if (cancelled) return;
       // Profile is persisted; only refresh it from /me once a day (it barely
       // changes), so a routine app open doesn't hit the network for it.
@@ -84,11 +88,16 @@ function captureTokenFromHash(): string | null {
   return token;
 }
 
-/** Resolve once the playlist store has finished its client rehydrate. */
-function whenPlaylistsHydrated(): Promise<void> {
-  if (usePlaylistStore.getState().hasHydrated) return Promise.resolve();
+/** Resolve once a skipHydration store has finished its client rehydrate — used
+ *  to hold the first cloud push until the local library (playlists + pins) has
+ *  loaded, so an empty snapshot can't overwrite the server. */
+function whenHydrated<T extends { hasHydrated: boolean }>(store: {
+  getState: () => T;
+  subscribe: (cb: (s: T) => void) => () => void;
+}): Promise<void> {
+  if (store.getState().hasHydrated) return Promise.resolve();
   return new Promise((resolve) => {
-    const unsub = usePlaylistStore.subscribe((s) => {
+    const unsub = store.subscribe((s) => {
       if (s.hasHydrated) {
         unsub();
         resolve();

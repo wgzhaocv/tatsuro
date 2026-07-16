@@ -13,6 +13,8 @@ import type { AccountUser } from "@/lib/account/store";
 import { useAccountStore } from "@/lib/account/store";
 import { fetchSong } from "@/lib/api/client";
 import type { NameLang, Song } from "@/lib/api/types";
+import { usePinStore } from "@/lib/pins/store";
+import { type PinRow, toPinRow } from "@/lib/pins/types";
 import { usePlaylistStore } from "@/lib/playlists/store";
 import { toWireRows, type WirePlaylist } from "@/lib/playlists/types";
 import { songQueryKey } from "@/lib/queries/song";
@@ -73,6 +75,10 @@ export async function syncNow(): Promise<void> {
           })),
         };
       }),
+      // Pins ride the same request as a sibling array (whole-row LWW server-side,
+      // keyed on albumId). They're albums, not songs, so they can't share the
+      // playlist channel — see lib/pins/types.
+      pins: usePinStore.getState().pins.map(toPinRow),
     };
     const res = await fetch(`${API}/me/sync`, {
       method: "POST",
@@ -85,10 +91,18 @@ export async function syncNow(): Promise<void> {
     if (res.status === 401) return useAccountStore.getState().clear();
     if (!res.ok) throw new Error(`sync failed: ${res.status}`);
 
-    const data = (await res.json()) as { playlists: WirePlaylist[] };
-    const stubbed = withRemoteApplied(() =>
-      usePlaylistStore.getState().adoptRemote(data.playlists),
-    );
+    const data = (await res.json()) as {
+      playlists: WirePlaylist[];
+      pins?: PinRow[];
+    };
+    const stubbed = withRemoteApplied(() => {
+      // Only adopt pins when the server actually returned them: an older backend
+      // (no pin support) omits the field, and adopting [] would wipe local pins.
+      if (Array.isArray(data.pins)) {
+        usePinStore.getState().adoptRemote(data.pins);
+      }
+      return usePlaylistStore.getState().adoptRemote(data.playlists);
+    });
     useAccountStore.getState().setStatus("idle");
     if (stubbed.length) void hydrateStubbed(stubbed);
   } catch {
@@ -111,15 +125,25 @@ export function scheduleSync(): void {
   }, DEBOUNCE_MS);
 }
 
-/** Wire a debounced push to every user playlist mutation. Returns unsubscribe.
- *  Skips changes made by our own adopt/hydrate, and no-ops without a token. */
+/** Wire a debounced push to every user playlist/pin mutation. Returns
+ *  unsubscribe. Skips changes made by our own adopt/hydrate, and no-ops without
+ *  a token. */
 export function startAutoSync(): () => void {
-  return usePlaylistStore.subscribe((state, prev) => {
-    if (applyingRemote) return;
-    if (state.playlists === prev.playlists) return; // unrelated slice changed
+  const trigger = () => {
+    if (applyingRemote) return; // our own adopt writing back — not a user edit
     if (!useAccountStore.getState().token) return;
     scheduleSync();
+  };
+  const unsubPlaylists = usePlaylistStore.subscribe((state, prev) => {
+    if (state.playlists !== prev.playlists) trigger();
   });
+  const unsubPins = usePinStore.subscribe((state, prev) => {
+    if (state.pins !== prev.pins) trigger();
+  });
+  return () => {
+    unsubPlaylists();
+    unsubPins();
+  };
 }
 
 // Fetch the songs the merge pulled from other devices through the shared query

@@ -86,8 +86,13 @@ export function FullPlayer() {
               Cover Ambient material as the album screen, one recipe ── */}
           {cover && <AlbumAmbient cover={coverUrl(cover)} />}
 
-          {/* ── Chrome: collapse + context ── */}
-          <header className="mx-auto flex w-full max-w-3xl items-center gap-3 px-5 pt-[max(1.25rem,env(safe-area-inset-top))] sm:px-8 lg:max-w-6xl">
+          {/* ── Chrome: collapse + context ──
+              flex-wrap so on phones the four action buttons stay up on the
+              close button's row and the "playing from" caption folds onto its
+              own full-width line below (basis-full) — legible, not squeezed to
+              an ellipsis between the buttons. On lg the caption goes back inline
+              and centred (flex-1) with room to spare. */}
+          <header className="mx-auto flex w-full max-w-3xl flex-wrap items-center gap-x-3 gap-y-1.5 px-5 pt-[max(1.25rem,env(safe-area-inset-top))] sm:px-8 lg:max-w-6xl lg:flex-nowrap">
             <DialogPrimitive.Close
               render={
                 <Button
@@ -103,7 +108,7 @@ export function FullPlayer() {
             {contextLabel && (
               <p
                 lang={isJapanese(contextLabel) ? "ja" : undefined}
-                className="min-w-0 flex-1 truncate text-center text-[13px] font-medium text-foreground/80"
+                className="order-last basis-full truncate text-center text-[13px] font-medium text-foreground/80 lg:order-none lg:min-w-0 lg:flex-1 lg:basis-auto"
               >
                 {t("playingFrom", { context: contextLabel })}
               </p>

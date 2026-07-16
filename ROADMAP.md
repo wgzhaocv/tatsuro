@@ -110,7 +110,7 @@
 
 - [x] 生产部署(2026-07)— **Vercel**(不是旧站的 Docker/opi 路子):`vercel.json` 固定 `regions: ["hnd1"]`(东京,贴近后端 Worker + 用户);`@vercel/analytics` + `@vercel/speed-insights` 已接入 `app/layout.tsx`。部署时需设 `NEXT_PUBLIC_SITE_URL`(OG/metadataBase,见 Backlog #7)
 - [ ] 数据回归验证:29–34 张专辑、歌词、MV 全通
-- [ ] 旧站下线或跳转到新站
+- [x] 旧站下线或跳转到新站
 
 ---
 

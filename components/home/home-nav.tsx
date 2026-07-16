@@ -29,11 +29,15 @@ export function HomeNav({
   search?: ReactNode;
 }) {
   const t = useTranslations("nav");
+  // items-start so a wrapping control group grows downward without dragging the
+  // logo down with it. The logo carries a control-height box (min-h-11) and
+  // centres inside it, so it lands on the first row's centre — and stays there
+  // no matter how many rows the controls fold into.
   return (
-    <header className="relative flex items-center gap-3 px-5 py-4 sm:px-8 sm:py-5">
+    <header className="relative flex items-start gap-3 px-5 py-4 sm:px-8 sm:py-5">
       <Link
         href="/"
-        className="flex shrink-0 items-center rounded-full text-white [text-shadow:0_2px_12px_rgba(11,58,83,0.5)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
+        className="flex min-h-11 shrink-0 items-center rounded-full text-white [text-shadow:0_2px_12px_rgba(11,58,83,0.5)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
       >
         {/* Wordmark: brand font (Jost) + wide tracking — the LV/Futura formula
             (DESIGN.md § Navigation). */}
@@ -46,7 +50,7 @@ export function HomeNav({
           vary in width, so a flex-between would drift the pills off-center. */}
       <nav
         aria-label={t("sections")}
-        className="-translate-x-1/2 absolute left-1/2 hidden lg:block"
+        className="-translate-x-1/2 -translate-y-1/2 absolute top-1/2 left-1/2 hidden lg:block"
       >
         <div className="flex gap-1 rounded-full border border-white/40 bg-white/15 p-1 backdrop-blur-xs dark:bg-dusk-navy/40">
           {SECTIONS.map((s) => {

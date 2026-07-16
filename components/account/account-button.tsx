@@ -20,6 +20,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import {
+  type AccountUser,
   useAccountStore,
   useAccountUser,
   useIsConnected,
@@ -39,6 +40,7 @@ export function AccountButton() {
   const t = useTranslations("account");
   const [open, setOpen] = useState(false);
   const connected = useIsConnected();
+  const user = useAccountUser();
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -47,10 +49,12 @@ export function AccountButton() {
           render={
             <DialogTrigger
               aria-label={t("label")}
-              className="group relative grid size-11 place-items-center rounded-full border border-white/60 bg-card/80 text-foreground shadow-lift-navy backdrop-blur-xl transition-shadow duration-400 ease-lazy hover:shadow-lift-ocean focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean/40 dark:border-white/15 dark:hover:shadow-lift-coral dark:focus-visible:ring-sky-bright/40"
+              // Padding drops to 0 when the avatar fills the button, so the
+              // photo reaches the rim; the cloud icons keep the inset.
+              className="group relative grid size-11 place-items-center overflow-hidden rounded-full border border-white/60 bg-card/80 text-foreground shadow-lift-navy backdrop-blur-xl transition-shadow duration-400 ease-lazy hover:shadow-lift-ocean focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean/40 dark:border-white/15 dark:hover:shadow-lift-coral dark:focus-visible:ring-sky-bright/40"
             >
               {connected ? (
-                <CloudCheck size={20} weight="fill" aria-hidden />
+                <ConnectedGlyph user={user} />
               ) : (
                 <CloudArrowUp size={20} aria-hidden />
               )}
@@ -67,6 +71,28 @@ export function AccountButton() {
       </DialogContent>
     </Dialog>
   );
+}
+
+/** Connected state: the Google avatar when we have one, else a cloud-synced
+ *  glyph. The photo can 403 (referrer/expiry), so a failed load falls back to
+ *  the same glyph rather than a broken image. */
+function ConnectedGlyph({ user }: { user: AccountUser | null }) {
+  const [broken, setBroken] = useState(false);
+  if (user?.picture && !broken) {
+    return (
+      // Google avatar — a small third-party photo, so a plain img (no next
+      // optimizer/remotePatterns) is the right tool; no-referrer avoids 403s.
+      // biome-ignore lint/performance/noImgElement: tiny remote avatar, not app art
+      <img
+        src={user.picture}
+        alt=""
+        referrerPolicy="no-referrer"
+        onError={() => setBroken(true)}
+        className="size-full object-cover"
+      />
+    );
+  }
+  return <CloudCheck size={20} weight="fill" aria-hidden />;
 }
 
 function DisconnectedBody() {

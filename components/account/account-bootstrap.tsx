@@ -12,6 +12,8 @@ import {
 import { nameLang } from "@/lib/api/types";
 import { usePlaylistStore } from "@/lib/playlists/store";
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+
 /**
  * Client bootstrap for cloud sync — renders nothing; mounted in the (main)
  * layout beside PlaylistsHydration. On mount it rehydrates the account store,
@@ -44,7 +46,12 @@ export function AccountBootstrap() {
       // would upload and then adopt back over real data.
       await whenPlaylistsHydrated();
       if (cancelled) return;
-      void fetchMe();
+      // Profile is persisted; only refresh it from /me once a day (it barely
+      // changes), so a routine app open doesn't hit the network for it.
+      const { user, userFetchedAt } = useAccountStore.getState();
+      const stale =
+        userFetchedAt == null || Date.now() - userFetchedAt > DAY_MS;
+      if (!user || stale) void fetchMe();
       void syncNow();
     })();
 

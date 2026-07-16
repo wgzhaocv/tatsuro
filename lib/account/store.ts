@@ -26,6 +26,9 @@ type AccountState = {
   /** Bearer session token (HMAC, minted by the Worker). null = not connected. */
   token: string | null;
   user: AccountUser | null;
+  /** epoch ms of the last successful /me fetch — profile is otherwise served
+   *  from localStorage, so this gates re-fetching to once a day (see sync.ts). */
+  userFetchedAt: number | null;
   /** Live sync state, for the dialog. Not persisted. */
   status: SyncStatus;
 
@@ -42,19 +45,20 @@ export const useAccountStore = create<AccountState>()(
     (set) => ({
       token: null,
       user: null,
+      userFetchedAt: null,
       status: "idle",
 
       setSession(token) {
         set({ token });
       },
       setUser(user) {
-        set({ user });
+        set({ user, userFetchedAt: Date.now() });
       },
       setStatus(status) {
         set({ status });
       },
       clear() {
-        set({ token: null, user: null, status: "idle" });
+        set({ token: null, user: null, userFetchedAt: null, status: "idle" });
       },
     }),
     {
@@ -63,7 +67,11 @@ export const useAccountStore = create<AccountState>()(
       storage: createJSONStorage(() => localStorage),
       skipHydration: true, // SSR renders empty; the bootstrap mount rehydrates.
       // Only the token + profile persist; status is per-session.
-      partialize: (s) => ({ token: s.token, user: s.user }),
+      partialize: (s) => ({
+        token: s.token,
+        user: s.user,
+        userFetchedAt: s.userFetchedAt,
+      }),
     },
   ),
 );

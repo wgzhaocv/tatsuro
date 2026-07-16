@@ -21,7 +21,7 @@ export default async function AlbumLayout({
   const t = await getTranslations({ locale, namespace: "album" });
   return (
     <div className="relative isolate flex min-h-dvh flex-col">
-      <header className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-5 py-4 sm:px-8 sm:py-5">
+      <header className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-5 pb-4 pt-[max(1rem,env(safe-area-inset-top))] sm:px-8 sm:pb-5 sm:pt-[max(1.25rem,env(safe-area-inset-top))]">
         <Link
           href="/"
           className={cn(

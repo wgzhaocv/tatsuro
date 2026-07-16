@@ -34,7 +34,7 @@ export function HomeNav({
   // centres inside it, so it lands on the first row's centre — and stays there
   // no matter how many rows the controls fold into.
   return (
-    <header className="relative flex items-start gap-3 px-5 py-4 sm:px-8 sm:py-5">
+    <header className="relative flex items-start gap-3 px-5 pb-4 pt-[max(1rem,env(safe-area-inset-top))] sm:px-8 sm:pb-5 sm:pt-[max(1.25rem,env(safe-area-inset-top))]">
       <Link
         href="/"
         className="flex min-h-11 shrink-0 items-center rounded-full text-white [text-shadow:0_2px_12px_rgba(11,58,83,0.5)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"

@@ -25,7 +25,15 @@ import {
   DOWNLOAD_EVENTS_CHANNEL,
   RECONCILE_LOCK,
 } from "@/lib/offline/constants";
-import { clearAllAccessTimes, deleteAccessTime } from "@/lib/offline/lru-db";
+import {
+  type CacheEntry,
+  clearAllAccessTimes,
+  deleteAccessTime,
+  deleteEntriesByBucket,
+  deleteEntry,
+  getAllEntries,
+  putEntry,
+} from "@/lib/offline/lru-db";
 
 export type BucketStats = { count: number; bytes: number };
 
@@ -123,6 +131,51 @@ async function statsOf(
   }
 }
 
+/** Sizes of one audio bucket, read from the IndexedDB entry metadata instead of
+ *  opening every cached Response (which OOM-reloads mobile Safari on a big
+ *  cache). `known` is the recorded entries; a URL present in the cache but not
+ *  yet recorded (first run after this shipped, or drift) is backfilled once —
+ *  in small batches — so subsequent measures need no cache.match here at all.
+ *  Every seen URL is added to `seen` so the caller can prune stale records. */
+async function auditAudioBucket(
+  cacheName: string,
+  bucket: CacheEntry["bucket"],
+  known: Map<string, CacheEntry>,
+  seen: Set<string>,
+): Promise<{ count: number; bytes: number; sizes: Map<string, number> }> {
+  const sizes = new Map<string, number>();
+  try {
+    const cache = await caches.open(cacheName);
+    const keys = await cache.keys(); // metadata only — no bodies opened
+    const missing: Request[] = [];
+    for (const k of keys) {
+      const url = canonicalStreamUrl(k.url);
+      seen.add(url);
+      const entry = known.get(url);
+      if (entry && entry.bucket === bucket) sizes.set(url, entry.bytes);
+      else missing.push(k);
+    }
+    for (let i = 0; i < missing.length; i += MATCH_CONCURRENCY) {
+      const batch = missing.slice(i, i + MATCH_CONCURRENCY);
+      const sized = await Promise.all(
+        batch.map(async (k) => ({
+          url: canonicalStreamUrl(k.url),
+          n: await entrySize(cache, k),
+        })),
+      );
+      for (const s of sized) {
+        sizes.set(s.url, s.n);
+        await putEntry({ url: s.url, bucket, bytes: s.n });
+      }
+    }
+    let bytes = 0;
+    for (const n of sizes.values()) bytes += n;
+    return { count: keys.length, bytes, sizes };
+  } catch {
+    return { count: 0, bytes: 0, sizes };
+  }
+}
+
 /** Attribute the download bucket to each active saved source. */
 function savedSources(downloadSizes: Map<string, number>): SavedSource[] {
   const { intents } = useDownloadsStore.getState();
@@ -163,11 +216,25 @@ async function runMeasure(): Promise<CacheUsage> {
   // No Cache API (very old browser / SSR): resolve as ready with zeros rather
   // than leaving the panel stuck on its loading skeleton forever.
   if (!hasCaches()) return { ...EMPTY, ready: true };
-  // estimate() reads no cache bodies, so it runs alongside; the three buckets
-  // are scanned serially so peak concurrency stays at MATCH_CONCURRENCY (not ×3).
+  // estimate() reads no cache bodies, so it runs alongside. Audio sizes come
+  // from the IndexedDB entry metadata (no cache.match); only the small cover
+  // bucket is still scanned via headers.
   const estimating = estimate();
-  const dl = await statsOf(DOWNLOAD_CACHE_NAME, true);
-  const au = await statsOf(AUDIO_CACHE_NAME, true);
+  const known = new Map(
+    (await getAllEntries()).map((e) => [e.url, e] as const),
+  );
+  const seen = new Set<string>();
+  const dl = await auditAudioBucket(
+    DOWNLOAD_CACHE_NAME,
+    "download",
+    known,
+    seen,
+  );
+  const au = await auditAudioBucket(AUDIO_CACHE_NAME, "auto", known, seen);
+  // Prune records for entries that left the cache without going through our
+  // delete paths (drift), so totals can't drift upward over time.
+  for (const url of known.keys()) if (!seen.has(url)) await deleteEntry(url);
+
   const cover = await statsOf(COVER_CACHE_NAME, false);
   const { usage, quota } = await estimating;
 
@@ -181,8 +248,8 @@ async function runMeasure(): Promise<CacheUsage> {
     ready: true,
     usage,
     quota,
-    download: dl.stats,
-    auto: au.stats,
+    download: { count: dl.count, bytes: dl.bytes },
+    auto: { count: au.count, bytes: au.bytes },
     cover: cover.stats,
     sources: savedSources(dl.sizes),
     songBytes,
@@ -219,9 +286,11 @@ function measure(): Promise<CacheUsage> {
 
 // ── Clear operations ────────────────────────────────────────────────────────
 
-/** Nuke a whole audio bucket and tell status UIs each entry is gone. */
+/** Nuke a whole audio bucket, drop its entry records, and tell status UIs each
+ *  entry is gone. */
 async function clearAudioBucket(
   name: string,
+  bucket: CacheEntry["bucket"],
   channel: string,
   removeType: string,
 ): Promise<void> {
@@ -229,6 +298,7 @@ async function clearAudioBucket(
     const cache = await caches.open(name);
     const keys = await cache.keys();
     await caches.delete(name);
+    await deleteEntriesByBucket(bucket);
     for (const k of keys) postCacheEvent(channel, removeType, k.url, "cleared");
   } catch {
     // best-effort
@@ -263,17 +333,22 @@ async function clearSongs(songIds: string[]): Promise<void> {
     ]);
     for (const id of songIds) {
       const url = canonicalStreamUrl(songStreamUrl(id));
-      if (await dl.delete(url))
+      let removed = false;
+      if (await dl.delete(url)) {
+        removed = true;
         postCacheEvent(
           DOWNLOAD_EVENTS_CHANNEL,
           "download-removed",
           url,
           "cleared",
         );
+      }
       if (await au.delete(url)) {
+        removed = true;
         postCacheEvent(AUDIO_EVENTS_CHANNEL, "cache-removed", url, "cleared");
         await deleteAccessTime(url);
       }
+      if (removed) await deleteEntry(url);
     }
   } catch {
     // best-effort
@@ -293,7 +368,12 @@ function dropIntents(ids?: Set<string>): void {
 export async function clearPlaybackCache(): Promise<void> {
   await withReconcileLock(async () => {
     await Promise.all([
-      clearAudioBucket(AUDIO_CACHE_NAME, AUDIO_EVENTS_CHANNEL, "cache-removed"),
+      clearAudioBucket(
+        AUDIO_CACHE_NAME,
+        "auto",
+        AUDIO_EVENTS_CHANNEL,
+        "cache-removed",
+      ),
       clearAllAccessTimes(),
     ]);
   });
@@ -306,6 +386,7 @@ export async function clearDownloads(): Promise<void> {
   await withReconcileLock(() =>
     clearAudioBucket(
       DOWNLOAD_CACHE_NAME,
+      "download",
       DOWNLOAD_EVENTS_CHANNEL,
       "download-removed",
     ),
@@ -331,11 +412,13 @@ export async function clearEverything(): Promise<void> {
       await Promise.all([
         clearAudioBucket(
           DOWNLOAD_CACHE_NAME,
+          "download",
           DOWNLOAD_EVENTS_CHANNEL,
           "download-removed",
         ),
         clearAudioBucket(
           AUDIO_CACHE_NAME,
+          "auto",
           AUDIO_EVENTS_CHANNEL,
           "cache-removed",
         ),

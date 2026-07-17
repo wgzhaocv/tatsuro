@@ -24,7 +24,11 @@
 // and the client share them (that code is worker-safe: no env, no DOM/React).
 
 import type { RouteHandlerCallbackOptions } from "serwist";
-import { evictAutoLru, getAutoCacheBudget } from "@/lib/offline/auto-evict";
+import {
+  evictAutoLru,
+  getAutoCacheBudget,
+  sizeOf,
+} from "@/lib/offline/auto-evict";
 import { postCacheEvent } from "@/lib/offline/broadcast";
 import {
   AUDIO_CACHE_NAME,
@@ -33,7 +37,7 @@ import {
   DOWNLOAD_CACHE_NAME,
   DOWNLOAD_MARKER_PARAM,
 } from "@/lib/offline/constants";
-import { setAccessTime } from "@/lib/offline/lru-db";
+import { putEntry, setAccessTime } from "@/lib/offline/lru-db";
 import { buildRangeResponse } from "@/lib/offline/range-response";
 
 const downloadingUrls = new Set<string>();
@@ -98,6 +102,7 @@ async function downloadAndCache(url: string, cache: Cache) {
     if (response.ok && response.status === 200) {
       await cache.put(url, response.clone());
       await setAccessTime(url, Date.now());
+      await putEntry({ url, bucket: "auto", bytes: sizeOf(response) });
       postCacheEvent(AUDIO_EVENTS_CHANNEL, "cache-added", url);
     }
   } catch {

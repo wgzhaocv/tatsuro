@@ -9,7 +9,7 @@ import {
   AUDIO_EVENTS_CHANNEL,
   DOWNLOAD_CACHE_NAME,
 } from "./constants";
-import { deleteAccessTime, getAllAccessTimes } from "./lru-db";
+import { deleteAccessTime, deleteEntry, getAllAccessTimes } from "./lru-db";
 
 // When estimate() is unavailable, 600 MiB × 0.5 reproduces the old 300 MB
 // default budget — while still shrinking once real downloads land.
@@ -122,6 +122,7 @@ export async function evictAutoLru(opts: {
       if (budgetOk && freeOk) break;
       await cache.delete(item.url);
       await deleteAccessTime(item.url);
+      await deleteEntry(item.url);
       total -= item.size;
       freed += item.size;
       postCacheEvent(

@@ -32,7 +32,11 @@ import {
   DOWNLOAD_MARKER_PARAM,
   RECONCILE_LOCK,
 } from "@/lib/offline/constants";
-import { deleteAccessTime, setAccessTime } from "@/lib/offline/lru-db";
+import {
+  deleteAccessTime,
+  putEntry,
+  setAccessTime,
+} from "@/lib/offline/lru-db";
 import { usePlayerStore } from "@/lib/player/store";
 import { usePlaylistStore } from "@/lib/playlists/store";
 import { getDesiredSongIds, pruneOrphans, useDownloadsStore } from "./store";
@@ -102,6 +106,7 @@ async function demote(url: string, dl: Cache, auto: Cache) {
     ) {
       await auto.put(url, resp);
       setAccessTime(url, Date.now());
+      putEntry({ url, bucket: "auto", bytes: sizeOf(resp) });
       postCacheEvent(AUDIO_EVENTS_CHANNEL, "cache-added", url);
     }
     await dl.delete(url);
@@ -144,6 +149,7 @@ async function promote(
       if (!resp) return false;
       await dl.put(url, resp);
     }
+    putEntry({ url, bucket: "download", bytes: size });
     postCacheEvent(DOWNLOAD_EVENTS_CHANNEL, "download-added", url);
     await auto.delete(url);
     deleteAccessTime(url);
@@ -204,6 +210,7 @@ async function downloadOne(id: string, dl: Cache, auto: Cache) {
       }
       await dl.put(canonical, resp);
     }
+    putEntry({ url: canonical, bucket: "download", bytes: size });
     postCacheEvent(DOWNLOAD_EVENTS_CHANNEL, "download-added", canonical);
     // If it was also auto-cached (e.g. a race with playback), drop that copy.
     if (await auto.match(canonical, { ignoreVary: true })) {

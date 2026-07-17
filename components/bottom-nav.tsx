@@ -68,10 +68,12 @@ export function BottomNav() {
 }
 
 /**
- * The bar itself, given the current path (or `null` before the dynamic render
- * resolves). Reads no dynamic API, so it can prerender into the static shell as
- * the Suspense fallback. `videoStage` is client store state (initial `false`),
- * not a dynamic API, so it stays here.
+ * The bar itself. With a real `activePath` it renders live locale-aware Links
+ * and lights the current tab. With `activePath === null` it renders as the
+ * Suspense fallback: identical chrome, but the tabs are plain non-interactive
+ * placeholders (no locale-aware Link — that reads uncached data a fallback
+ * can't touch) and nothing is lit. `videoStage` is client store state (initial
+ * `false`), not a dynamic API, so it stays here.
  */
 export function BottomNavShell({ activePath }: { activePath: string | null }) {
   const t = useTranslations("nav");
@@ -100,6 +102,23 @@ export function BottomNavShell({ activePath }: { activePath: string | null }) {
         <ul className="flex h-14 items-stretch">
           {SECTIONS.map((s) => {
             const Icon = s.icon;
+            const inner = (active: boolean) => (
+              <>
+                <Icon
+                  size={22}
+                  weight={active ? "fill" : "regular"}
+                  aria-hidden
+                />
+                <span
+                  className={cn(
+                    "text-[11px] leading-none",
+                    active && "font-medium",
+                  )}
+                >
+                  {t(s.key)}
+                </span>
+              </>
+            );
             // No href → a not-yet-built screen: shown, disabled, never a dead click.
             if (!s.href)
               return (
@@ -114,9 +133,20 @@ export function BottomNavShell({ activePath }: { activePath: string | null }) {
                   </span>
                 </li>
               );
-            const active = activePath
-              ? (s.match?.(activePath) ?? false)
-              : false;
+            // Fallback instance (activePath === null): the locale-aware Link reads
+            // uncached data, which a Suspense fallback can't do — so render the
+            // tab as a plain, non-interactive placeholder that looks identical
+            // (muted, nothing lit). The real BottomNav swaps in the live Link +
+            // highlight once its dynamic render resolves.
+            if (activePath === null)
+              return (
+                <li key={s.key} className="flex-1">
+                  <span className="flex h-full flex-col items-center justify-center gap-1 text-muted-foreground">
+                    {inner(false)}
+                  </span>
+                </li>
+              );
+            const active = s.match?.(activePath) ?? false;
             return (
               <li key={s.key} className="flex-1">
                 <Link
@@ -132,19 +162,7 @@ export function BottomNavShell({ activePath }: { activePath: string | null }) {
                       : "text-muted-foreground hover:text-foreground",
                   )}
                 >
-                  <Icon
-                    size={22}
-                    weight={active ? "fill" : "regular"}
-                    aria-hidden
-                  />
-                  <span
-                    className={cn(
-                      "text-[11px] leading-none",
-                      active && "font-medium",
-                    )}
-                  >
-                    {t(s.key)}
-                  </span>
+                  {inner(active)}
                 </Link>
               </li>
             );

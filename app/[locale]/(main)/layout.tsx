@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { AccountBootstrap } from "@/components/account/account-bootstrap";
 import { BottomNav, BottomNavShell } from "@/components/bottom-nav";
+import { DownloadsHydration } from "@/components/downloads/downloads-hydration";
 import { PinsHydration } from "@/components/pins/pins-hydration";
 import { PlayerDock } from "@/components/player/player-dock";
 import { PlaylistsHydration } from "@/components/playlists/hydration";
@@ -37,6 +38,7 @@ export default function MainLayout({
       </Suspense>
       <PlaylistsHydration />
       <PinsHydration />
+      <DownloadsHydration />
       <AccountBootstrap />
     </>
   );

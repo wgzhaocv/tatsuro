@@ -23,6 +23,7 @@ import {
   canonicalStreamUrl,
   DOWNLOAD_CACHE_NAME,
   DOWNLOAD_EVENTS_CHANNEL,
+  RECONCILE_LOCK,
 } from "@/lib/offline/constants";
 import { clearAllAccessTimes, deleteAccessTime } from "@/lib/offline/lru-db";
 
@@ -181,51 +182,26 @@ async function clearAudioBucket(
   }
 }
 
-/** Drop the playback (auto) cache and its LRU bookkeeping (independent stores,
- *  cleared together). */
-export async function clearPlaybackCache(): Promise<void> {
-  await Promise.all([
-    clearAudioBucket(AUDIO_CACHE_NAME, AUDIO_EVENTS_CHANNEL, "cache-removed"),
-    clearAllAccessTimes(),
-  ]);
-}
-
-/** Remove every pinned download. Tombstones all intents first so the reconciler
- *  won't refetch, then deletes the bucket. A concurrent reconcile pass could
- *  demote a few entries into the auto bucket mid-clear; those become evictable
- *  (not a permanent leak) and clearEverything sweeps them anyway. */
-export async function clearDownloads(): Promise<void> {
-  const { intents, clearIntent } = useDownloadsStore.getState();
-  for (const i of intents) if (!i.deletedAt) clearIntent(i.id);
-  await clearAudioBucket(
-    DOWNLOAD_CACHE_NAME,
-    DOWNLOAD_EVENTS_CHANNEL,
-    "download-removed",
-  );
-}
-
-/** Drop the cached cover art. */
-export async function clearImageCache(): Promise<void> {
-  try {
-    await caches.delete(COVER_CACHE_NAME);
-  } catch {
-    // best-effort
+/**
+ * Run a cache-mutating clear as the sole writer, coordinated with the reconciler
+ * through its Web Lock so a concurrent reconcile pass can't demote/promote
+ * entries out from under the delete. The reconciler takes the lock with
+ * `ifAvailable`, so a pass triggered while we hold it just skips and retries via
+ * its own triggers afterward — no deadlock, no interleaved bucket writes. Where
+ * Web Locks are unavailable (older Safari) it runs directly (single-threaded
+ * page; the reconciler there is best-effort too).
+ */
+function withReconcileLock<T>(fn: () => Promise<T>): Promise<T> {
+  if (typeof navigator !== "undefined" && navigator.locks?.request) {
+    return navigator.locks.request(RECONCILE_LOCK, fn);
   }
-}
-
-/** Everything: downloads, playback cache, covers — disjoint stores, in parallel. */
-export async function clearEverything(): Promise<void> {
-  await Promise.all([
-    clearDownloads(),
-    clearPlaybackCache(),
-    clearImageCache(),
-  ]);
+  return fn();
 }
 
 /** Delete specific songs from both audio buckets (a pinned song may also sit in
  *  the auto bucket) + their LRU rows, broadcasting each removal. The shared core
- *  of every per-song clear. */
-export async function clearSongs(songIds: string[]): Promise<void> {
+ *  of every per-song clear — always invoked under withReconcileLock. */
+async function clearSongs(songIds: string[]): Promise<void> {
   if (songIds.length === 0) return;
   try {
     const [dl, au] = await Promise.all([
@@ -251,13 +227,79 @@ export async function clearSongs(songIds: string[]): Promise<void> {
   }
 }
 
+/** Tombstone active intents (all, or those matching `ids`), so the reconciler
+ *  stops desiring them — aborting in-flight fetches and releasing its lock
+ *  quickly — before we take the lock to delete. */
+function dropIntents(ids?: Set<string>): void {
+  const { intents, clearIntent } = useDownloadsStore.getState();
+  for (const i of intents)
+    if (!i.deletedAt && (!ids || ids.has(i.id))) clearIntent(i.id);
+}
+
+/** Drop the playback (auto) cache and its LRU bookkeeping. */
+export async function clearPlaybackCache(): Promise<void> {
+  await withReconcileLock(async () => {
+    await Promise.all([
+      clearAudioBucket(AUDIO_CACHE_NAME, AUDIO_EVENTS_CHANNEL, "cache-removed"),
+      clearAllAccessTimes(),
+    ]);
+  });
+}
+
+/** Remove every pinned download: tombstone all intents, then delete the bucket
+ *  under the reconcile lock. */
+export async function clearDownloads(): Promise<void> {
+  dropIntents();
+  await withReconcileLock(() =>
+    clearAudioBucket(
+      DOWNLOAD_CACHE_NAME,
+      DOWNLOAD_EVENTS_CHANNEL,
+      "download-removed",
+    ),
+  );
+}
+
+/** Drop the cached cover art. The reconciler never touches this bucket, so it
+ *  needs no lock. */
+export async function clearImageCache(): Promise<void> {
+  try {
+    await caches.delete(COVER_CACHE_NAME);
+  } catch {
+    // best-effort
+  }
+}
+
+/** Everything: both audio buckets under one lock; covers in parallel (outside
+ *  the reconciler's ownership). */
+export async function clearEverything(): Promise<void> {
+  dropIntents();
+  await Promise.all([
+    withReconcileLock(async () => {
+      await Promise.all([
+        clearAudioBucket(
+          DOWNLOAD_CACHE_NAME,
+          DOWNLOAD_EVENTS_CHANNEL,
+          "download-removed",
+        ),
+        clearAudioBucket(
+          AUDIO_CACHE_NAME,
+          AUDIO_EVENTS_CHANNEL,
+          "cache-removed",
+        ),
+        clearAllAccessTimes(),
+      ]);
+    }),
+    clearImageCache(),
+  ]);
+}
+
 /** Remove one saved source by id: tombstone its intent, then delete its songs. */
 export async function clearSource(id: string): Promise<void> {
-  const { intents, clearIntent } = useDownloadsStore.getState();
+  const { intents } = useDownloadsStore.getState();
   const intent = intents.find((i) => i.id === id);
   const ids = intent ? intentSongIds(intent) : [];
-  clearIntent(id);
-  await clearSongs(ids);
+  dropIntents(new Set([id]));
+  await withReconcileLock(() => clearSongs(ids));
 }
 
 /** Clear one album's cached audio regardless of how it got there (playback or a
@@ -267,11 +309,8 @@ export async function clearAlbumCache(
   songIds: string[],
   editionIds: string[],
 ): Promise<void> {
-  const { intents, clearIntent } = useDownloadsStore.getState();
-  const pinned = new Set(editionIds);
-  for (const i of intents)
-    if (!i.deletedAt && pinned.has(i.id)) clearIntent(i.id);
-  await clearSongs(songIds);
+  dropIntents(new Set(editionIds));
+  await withReconcileLock(() => clearSongs(songIds));
 }
 
 // ── Read hook ────────────────────────────────────────────────────────────────

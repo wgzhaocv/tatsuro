@@ -155,7 +155,10 @@ export const usePlayerStore = create<PlayerState>()(
       history: [],
       isPlaying: false,
       shuffle: false,
-      repeat: "off",
+      // Default to looping the whole queue — a finished album/playlist rewinds
+      // and keeps going rather than falling silent. Persisted, so a user who
+      // picks another mode keeps it.
+      repeat: "all",
       volume: 1,
       muted: false,
       seekRequest: null,

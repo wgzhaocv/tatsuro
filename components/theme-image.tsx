@@ -1,4 +1,5 @@
 import { getImageProps, type StaticImageData } from "next/image";
+import { ThemeImageOverride } from "@/components/theme-image-override";
 import { cn } from "@/lib/utils";
 
 /**
@@ -11,10 +12,11 @@ import { cn } from "@/lib/utils";
  * getImageProps keeps next/image's responsive srcSet + format negotiation, so
  * phones still get a downscaled variant, not the 2400px original.
  *
- * The DOWNLOAD follows prefers-color-scheme (the OS), not the in-app theme
- * toggle. A viewer who overrides the OS therefore sees the OS-matching photo
- * under the toggled UI — an imperceptible crop/tone difference on a scrimmed
- * decorative backdrop, traded for zero JS and an LCP image in the first HTML.
+ * The initial DOWNLOAD follows prefers-color-scheme (the OS), not the in-app
+ * theme toggle, so the LCP paint costs zero JS. ThemeImageOverride then closes
+ * the gap on the client: if the viewer toggles against their OS it paints the
+ * theme-correct photo on top — a no-op (and no extra fetch) on the common
+ * app==OS path, so the toggle moves the backdrop without touching LCP.
  *
  * Underneath sit two blurred placeholders painted from each photo's inline
  * blurDataURL (a few hundred base64 bytes, no network): CSS (dark:hidden) shows
@@ -63,6 +65,15 @@ export function ThemeImage({
           )}
         />
       </picture>
+      {/* Follow the in-app theme toggle when it diverges from the OS (the
+          <picture> above can only track prefers-color-scheme). No-op — and no
+          extra download — on the common app==OS path, so LCP is untouched. */}
+      <ThemeImageOverride
+        noon={noon}
+        dusk={dusk}
+        sizes={sizes}
+        className={className}
+      />
     </>
   );
 }

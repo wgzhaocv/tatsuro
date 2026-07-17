@@ -38,11 +38,48 @@ import { buildRangeResponse } from "@/lib/offline/range-response";
 
 const downloadingUrls = new Set<string>();
 
+// TEMP one-shot recovery — REMOVE once the re-ripped 2025「オノマトペISLAND／
+// MOVE ON [Standard]」single is confirmed good on the client. These 6 song ids
+// were served with the WRONG audio before the re-rip; the corrected files are
+// live on CF/R2, but the browser's immutable HTTP-cache copy + the SW buckets
+// can still resurface the old bytes. For any request to these ids we neither
+// serve nor populate the cache: we evict both buckets and go straight to the
+// network with {cache:"reload"} (bypassing the HTTP cache), so the client is
+// forced to pull the corrected file. Delete this block + the set, then redeploy.
+const RERIP_STALE_IDS = new Set([
+  "7890012804109657", // 01 オノマトペISLAND
+  "7256724114919295", // 02 MOVE ON
+  "7015192161926887", // 03 Santé
+  "7069350906839511", // 04 オノマトペISLAND (KARAOKE)
+  "7700595740394042", // 05 MOVE ON (KARAOKE)
+  "7628899533975082", // 06 Santé (KARAOKE)
+]);
+function streamSongId(url: string): string | null {
+  const m = new URL(url).pathname.match(/\/stream\/new_play\/([^/]+)$/);
+  return m ? m[1] : null;
+}
+
 export const audioStreamHandler = {
   async handle({ request }: RouteHandlerCallbackOptions): Promise<Response> {
     const url = new URL(request.url);
     const isMarked = url.searchParams.get(DOWNLOAD_MARKER_PARAM) === "1";
     const canonical = canonicalStreamUrl(request.url);
+
+    // TEMP re-rip recovery: never serve/cache these ids — evict + reload-fetch.
+    const staleId = streamSongId(canonical);
+    if (staleId && RERIP_STALE_IDS.has(staleId)) {
+      await Promise.all([
+        caches
+          .open(DOWNLOAD_CACHE_NAME)
+          .then((c) => c.delete(canonical, { ignoreVary: true }))
+          .catch(() => false),
+        caches
+          .open(AUDIO_CACHE_NAME)
+          .then((c) => c.delete(canonical, { ignoreVary: true }))
+          .catch(() => false),
+      ]);
+      return fetch(request, { cache: "reload" });
+    }
 
     // Download bucket first (pinned), then auto bucket.
     const downloadCache = await caches.open(DOWNLOAD_CACHE_NAME);

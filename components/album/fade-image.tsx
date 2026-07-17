@@ -1,13 +1,12 @@
-"use client";
-
 import Image from "next/image";
-import { useState } from "react";
 import { cn } from "@/lib/utils";
 
 /**
- * A cover image that fades in once decoded, so covers dissolve in instead of
- * popping — the one client-side leaf of the album screen. Reduced-motion users
- * get the global transition kill-switch (globals.css).
+ * A cover image for the album screen, player, and ambient wash. It used to
+ * dissolve in with an opacity transition — removed: on these mostly-static
+ * surfaces the fade read as gratuitous, and starting at opacity-0 held back the
+ * LCP paint. With no load state left it's a plain, server-renderable <Image>.
+ * (Name kept to avoid churn across its callers; it no longer fades.)
  */
 export function FadeImage({
   src,
@@ -18,27 +17,23 @@ export function FadeImage({
 }: {
   src: string;
   sizes: string;
+  /** Above-the-fold LCP candidate: load eager with fetchpriority=high. Next 16
+   *  deprecated the `priority` prop, so we hint the <img> directly. */
   priority?: boolean;
-  /** Load immediately without the preload hint priority adds — for large
-   *  above-the-fold decoration (the ambient wash) that gets flagged as LCP. */
+  /** Load eagerly without the high-priority hint — large above-the-fold
+   *  decoration (the ambient wash). */
   eager?: boolean;
   className?: string;
 }) {
-  const [loaded, setLoaded] = useState(false);
   return (
     <Image
       src={src}
       alt=""
       fill
-      priority={priority}
-      loading={eager && !priority ? "eager" : undefined}
+      loading={priority || eager ? "eager" : "lazy"}
+      fetchPriority={priority ? "high" : "auto"}
       sizes={sizes}
-      onLoad={() => setLoaded(true)}
-      className={cn(
-        "object-cover transition-opacity duration-700 ease-lazy",
-        loaded ? "opacity-100" : "opacity-0",
-        className,
-      )}
+      className={cn("object-cover", className)}
     />
   );
 }

@@ -120,7 +120,7 @@ export async function EditionView({
             <p className="mt-1.5 text-sm text-foreground/85">{metaLine}</p>
 
             <div className="mt-5 flex flex-col items-start gap-3 sm:mt-6">
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <PlayQueueButton
                   playText={t("album.play")}
                   pauseText={t("album.pause")}

@@ -31,8 +31,7 @@ export default function GatePage() {
           noon={beach}
           dusk={beachDusk}
           sizes="100vw"
-          noonClassName="object-[50%_30%]"
-          duskClassName="object-[50%_42%]"
+          className="object-[50%_30%] dark:object-[50%_42%]"
         />
         <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(11,58,83,0.14),rgba(11,58,83,0)_40%,rgba(11,58,83,0.10)_72%,rgba(11,58,83,0.32))] dark:bg-[linear-gradient(to_bottom,rgba(18,38,58,0.42),rgba(18,38,58,0.08)_28%,rgba(18,38,58,0.12)_66%,rgba(18,38,58,0.62))]" />
         {/* soft pool of shade behind the wordmark so white type never sits on bare glare/glow */}

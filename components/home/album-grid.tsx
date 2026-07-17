@@ -14,9 +14,12 @@ export function AlbumGrid({ albums }: { albums: Album[] }) {
       isEmpty={albums.length === 0}
       emptyBody={t("albumsEmpty")}
     >
-      {albums.map((album) => (
+      {albums.map((album, i) => (
         <li key={album.id}>
-          <AlbumCard album={album} />
+          {/* Eager-load the first row's covers: one of them is the LCP element,
+              and next/image lazy-loads by default. Covers the widest first row
+              (desktop ~6 cols); the rest stay lazy. */}
+          <AlbumCard album={album} priority={i < 6} />
         </li>
       ))}
     </BrowseGrid>

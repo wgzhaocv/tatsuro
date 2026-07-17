@@ -43,15 +43,11 @@ export function AlbumAmbient({
           above to re-blur every frame — phones ran hot over it. The overscan
           inset hides the blur's transparent edge bleed. */}
       <div className="absolute -inset-[12%]">
-        {/* blur radius scales with viewport: phones get a lighter blur (a
-            full-viewport filtered layer is GPU-memory-heavy, and mobile GPUs
-            pay most for a large radius), desktop keeps the deep blur-xl.
-            Still large enough to hide the 384px source's upscale. */}
         <FadeImage
           src={cover}
           eager
           sizes="384px"
-          className="blur-lg saturate-[1.35] lg:blur-xl"
+          className="blur-xl saturate-[1.35]"
         />
       </div>
       {/* White (noon) / dusk-navy (dark) dissolve — bright enough for ink

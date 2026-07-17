@@ -185,7 +185,9 @@
   "cache": {
     "auto": "オフライン再生可(自動保存)",
     "downloaded": "ダウンロード済み",
-    "keepOffline": "オフライン保存"
+    "keepOffline": "オフライン保存",
+    "keepOfflineOn": "オフライン保存をオンにしました",
+    "keepOfflineOff": "オフライン保存をオフにしました"
   },
   "metadata": {
     "musicVideos": "ミュージックビデオ",

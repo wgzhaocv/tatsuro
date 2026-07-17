@@ -2,6 +2,8 @@
 
 import { ArrowLineDown } from "@phosphor-icons/react";
 import { useTranslations } from "next-intl";
+import { useState } from "react";
+import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 
@@ -9,16 +11,17 @@ import { cn } from "@/lib/utils";
  * "Keep this offline" — a declared intent, not an action. On means the
  * reconciler should keep every song here cached; off drops them. UI only for
  * now: the downloads store + reconcile loop that make it real are the next
- * step, so today the switch just renders (uncontrolled) and drives nothing.
+ * step, so flipping it drives no caching — local state + a toast just confirm
+ * the toggle (the copy states intent, it doesn't claim a finished cache).
  *
  * Compact by design — an icon + a small switch, no text label — so it sits at
- * the same footprint as the neighbouring share/pin buttons instead of running
- * the header row long; the meaning rides on the icon + aria/title. Frosted
- * glass-ink to match those buttons over the bright cover wash. Shown on both
- * album and playlist headers.
+ * the same footprint as the neighbouring share/pin buttons; the meaning rides
+ * on the icon + aria/title. Frosted glass-ink to match those buttons over the
+ * bright cover wash. Shown on both album and playlist headers.
  */
 export function OfflineSwitch({ className }: { className?: string }) {
   const t = useTranslations("cache");
+  const [on, setOn] = useState(false);
 
   return (
     <div
@@ -29,7 +32,15 @@ export function OfflineSwitch({ className }: { className?: string }) {
       )}
     >
       <ArrowLineDown size={16} weight="bold" aria-hidden />
-      <Switch size="sm" aria-label={t("keepOffline")} />
+      <Switch
+        size="sm"
+        checked={on}
+        onCheckedChange={(checked) => {
+          setOn(checked);
+          toast.success(checked ? t("keepOfflineOn") : t("keepOfflineOff"));
+        }}
+        aria-label={t("keepOffline")}
+      />
     </div>
   );
 }

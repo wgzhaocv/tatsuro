@@ -185,7 +185,9 @@
   "cache": {
     "auto": "已缓存 · 可离线",
     "downloaded": "已下载",
-    "keepOffline": "离线保存"
+    "keepOffline": "离线保存",
+    "keepOfflineOn": "已开启离线保存",
+    "keepOfflineOff": "已关闭离线保存"
   },
   "metadata": {
     "musicVideos": "音乐视频",

@@ -145,7 +145,7 @@ export function PlaylistDetail({ id }: { id: string }) {
                   pauseText={tRoot("album.pause")}
                 />
                 <div className="flex flex-wrap items-center gap-2">
-                  <OfflineSwitch />
+                  <OfflineSwitch contextId={playlist.id} kind="playlist" />
                   {!isLiked && <PlaylistHeaderActions playlist={playlist} />}
                 </div>
               </div>

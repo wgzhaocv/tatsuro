@@ -187,7 +187,10 @@
     "downloaded": "已下载",
     "keepOffline": "离线保存",
     "keepOfflineOn": "已开启离线保存",
-    "keepOfflineOff": "已关闭离线保存"
+    "keepOfflineOnDesc": "缺少的歌曲会自动下载",
+    "keepOfflineOff": "已关闭离线保存",
+    "keepOfflineOffDesc": "已缓存的歌曲保留,空间不足时才会清理",
+    "downloading": "下载中"
   },
   "metadata": {
     "musicVideos": "音乐视频",

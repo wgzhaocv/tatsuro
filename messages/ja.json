@@ -187,7 +187,10 @@
     "downloaded": "ダウンロード済み",
     "keepOffline": "オフライン保存",
     "keepOfflineOn": "オフライン保存をオンにしました",
-    "keepOfflineOff": "オフライン保存をオフにしました"
+    "keepOfflineOnDesc": "足りない曲は自動でダウンロードされます",
+    "keepOfflineOff": "オフライン保存をオフにしました",
+    "keepOfflineOffDesc": "保存済みの曲は残ります(容量不足時に自動削除)",
+    "downloading": "ダウンロード中"
   },
   "metadata": {
     "musicVideos": "ミュージックビデオ",

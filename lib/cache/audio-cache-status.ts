@@ -1,29 +1,30 @@
 "use client";
 
-// A read-only mirror of which songs are available offline. The service worker
-// (app/sw/audio-cache.ts) stores full audio bodies under the "audio-cache"
-// Cache Storage bucket as a byproduct of playback, and broadcasts adds and
-// LRU evictions on the "audio-cache-events" BroadcastChannel. Nothing here
-// drives those caches — this module just seeds a Set from Cache Storage once
-// and keeps it live off the broadcast, so a track row can show whether it's
-// cached without every row poking Cache Storage itself.
-//
-// User-initiated "download this" (pinned, eviction-proof) is a separate bucket
-// that isn't built yet; `CacheState` already carries the "active" case so the
-// indicator gains it without a shape change. For now this only ever resolves
-// "none" | "auto". Note the SW is disabled in dev (see components/sw-provider),
-// so nothing is cached there and every song stays "none".
+// A read-only mirror of which songs are available offline, across both buckets:
+//   - "audio-download" (pinned): written by the reconciler, never LRU-swept →
+//     resolves "active" (the solid dot).
+//   - "audio-cache" (auto): written by the SW as a byproduct of playback,
+//     LRU-evicted → resolves "auto" (the ring).
+// Nothing here drives the caches — it seeds a Set per bucket once and keeps
+// them live off the two BroadcastChannels, so a track row shows offline state
+// without every row poking Cache Storage itself. The reconciler runs in dev
+// too (Cache API needs no SW), so "active" can appear in dev; "auto" cannot
+// (the SW that fills the auto bucket is disabled in dev).
 
 import { useSyncExternalStore } from "react";
 import { songStreamUrl } from "@/lib/api/urls";
-
-// Keep in sync with AUDIO_CACHE_NAME in app/sw/audio-cache.ts.
-const AUDIO_CACHE_NAME = "audio-cache";
-const EVENTS_CHANNEL = "audio-cache-events";
+import {
+  AUDIO_CACHE_NAME,
+  AUDIO_EVENTS_CHANNEL,
+  canonicalStreamUrl,
+  DOWNLOAD_CACHE_NAME,
+  DOWNLOAD_EVENTS_CHANNEL,
+} from "@/lib/offline/constants";
 
 export type CacheState = "none" | "auto" | "active";
 
 let cachedUrls = new Set<string>();
+let downloadedUrls = new Set<string>();
 const listeners = new Set<() => void>();
 let started = false;
 
@@ -31,45 +32,78 @@ function emit(): void {
   for (const fn of listeners) fn();
 }
 
+async function seed(bucket: string, apply: (urls: Set<string>) => void) {
+  try {
+    const cache = await caches.open(bucket);
+    const keys = await cache.keys();
+    if (keys.length === 0) return;
+    const next = new Set<string>();
+    for (const req of keys) next.add(canonicalStreamUrl(req.url));
+    apply(next);
+    emit();
+  } catch {
+    // best-effort snapshot
+  }
+}
+
+function listen(
+  channel: string,
+  addType: string,
+  removeType: string,
+  get: () => Set<string>,
+  set: (s: Set<string>) => void,
+) {
+  try {
+    const bc = new BroadcastChannel(channel);
+    bc.onmessage = (event: MessageEvent) => {
+      const { type, data } = (event.data ?? {}) as {
+        type?: string;
+        data?: { url?: string };
+      };
+      if (!data?.url) return;
+      const url = canonicalStreamUrl(data.url);
+      const next = new Set(get());
+      if (type === addType) next.add(url);
+      else if (type === removeType) next.delete(url);
+      else return;
+      set(next);
+      emit();
+    };
+  } catch {
+    // No BroadcastChannel — the seed is still a one-shot snapshot.
+  }
+}
+
 // Lazy, one-time: only wires up once something actually subscribes.
 function start(): void {
   if (started || typeof window === "undefined" || !("caches" in window)) return;
   started = true;
 
-  // Snapshot whatever the SW has already stored this session.
-  caches
-    .open(AUDIO_CACHE_NAME)
-    .then((cache) => cache.keys())
-    .then((keys) => {
-      if (keys.length === 0) return;
-      const next = new Set(cachedUrls);
-      for (const req of keys) next.add(req.url);
-      cachedUrls = next;
-      emit();
-    })
-    .catch(() => {});
+  seed(AUDIO_CACHE_NAME, (s) => {
+    cachedUrls = s;
+  });
+  seed(DOWNLOAD_CACHE_NAME, (s) => {
+    downloadedUrls = s;
+  });
 
-  // Live updates: the SW posts cache-added / cache-removed here.
-  try {
-    const channel = new BroadcastChannel(EVENTS_CHANNEL);
-    channel.onmessage = (event: MessageEvent) => {
-      const { type, data } = (event.data ?? {}) as {
-        type?: string;
-        data?: { url?: string };
-      };
-      const url = data?.url;
-      if (!url) return;
-      const next = new Set(cachedUrls);
-      if (type === "cache-added") next.add(url);
-      else if (type === "cache-removed") next.delete(url);
-      else return;
-      cachedUrls = next;
-      emit();
-    };
-  } catch {
-    // No BroadcastChannel — the seed above is still a one-shot snapshot;
-    // only live updates are lost.
-  }
+  listen(
+    AUDIO_EVENTS_CHANNEL,
+    "cache-added",
+    "cache-removed",
+    () => cachedUrls,
+    (s) => {
+      cachedUrls = s;
+    },
+  );
+  listen(
+    DOWNLOAD_EVENTS_CHANNEL,
+    "download-added",
+    "download-removed",
+    () => downloadedUrls,
+    (s) => {
+      downloadedUrls = s;
+    },
+  );
 }
 
 function subscribe(onStoreChange: () => void): () => void {
@@ -80,13 +114,18 @@ function subscribe(onStoreChange: () => void): () => void {
   };
 }
 
-/** Live offline-availability of one song. Resolves "none" | "auto" today
- *  ("active" arrives with user downloads). */
+/** Live offline-availability of one song: "active" (pinned download) wins over
+ *  "auto" (playback byproduct). */
 export function useSongCacheState(songId: string): CacheState {
   const url = songStreamUrl(songId);
   return useSyncExternalStore(
     subscribe,
-    () => (cachedUrls.has(url) ? "auto" : "none"),
+    () =>
+      downloadedUrls.has(url)
+        ? "active"
+        : cachedUrls.has(url)
+          ? "auto"
+          : "none",
     () => "none",
   );
 }

@@ -187,7 +187,10 @@
     "downloaded": "Downloaded",
     "keepOffline": "Save offline",
     "keepOfflineOn": "Keeping this offline",
-    "keepOfflineOff": "Offline save off"
+    "keepOfflineOnDesc": "Missing songs download automatically",
+    "keepOfflineOff": "Offline save off",
+    "keepOfflineOffDesc": "Cached songs stay until space is needed",
+    "downloading": "Downloading"
   },
   "metadata": {
     "musicVideos": "Music Videos",

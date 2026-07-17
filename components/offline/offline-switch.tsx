@@ -2,26 +2,57 @@
 
 import { ArrowLineDown } from "@phosphor-icons/react";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
+import type { Song } from "@/lib/api/types";
+import { useDownloadsStore, useIsOfflineEnabled } from "@/lib/downloads/store";
 import { cn } from "@/lib/utils";
 
 /**
- * "Keep this offline" — a declared intent, not an action. On means the
- * reconciler should keep every song here cached; off drops them. UI only for
- * now: the downloads store + reconcile loop that make it real are the next
- * step, so flipping it drives no caching — local state + a toast just confirm
- * the toggle (the copy states intent, it doesn't claim a finished cache).
+ * "Keep this offline" — a declared intent, not an action. On writes an intent
+ * the reconciler converges toward (fetching the missing songs); off tombstones
+ * it, and the reconciler demotes the bytes back to the evictable auto bucket
+ * (nothing is deleted — it just loses its LRU immunity). Albums snapshot their
+ * song ids at toggle time (a release edition is fixed); playlists resolve live.
  *
  * Compact by design — an icon + a small switch, no text label — so it sits at
  * the same footprint as the neighbouring share/pin buttons; the meaning rides
  * on the icon + aria/title. Frosted glass-ink to match those buttons over the
  * bright cover wash. Shown on both album and playlist headers.
  */
-export function OfflineSwitch({ className }: { className?: string }) {
+export function OfflineSwitch({
+  contextId,
+  kind,
+  songs,
+  className,
+}: {
+  contextId: string;
+  kind: "playlist" | "album";
+  /** Album only: the edition's songs, snapshotted into the intent on enable. */
+  songs?: Song[];
+  className?: string;
+}) {
   const t = useTranslations("cache");
-  const [on, setOn] = useState(false);
+  const enabled = useIsOfflineEnabled(contextId);
+  const setIntent = useDownloadsStore((s) => s.setIntent);
+  const clearIntent = useDownloadsStore((s) => s.clearIntent);
+
+  const toggle = (checked: boolean) => {
+    if (checked) {
+      const songIds = kind === "album" ? songs?.map((s) => s.id) : undefined;
+      setIntent(contextId, kind, songIds);
+      // Ask for durable storage so downloads survive storage pressure.
+      navigator.storage?.persist?.().catch(() => {});
+      toast.success(t("keepOfflineOn"), {
+        description: t("keepOfflineOnDesc"),
+      });
+    } else {
+      clearIntent(contextId);
+      toast.success(t("keepOfflineOff"), {
+        description: t("keepOfflineOffDesc"),
+      });
+    }
+  };
 
   return (
     <div
@@ -34,11 +65,8 @@ export function OfflineSwitch({ className }: { className?: string }) {
       <ArrowLineDown size={16} weight="bold" aria-hidden />
       <Switch
         size="sm"
-        checked={on}
-        onCheckedChange={(checked) => {
-          setOn(checked);
-          toast.success(checked ? t("keepOfflineOn") : t("keepOfflineOff"));
-        }}
+        checked={enabled}
+        onCheckedChange={toggle}
         aria-label={t("keepOffline")}
       />
     </div>

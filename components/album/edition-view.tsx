@@ -133,7 +133,11 @@ export async function EditionView({
                     title={queueLabel}
                   />
                   <PinButton albumId={album.id} name={album.name} />
-                  <OfflineSwitch />
+                  <OfflineSwitch
+                    contextId={edition.id}
+                    kind="album"
+                    songs={queueSongs}
+                  />
                 </div>
               </div>
               {edition.download && (

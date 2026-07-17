@@ -159,6 +159,7 @@
   "share": {
     "song": "Share song",
     "album": "Share album",
+    "generating": "Creating share link…",
     "copied": "Link copied to clipboard",
     "shared": "Shared",
     "failed": "Couldn't create a share link"

@@ -159,6 +159,7 @@
   "share": {
     "song": "分享歌曲",
     "album": "分享专辑",
+    "generating": "正在生成分享链接…",
     "copied": "链接已复制",
     "shared": "已分享",
     "failed": "无法创建分享链接"

@@ -19,10 +19,14 @@ export function useShareLink(): (
   const locale = useLocale();
   return useCallback(
     async (resolve, title) => {
+      // The link is minted server-side (token round-trip), so show a loading
+      // toast the instant the menu item is tapped — otherwise the menu just
+      // closes and nothing visible happens until it resolves. Updated in place.
+      const id = toast.loading(t("generating"));
       try {
         const link = await resolve();
         if (!link) {
-          toast.error(t("failed"));
+          toast.error(t("failed"), { id });
           return;
         }
         const url = `${window.location.origin}/${locale}${link}`;
@@ -31,15 +35,20 @@ export function useShareLink(): (
           typeof navigator.share === "function" &&
           navigator.maxTouchPoints > 0
         ) {
+          // The sheet is its own feedback — drop the loading toast under it.
+          toast.dismiss(id);
           await navigator.share({ title, url });
         } else {
           await navigator.clipboard.writeText(url);
-          toast.success(t("copied"));
+          toast.success(t("copied"), { id });
         }
       } catch (err) {
         // User dismissed the native share sheet — not an error.
-        if (err instanceof DOMException && err.name === "AbortError") return;
-        toast.error(t("failed"));
+        if (err instanceof DOMException && err.name === "AbortError") {
+          toast.dismiss(id);
+          return;
+        }
+        toast.error(t("failed"), { id });
       }
     },
     [locale, t],

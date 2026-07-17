@@ -18,14 +18,14 @@ export function OfflineSwitch({ className }: { className?: string }) {
   return (
     <div
       className={cn(
-        "inline-flex h-11 items-center gap-2.5 rounded-full border border-border/50 bg-card/75 px-3.5 shadow-postcard backdrop-blur-md",
+        "inline-flex h-9 items-center gap-2 whitespace-nowrap rounded-full border border-border/50 bg-card/75 px-3 shadow-postcard backdrop-blur-md",
         className,
       )}
     >
-      <span className="text-sm font-medium text-foreground">
+      <span className="text-xs font-medium text-foreground">
         {t("keepOffline")}
       </span>
-      <Switch aria-label={t("keepOffline")} />
+      <Switch size="sm" aria-label={t("keepOffline")} />
     </div>
   );
 }

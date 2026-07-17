@@ -18,13 +18,14 @@ export function OfflineSwitch({ className }: { className?: string }) {
   return (
     <div
       className={cn(
-        "inline-flex h-9 items-center gap-2 whitespace-nowrap rounded-full border border-border/50 bg-card/75 px-3 shadow-postcard backdrop-blur-md",
+        // Match the neighbouring glass-ink action buttons exactly (see the
+        // Button `glass-ink` variant): light glass, ink text, over the bright
+        // cover wash.
+        "inline-flex h-9 items-center gap-2 whitespace-nowrap rounded-full border border-white/70 bg-white/55 px-3 text-navy backdrop-blur-xs dark:border-white/20 dark:bg-dusk-navy/50 dark:text-foreground",
         className,
       )}
     >
-      <span className="text-xs font-medium text-foreground">
-        {t("keepOffline")}
-      </span>
+      <span className="text-xs font-medium">{t("keepOffline")}</span>
       <Switch size="sm" aria-label={t("keepOffline")} />
     </div>
   );

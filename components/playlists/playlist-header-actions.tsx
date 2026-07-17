@@ -36,7 +36,7 @@ export function PlaylistHeaderActions({ playlist }: { playlist: Playlist }) {
     <>
       <Button
         type="button"
-        variant="glass"
+        variant="glass-ink"
         size="icon"
         className="size-11 rounded-full"
         aria-label={t("rename")}
@@ -47,7 +47,7 @@ export function PlaylistHeaderActions({ playlist }: { playlist: Playlist }) {
       </Button>
       <Button
         type="button"
-        variant="glass"
+        variant="glass-ink"
         size="icon"
         className="size-11 rounded-full"
         aria-label={t("delete")}

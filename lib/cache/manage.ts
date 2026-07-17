@@ -77,9 +77,17 @@ function hasCaches(): boolean {
   return typeof window !== "undefined" && "caches" in window;
 }
 
+// How many cache entries to match() at once. sizeOf reads only the header, but
+// each match() still hands back a Response referencing a multi-MB body; opening
+// a whole bucket at once (Promise.all over every key) makes mobile Safari hold
+// hundreds of those bodies simultaneously and crash. A small window keeps peak
+// memory flat regardless of how much is cached.
+const MATCH_CONCURRENCY = 6;
+
 /** Count + total bytes of a bucket. With `withSizes` (audio buckets) it also
  *  returns a canonical-url → bytes map used to attribute songs to sources and
- *  albums; the cover bucket skips it (nothing consumes cover sizes per-entry). */
+ *  albums; the cover bucket skips it (nothing consumes cover sizes per-entry).
+ *  Matches entries in small batches so peak memory stays bounded. */
 async function statsOf(
   name: string,
   withSizes: boolean,
@@ -88,14 +96,20 @@ async function statsOf(
   try {
     const cache = await caches.open(name);
     const keys = await cache.keys();
-    const each = await Promise.all(
-      keys.map(async (k) => sizeOf(await cache.match(k))),
-    );
     let bytes = 0;
-    keys.forEach((k, i) => {
-      bytes += each[i];
-      if (withSizes) sizes.set(canonicalStreamUrl(k.url), each[i]);
-    });
+    for (let i = 0; i < keys.length; i += MATCH_CONCURRENCY) {
+      const batch = keys.slice(i, i + MATCH_CONCURRENCY);
+      const measured = await Promise.all(
+        batch.map(async (k) => ({
+          url: k.url,
+          n: sizeOf(await cache.match(k)),
+        })),
+      );
+      for (const m of measured) {
+        bytes += m.n;
+        if (withSizes) sizes.set(canonicalStreamUrl(m.url), m.n);
+      }
+    }
     return { stats: { count: keys.length, bytes }, sizes };
   } catch {
     return { stats: { count: 0, bytes: 0 }, sizes };
@@ -138,7 +152,7 @@ async function estimate(): Promise<{ usage: number; quota: number }> {
   }
 }
 
-async function measure(): Promise<CacheUsage> {
+async function runMeasure(): Promise<CacheUsage> {
   // No Cache API (very old browser / SSR): resolve as ready with zeros rather
   // than leaving the panel stuck on its loading skeleton forever.
   if (!hasCaches()) return { ...EMPTY, ready: true };
@@ -164,6 +178,18 @@ async function measure(): Promise<CacheUsage> {
     sources: savedSources(dl.sizes),
     songBytes,
   };
+}
+
+// One measurement at a time: overlapping triggers (mount + broadcast + a clear's
+// refresh, especially during playback) share the in-flight run instead of each
+// spawning its own full bucket scan — so the heavy work can never stack up.
+let inFlightMeasure: Promise<CacheUsage> | null = null;
+
+function measure(): Promise<CacheUsage> {
+  inFlightMeasure ??= runMeasure().finally(() => {
+    inFlightMeasure = null;
+  });
+  return inFlightMeasure;
 }
 
 // ── Clear operations ────────────────────────────────────────────────────────

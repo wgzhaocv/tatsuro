@@ -76,15 +76,24 @@ export const useDownloadsStore = create<DownloadsState>()(
       },
 
       adoptRemote(remote) {
-        set({
-          intents: remote.map((r) => ({
-            id: r.id,
-            kind: r.kind,
-            songIds: r.songIds ?? undefined,
-            enabledAt: r.enabledAt,
-            updatedAt: r.updatedAt,
-            deletedAt: r.deletedAt ?? undefined,
-          })),
+        set((s) => {
+          // `label` is local-only (never on the wire), so carry over the label
+          // this device already has for each id — otherwise adopting the merged
+          // set would blank the saved-sources names on the very device that set
+          // them. A row this device hasn't seen (from a peer) has no label and
+          // falls back to a generic name in the More page, which is expected.
+          const localLabel = new Map(s.intents.map((i) => [i.id, i.label]));
+          return {
+            intents: remote.map((r) => ({
+              id: r.id,
+              kind: r.kind,
+              songIds: r.songIds ?? undefined,
+              label: localLabel.get(r.id),
+              enabledAt: r.enabledAt,
+              updatedAt: r.updatedAt,
+              deletedAt: r.deletedAt ?? undefined,
+            })),
+          };
         });
       },
     }),

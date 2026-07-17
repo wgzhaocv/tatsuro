@@ -130,5 +130,60 @@ function pickDominant(data: Uint8ClampedArray): string | null {
   const r = Math.round(best.r / best.weight);
   const g = Math.round(best.g / best.weight);
   const b = Math.round(best.b / best.weight);
-  return `#${((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1)}`;
+  return refine(r, g, b);
+}
+
+/**
+ * Clean the raw dominant colour into something that reads as a *tint* rather
+ * than mud: floor the saturation and pin the lightness into a mid band. A flat
+ * or dark cover colour, washed at low opacity over glass, otherwise turns grey
+ * — this keeps the cast lively and consistent whatever the artwork is.
+ */
+function refine(r: number, g: number, b: number): string {
+  let [h, s, l] = rgbToHsl(r, g, b);
+  s = Math.max(s, 0.5);
+  l = Math.min(Math.max(l, 0.5), 0.68);
+  const [nr, ng, nb] = hslToRgb(h, s, l);
+  return `#${((1 << 24) | (nr << 16) | (ng << 8) | nb).toString(16).slice(1)}`;
+}
+
+function rgbToHsl(r: number, g: number, b: number): [number, number, number] {
+  const rn = r / 255;
+  const gn = g / 255;
+  const bn = b / 255;
+  const max = Math.max(rn, gn, bn);
+  const min = Math.min(rn, gn, bn);
+  const d = max - min;
+  const l = (max + min) / 2;
+  let h = 0;
+  let s = 0;
+  if (d !== 0) {
+    s = d / (1 - Math.abs(2 * l - 1));
+    if (max === rn) h = ((gn - bn) / d) % 6;
+    else if (max === gn) h = (bn - rn) / d + 2;
+    else h = (rn - gn) / d + 4;
+    h *= 60;
+    if (h < 0) h += 360;
+  }
+  return [h, s, l];
+}
+
+function hslToRgb(h: number, s: number, l: number): [number, number, number] {
+  const c = (1 - Math.abs(2 * l - 1)) * s;
+  const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+  const m = l - c / 2;
+  let r = 0;
+  let g = 0;
+  let b = 0;
+  if (h < 60) [r, g, b] = [c, x, 0];
+  else if (h < 120) [r, g, b] = [x, c, 0];
+  else if (h < 180) [r, g, b] = [0, c, x];
+  else if (h < 240) [r, g, b] = [0, x, c];
+  else if (h < 300) [r, g, b] = [x, 0, c];
+  else [r, g, b] = [c, 0, x];
+  return [
+    Math.round((r + m) * 255),
+    Math.round((g + m) * 255),
+    Math.round((b + m) * 255),
+  ];
 }

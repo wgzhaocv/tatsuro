@@ -70,18 +70,18 @@ export function MiniPlayer() {
           controls. Rounded, lifted on a navy shadow; overflow-hidden lets the
           progress line ride the rounded top edge. pointer-events-auto re-arms
           the bar (the wrapper opts out above). */}
-      <div className="pointer-events-auto relative mx-auto max-w-2xl overflow-hidden rounded-2xl border border-white/55 bg-white/60 text-foreground shadow-float-navy backdrop-blur-sm dark:border-white/15 dark:bg-dusk-navy/64">
-        {/* Cover-cast: a wash of the current cover's leading colour that carries
-            the old site's tinted, see-through bar — but here it rides over the
-            neutral glass, which keeps the light/dark base tone so ink text stays
-            readable in both themes (Deep-Water Rule) whatever colour the cover
-            is. Heavier in dusk (dark base takes more colour). Sits under the
-            progress line and content (both establish their own stacking above),
-            crossfading as the song changes; transparent while it resolves / for
-            an all-neutral cover keeps the glass untouched. */}
+      <div className="pointer-events-auto relative mx-auto max-w-2xl overflow-hidden rounded-2xl border border-white/55 bg-white/48 text-foreground shadow-float-navy backdrop-blur-xl backdrop-saturate-150 dark:border-white/15 dark:bg-dusk-navy/52">
+        {/* Translucency comes from the glass itself — a thin fill over a strong,
+            saturated frost, so the room behind shows through alive rather than
+            greyed. The cover colour is only a whisper of tint on top (a flat
+            wash of it just muddies the glass), riding over the neutral base so
+            the light/dark tone — and ink-text contrast — holds whatever colour
+            the cover is (Deep-Water Rule). Under the progress line and content
+            (both stack above); crossfades on song change; transparent while it
+            resolves / for an all-neutral cover leaves the glass clean. */}
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-0 opacity-[0.24] transition-colors duration-700 ease-lazy dark:opacity-[0.38]"
+          className="pointer-events-none absolute inset-0 opacity-[0.10] transition-colors duration-700 ease-lazy dark:opacity-[0.16]"
           style={{ backgroundColor: tint ?? "transparent" }}
         />
         <MiniProgress />

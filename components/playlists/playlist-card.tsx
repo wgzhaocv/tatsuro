@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { Link } from "@/components/ui/link";
+import { HoverPrefetchLink } from "@/components/ui/hover-prefetch-link";
 import type { Playlist } from "@/lib/playlists/types";
 import { isJapanese } from "@/lib/text";
 import { PlaylistCover } from "./playlist-cover";
@@ -20,7 +20,7 @@ export function PlaylistCard({ playlist }: { playlist: Playlist }) {
   const isJa = playlist.kind === "user" && isJapanese(name);
 
   return (
-    <Link
+    <HoverPrefetchLink
       href={`/playlists/${playlist.id}`}
       aria-label={name}
       className="group flex items-center gap-3 rounded-xl p-2 outline-none transition-colors duration-300 ease-lazy max-sm:hover:bg-navy/[0.05] dark:max-sm:hover:bg-white/[0.06] sm:block sm:rounded-2xl sm:p-0"
@@ -42,6 +42,6 @@ export function PlaylistCard({ playlist }: { playlist: Playlist }) {
           {t("songCount", { n: playlist.entries.length })}
         </p>
       </div>
-    </Link>
+    </HoverPrefetchLink>
   );
 }

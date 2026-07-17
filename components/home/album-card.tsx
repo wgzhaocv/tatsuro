@@ -1,7 +1,7 @@
 import { PushPinIcon } from "@phosphor-icons/react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
-import { Link } from "@/components/ui/link";
+import { HoverPrefetchLink } from "@/components/ui/hover-prefetch-link";
 import type { Album } from "@/lib/api/types";
 import { coverUrl } from "@/lib/api/urls";
 import { useIsPinned } from "@/lib/pins/store";
@@ -34,7 +34,7 @@ export function AlbumCard({
         : null;
 
   return (
-    <Link
+    <HoverPrefetchLink
       href={`/album/${album.id}`}
       aria-label={album.year ? `${album.name}, ${album.year}` : album.name}
       className="group block rounded-2xl focus:outline-none"
@@ -87,6 +87,6 @@ export function AlbumCard({
           </span>
         )}
       </p>
-    </Link>
+    </HoverPrefetchLink>
   );
 }

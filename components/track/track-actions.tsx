@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  CircleNotch,
   DotsThreeVertical,
   Plus,
   Queue,
@@ -60,7 +61,14 @@ export function TrackActions({
   const router = useRouter();
   const playNext = usePlayerStore((s) => s.playNext);
   const [addOpen, setAddOpen] = useState(false);
-  const share = useShareSong(song);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const { share, pending: sharePending } = useShareSong(song);
+
+  // Keep the menu open while the share link mints (spinner shows inline on the
+  // row); close it on success, leave it open on failure so the miss is visible.
+  const onShare = async () => {
+    if (await share()) setMenuOpen(false);
+  };
 
   const queueNext = () => {
     const { current } = usePlayerStore.getState();
@@ -81,7 +89,7 @@ export function TrackActions({
     <div className="flex shrink-0 items-center">
       {!hideLike && <LikeButton song={song} />}
 
-      <Menu>
+      <Menu open={menuOpen} onOpenChange={setMenuOpen}>
         <MenuTrigger
           render={
             <Button
@@ -114,8 +122,16 @@ export function TrackActions({
               {tg("openAlbum")}
             </MenuItem>
           )}
-          <MenuItem onClick={share}>
-            <ShareNetwork aria-hidden />
+          <MenuItem
+            closeOnClick={false}
+            disabled={sharePending}
+            onClick={onShare}
+          >
+            {sharePending ? (
+              <CircleNotch className="animate-spin" aria-hidden />
+            ) : (
+              <ShareNetwork aria-hidden />
+            )}
             {ts("song")}
           </MenuItem>
           {onRemove && (

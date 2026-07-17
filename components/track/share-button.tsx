@@ -1,6 +1,6 @@
 "use client";
 
-import { ShareNetwork } from "@phosphor-icons/react";
+import { CircleNotch, ShareNetwork } from "@phosphor-icons/react";
 import { useLocale, useTranslations } from "next-intl";
 import { useCallback } from "react";
 import { useShareLink } from "@/components/share/use-share";
@@ -20,10 +20,13 @@ import { cn } from "@/lib/utils";
  * recipient and link-preview bots open straight in. Returned as a hook so the
  * standalone button and the track-row overflow menu share one implementation.
  */
-export function useShareSong(song: Song): () => Promise<void> {
-  const share = useShareLink();
+export function useShareSong(song: Song): {
+  share: () => Promise<boolean>;
+  pending: boolean;
+} {
+  const { share, pending } = useShareLink();
   const locale = useLocale();
-  return useCallback(
+  const shareSong = useCallback(
     () =>
       share(
         () =>
@@ -34,6 +37,7 @@ export function useShareSong(song: Song): () => Promise<void> {
       ),
     [share, locale, song.albumId, song.id, song.name],
   );
+  return { share: shareSong, pending };
 }
 
 /** Standalone icon button — the roomy surfaces (full player). */
@@ -45,7 +49,7 @@ export function ShareButton({
   className?: string;
 }) {
   const t = useTranslations("share");
-  const share = useShareSong(song);
+  const { share, pending } = useShareSong(song);
   return (
     <Tooltip>
       <TooltipTrigger
@@ -57,11 +61,19 @@ export function ShareButton({
             aria-label={t("song")}
             className={cn("rounded-full", className)}
             onClick={share}
+            disabled={pending}
           >
-            <ShareNetwork
-              className="size-[18px] text-muted-foreground group-hover/button:text-foreground"
-              aria-hidden
-            />
+            {pending ? (
+              <CircleNotch
+                className="size-[18px] animate-spin text-muted-foreground"
+                aria-hidden
+              />
+            ) : (
+              <ShareNetwork
+                className="size-[18px] text-muted-foreground group-hover/button:text-foreground"
+                aria-hidden
+              />
+            )}
           </Button>
         }
       />

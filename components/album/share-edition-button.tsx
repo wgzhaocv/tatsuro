@@ -1,6 +1,6 @@
 "use client";
 
-import { ShareNetwork } from "@phosphor-icons/react";
+import { CircleNotch, ShareNetwork } from "@phosphor-icons/react";
 import { useTranslations } from "next-intl";
 import { useShareLink } from "@/components/share/use-share";
 import { Button } from "@/components/ui/button";
@@ -30,7 +30,7 @@ export function ShareEditionButton({
   className?: string;
 }) {
   const t = useTranslations("share");
-  const share = useShareLink();
+  const { share, pending } = useShareLink();
   return (
     <Tooltip>
       <TooltipTrigger
@@ -44,8 +44,13 @@ export function ShareEditionButton({
             onClick={() =>
               share(() => getEditionShareLink(albumId, slug), title)
             }
+            disabled={pending}
           >
-            <ShareNetwork className="size-[18px]" aria-hidden />
+            {pending ? (
+              <CircleNotch className="size-[18px] animate-spin" aria-hidden />
+            ) : (
+              <ShareNetwork className="size-[18px]" aria-hidden />
+            )}
           </Button>
         }
       />

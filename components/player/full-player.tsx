@@ -122,7 +122,14 @@ export function FullPlayer() {
           // rasterise that blur every frame (profiled: two ~180ms freezes on
           // open). Opacity on the ancestor composites the already-rastered
           // blur cheaply, so the wash cross-fades while the controls slide.
-          className="group fixed inset-0 isolate z-50 flex flex-col overflow-y-auto bg-background pb-[env(safe-area-inset-bottom)] outline-none duration-500 ease-lazy data-closed:animate-out data-closed:fade-out-0 data-open:animate-in data-open:fade-in-0"
+          //
+          // overflow-hidden (not overflow-y-auto): the scroll lives on the
+          // inner slide wrapper below. While that wrapper slides in/out it
+          // briefly overhangs the Popup's bottom edge — with the scroller here
+          // that overhang popped a real (non-overlay) scrollbar on Windows for
+          // the length of the animation. Clipping it at the Popup and scrolling
+          // the wrapper keeps the transform inside the frame.
+          className="group fixed inset-0 isolate z-50 flex flex-col overflow-hidden bg-background pb-[env(safe-area-inset-bottom)] outline-none duration-500 ease-lazy data-closed:animate-out data-closed:fade-out-0 data-open:animate-in data-open:fade-in-0"
         >
           {/* ── Ambient: the cover's own colour fills the room — the same
               Cover Ambient material as the album screen, one recipe ── */}
@@ -132,7 +139,7 @@ export function FullPlayer() {
               the Popup's data-open (group-data) so it stays in lockstep with
               the dialog's own fade. Kept a flex-col that fills the Popup so the
               header/stage/transport layout is unchanged. */}
-          <div className="flex min-h-0 flex-1 flex-col duration-500 ease-lazy group-data-closed:animate-out group-data-closed:slide-out-to-bottom-8 group-data-open:animate-in group-data-open:slide-in-from-bottom-8">
+          <div className="flex min-h-0 flex-1 flex-col overflow-y-auto duration-500 ease-lazy group-data-closed:animate-out group-data-closed:slide-out-to-bottom-8 group-data-open:animate-in group-data-open:slide-in-from-bottom-8">
             {/* ── Chrome: collapse + context ──
               flex-wrap so on phones the action buttons stay up on the
               close button's row and the "playing from" caption folds onto its

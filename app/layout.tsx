@@ -3,6 +3,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import type { Metadata, Viewport } from "next";
 import { Inter, Jost, Quicksand } from "next/font/google";
 import "./globals.css";
+import { DownloadsReconciler } from "@/components/downloads/downloads-reconciler";
 import { AudioEngine } from "@/components/player/audio-engine";
 import { QueryProvider } from "@/components/query-provider";
 import { ServiceWorkerProvider } from "@/components/sw-provider";
@@ -103,6 +104,9 @@ export default function RootLayout({
               remounted <audio> element would ghost-play alongside its
               replacement (the double-audio bug). */}
           <AudioEngine />
+          {/* Client reconciler for offline downloads — module singleton, kept
+              above [locale] so its in-memory queue survives language switches. */}
+          <DownloadsReconciler />
           {/* Vercel free-tier telemetry: page views + Web Vitals. No-ops off
               Vercel, so dev/self-host stay clean. */}
           <Analytics />

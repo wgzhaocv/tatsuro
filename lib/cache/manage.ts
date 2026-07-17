@@ -423,8 +423,30 @@ export async function clearAlbumCache(
 // Last measurement, kept at module scope so re-entering the More page shows the
 // previous numbers instantly (with a refreshing loader) instead of resetting to
 // a skeleton every time. Survives route changes within the session; a full
-// reload starts fresh (skeleton once).
+// reload rehydrates it from localStorage (see below) so it survives that too.
 let lastUsage: CacheUsage = EMPTY;
+
+const USAGE_STORAGE_KEY = "tatsuro-cache-usage";
+
+/** The last snapshot persisted across full reloads, or null. Marked ready so the
+ *  panel shows it (with the refresh spinner) instead of the skeleton. */
+function loadPersistedUsage(): CacheUsage | null {
+  try {
+    const raw = localStorage.getItem(USAGE_STORAGE_KEY);
+    if (!raw) return null;
+    return { ...(JSON.parse(raw) as CacheUsage), ready: true };
+  } catch {
+    return null;
+  }
+}
+
+function persistUsage(u: CacheUsage): void {
+  try {
+    localStorage.setItem(USAGE_STORAGE_KEY, JSON.stringify(u));
+  } catch {
+    // storage full / unavailable — the in-memory lastUsage still covers SPA nav.
+  }
+}
 
 /** Live cache usage for the More page. Seeds from the last measurement, then
  *  re-measures on mount and (debounced) on any cache-event broadcast or
@@ -445,11 +467,23 @@ export function useCacheUsage(): CacheUsage & {
     measure().then((u) => {
       lastUsage = u;
       setUsage(u);
+      persistUsage(u);
       setMeasuring(false);
     });
   }, []);
 
   useEffect(() => {
+    // On a fresh page load the in-memory snapshot is empty; show the persisted
+    // one immediately (returning users skip the skeleton) before the async
+    // remeasure resolves. SSR-safe: runs only after mount, so no hydration
+    // mismatch with the server-rendered skeleton.
+    if (!lastUsage.ready) {
+      const persisted = loadPersistedUsage();
+      if (persisted) {
+        lastUsage = persisted;
+        setUsage(persisted);
+      }
+    }
     refresh();
     const schedule = () => {
       if (timer.current) window.clearTimeout(timer.current);

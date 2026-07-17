@@ -102,42 +102,13 @@ async function entrySize(cache: Cache, req: Request): Promise<number> {
   return n;
 }
 
-/** Count + total bytes of a bucket. With `withSizes` (audio buckets) it also
- *  returns a canonical-url → bytes map used to attribute songs to sources and
- *  albums; the cover bucket skips it (nothing consumes cover sizes per-entry).
- *  Matches entries in small batches so peak memory stays bounded. */
-async function statsOf(
-  name: string,
-  withSizes: boolean,
-): Promise<{ stats: BucketStats; sizes: Map<string, number> }> {
-  const sizes = new Map<string, number>();
-  try {
-    const cache = await caches.open(name);
-    const keys = await cache.keys();
-    let bytes = 0;
-    for (let i = 0; i < keys.length; i += MATCH_CONCURRENCY) {
-      const batch = keys.slice(i, i + MATCH_CONCURRENCY);
-      const measured = await Promise.all(
-        batch.map(async (k) => ({ url: k.url, n: await entrySize(cache, k) })),
-      );
-      for (const m of measured) {
-        bytes += m.n;
-        if (withSizes) sizes.set(canonicalStreamUrl(m.url), m.n);
-      }
-    }
-    return { stats: { count: keys.length, bytes }, sizes };
-  } catch {
-    return { stats: { count: 0, bytes: 0 }, sizes };
-  }
-}
-
-/** Sizes of one audio bucket, read from the IndexedDB entry metadata instead of
+/** Sizes of one cache bucket, read from the IndexedDB entry metadata instead of
  *  opening every cached Response (which OOM-reloads mobile Safari on a big
  *  cache). `known` is the recorded entries; a URL present in the cache but not
  *  yet recorded (first run after this shipped, or drift) is backfilled once —
  *  in small batches — so subsequent measures need no cache.match here at all.
  *  Every seen URL is added to `seen` so the caller can prune stale records. */
-async function auditAudioBucket(
+async function auditBucket(
   cacheName: string,
   bucket: CacheEntry["bucket"],
   known: Map<string, CacheEntry>,
@@ -216,28 +187,26 @@ async function runMeasure(): Promise<CacheUsage> {
   // No Cache API (very old browser / SSR): resolve as ready with zeros rather
   // than leaving the panel stuck on its loading skeleton forever.
   if (!hasCaches()) return { ...EMPTY, ready: true };
-  // estimate() reads no cache bodies, so it runs alongside. Audio sizes come
-  // from the IndexedDB entry metadata (no cache.match); only the small cover
-  // bucket is still scanned via headers.
+  // estimate() reads no cache bodies, so it runs alongside. Every bucket's sizes
+  // come from the IndexedDB entry metadata (no cache.match) — only genuinely
+  // unrecorded entries get a one-time batched backfill inside auditBucket.
   const estimating = estimate();
   const known = new Map(
     (await getAllEntries()).map((e) => [e.url, e] as const),
   );
   const seen = new Set<string>();
-  const dl = await auditAudioBucket(
-    DOWNLOAD_CACHE_NAME,
-    "download",
-    known,
-    seen,
-  );
-  const au = await auditAudioBucket(AUDIO_CACHE_NAME, "auto", known, seen);
+  const dl = await auditBucket(DOWNLOAD_CACHE_NAME, "download", known, seen);
+  const au = await auditBucket(AUDIO_CACHE_NAME, "auto", known, seen);
+  const cover = await auditBucket(COVER_CACHE_NAME, "cover", known, seen);
   // Prune records for entries that left the cache without going through our
-  // delete paths (drift), so totals can't drift upward over time.
+  // delete paths (e.g. an ExpirationPlugin cover eviction), so totals can't
+  // drift upward over time.
   for (const url of known.keys()) if (!seen.has(url)) await deleteEntry(url);
 
-  const cover = await statsOf(COVER_CACHE_NAME, false);
   const { usage, quota } = await estimating;
 
+  // Per-song sizes for the album breakdown come from the audio buckets only;
+  // cover URLs aren't songs (songIdFromStreamUrl returns null for them).
   const songBytes: Record<string, number> = {};
   for (const [url, bytes] of [...dl.sizes, ...au.sizes]) {
     const id = songIdFromStreamUrl(url);
@@ -250,7 +219,7 @@ async function runMeasure(): Promise<CacheUsage> {
     quota,
     download: { count: dl.count, bytes: dl.bytes },
     auto: { count: au.count, bytes: au.bytes },
-    cover: cover.stats,
+    cover: { count: cover.count, bytes: cover.bytes },
     sources: savedSources(dl.sizes),
     songBytes,
   };

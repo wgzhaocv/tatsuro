@@ -15,10 +15,10 @@ const STORE_NAME = "access-times";
 const ENTRIES_STORE = "entries";
 const DB_VERSION = 2;
 
-/** One cached audio entry's metadata (both audio buckets). */
+/** One cached entry's metadata (both audio buckets + cover art). */
 export type CacheEntry = {
   url: string;
-  bucket: "auto" | "download";
+  bucket: "auto" | "download" | "cover";
   bytes: number;
 };
 

@@ -8,7 +8,9 @@
 
 import type { PrecacheEntry, SerwistGlobalConfig } from "serwist";
 import { CacheFirst, ExpirationPlugin, Serwist } from "serwist";
+import { sizeOf } from "@/lib/offline/auto-evict";
 import { COVER_CACHE_NAME } from "@/lib/offline/constants";
+import { putEntry } from "@/lib/offline/lru-db";
 import { audioStreamHandler } from "./sw/audio-cache";
 
 declare global {
@@ -53,6 +55,20 @@ serwist.registerCapture(
         maxAgeSeconds: 30 * 24 * 60 * 60, // 30d, mirrors the upstream max-age
         purgeOnQuotaError: true,
       }),
+      // Record each cover's size in the offline metadata DB on write, so the
+      // More page reads cover totals from IndexedDB like the audio buckets
+      // (no cache.match). ExpirationPlugin evictions don't notify here, but the
+      // More page's keys()-vs-records reconcile prunes any stale rows.
+      {
+        cacheDidUpdate: async ({ request, newResponse }) => {
+          if (newResponse)
+            await putEntry({
+              url: request.url,
+              bucket: "cover",
+              bytes: sizeOf(newResponse),
+            });
+        },
+      },
     ],
   }),
 );

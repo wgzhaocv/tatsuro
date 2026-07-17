@@ -17,6 +17,7 @@ import {
   usePlayerStore,
   useProgressStore,
 } from "@/lib/player/store";
+import { useDominantColor } from "@/lib/player/use-dominant-color";
 import { isJapanese } from "@/lib/text";
 import { cn } from "@/lib/utils";
 
@@ -39,6 +40,11 @@ export function MiniPlayer() {
   const t = useTranslations("player");
 
   const subline = song?.albumName ?? contextLabel ?? "";
+  // The bar wears a faint cast of the current cover — the same colour trick
+  // the old site pulled from artwork, here kept to a whisper over the glass.
+  const tint = useDominantColor(
+    song?.coverFrontId ? coverUrl(song.coverFrontId) : null,
+  );
 
   return (
     <section
@@ -65,10 +71,19 @@ export function MiniPlayer() {
           progress line ride the rounded top edge. pointer-events-auto re-arms
           the bar (the wrapper opts out above). */}
       <div className="pointer-events-auto relative mx-auto max-w-2xl overflow-hidden rounded-2xl border border-white/55 bg-white/72 text-foreground shadow-float-navy backdrop-blur-md dark:border-white/15 dark:bg-dusk-navy/80">
+        {/* Cover-cast: a low-opacity wash of the current cover's leading colour,
+            sitting under the progress line and content (both establish their own
+            stacking above), crossfading as the song changes. transparent while
+            it resolves / for an all-neutral cover keeps the glass untouched. */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 opacity-[0.13] transition-colors duration-700 ease-lazy dark:opacity-[0.22]"
+          style={{ backgroundColor: tint ?? "transparent" }}
+        />
         <MiniProgress />
         {/* Height chosen so the 44px cover/controls get the same ~10px inset
             top, bottom, and left — a uniform frame gap. */}
-        <div className="flex h-16 items-center gap-3 px-2.5">
+        <div className="relative flex h-16 items-center gap-3 px-2.5">
           <button
             type="button"
             onClick={() => setExpanded(true)}

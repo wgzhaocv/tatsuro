@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { AccountBootstrap } from "@/components/account/account-bootstrap";
-import { BottomNav } from "@/components/bottom-nav";
+import { BottomNav, BottomNavShell } from "@/components/bottom-nav";
 import { PinsHydration } from "@/components/pins/pins-hydration";
 import { PlayerDock } from "@/components/player/player-dock";
 import { PlaylistsHydration } from "@/components/playlists/hydration";
@@ -27,11 +27,12 @@ export default function MainLayout({
     <>
       {children}
       <PlayerDock />
-      {/* BottomNav reads the pathname (usePathname) to mark the active tab —
-          dynamic under Cache Components. A Suspense boundary lets it stream as a
-          hole on non-enumerated routes (e.g. /playlists/[id]) while enumerated
-          pages still prerender it. */}
-      <Suspense>
+      {/* Only the active-tab highlight needs the pathname (a dynamic API under
+          Cache Components). The fallback renders the full bar with nothing lit,
+          so it prerenders into the static shell and is in the first paint;
+          BottomNav then resolves and lights the current tab. The bar never pops
+          in — only its highlight arrives late. */}
+      <Suspense fallback={<BottomNavShell activePath={null} />}>
         <BottomNav />
       </Suspense>
       <PlaylistsHydration />

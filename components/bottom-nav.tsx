@@ -53,10 +53,28 @@ const SECTIONS: {
  * overlap. Fixed to the visual viewport, so a collapsing mobile address bar
  * (dvh territory) never buries it. Steps aside on the video stage, matching
  * the PlayerDock.
+ *
+ * Split in two so only the highlight is dynamic. `BottomNav` reads `usePathname`
+ * (a dynamic API under Cache Components — it opts the reader out of the static
+ * shell) and hands the path to the presentational `BottomNavShell`. The layout
+ * renders `<BottomNavShell activePath={null} />` as the Suspense fallback, so
+ * the full bar is in the prerendered HTML from the first paint; when the dynamic
+ * render resolves (≈ hydration) the correct tab simply lights up. Nothing
+ * pops into existence — only the active mark arrives late.
  */
 export function BottomNav() {
-  const t = useTranslations("nav");
   const pathname = usePathname();
+  return <BottomNavShell activePath={pathname} />;
+}
+
+/**
+ * The bar itself, given the current path (or `null` before the dynamic render
+ * resolves). Reads no dynamic API, so it can prerender into the static shell as
+ * the Suspense fallback. `videoStage` is client store state (initial `false`),
+ * not a dynamic API, so it stays here.
+ */
+export function BottomNavShell({ activePath }: { activePath: string | null }) {
+  const t = useTranslations("nav");
   const videoStage = usePlayerStore((s) => s.videoStage);
   if (videoStage) return null;
 
@@ -96,7 +114,9 @@ export function BottomNav() {
                   </span>
                 </li>
               );
-            const active = s.match?.(pathname) ?? false;
+            const active = activePath
+              ? (s.match?.(activePath) ?? false)
+              : false;
             return (
               <li key={s.key} className="flex-1">
                 <Link

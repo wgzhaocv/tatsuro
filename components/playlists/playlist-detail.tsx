@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { AlbumAmbient } from "@/components/album/album-ambient";
 import { SharedSongHighlight } from "@/components/album/shared-song-highlight";
 import { GlassPanel } from "@/components/glass-panel";
+import { OfflineSwitch } from "@/components/offline/offline-switch";
 import { ThemeToggle } from "@/components/theme-toggle";
 import {
   PlayQueueButton,
@@ -143,7 +144,10 @@ export function PlaylistDetail({ id }: { id: string }) {
                   playText={t("playAll")}
                   pauseText={tRoot("album.pause")}
                 />
-                {!isLiked && <PlaylistHeaderActions playlist={playlist} />}
+                <div className="flex items-center gap-2">
+                  <OfflineSwitch />
+                  {!isLiked && <PlaylistHeaderActions playlist={playlist} />}
+                </div>
               </div>
             </div>
           </aside>

@@ -1,6 +1,7 @@
 import { DownloadSimpleIcon } from "@phosphor-icons/react/dist/ssr";
 import { getTranslations } from "next-intl/server";
 import { GlassPanel } from "@/components/glass-panel";
+import { OfflineSwitch } from "@/components/offline/offline-switch";
 import { PinButton } from "@/components/pins/pin-button";
 import {
   PlayQueueButton,
@@ -132,6 +133,7 @@ export async function EditionView({
                     title={queueLabel}
                   />
                   <PinButton albumId={album.id} name={album.name} />
+                  <OfflineSwitch />
                 </div>
               </div>
               {edition.download && (

@@ -184,7 +184,8 @@
   },
   "cache": {
     "auto": "Cached for offline",
-    "downloaded": "Downloaded"
+    "downloaded": "Downloaded",
+    "keepOffline": "Save offline"
   },
   "metadata": {
     "musicVideos": "Music Videos",

@@ -4,7 +4,6 @@ import { Pause, Play } from "@phosphor-icons/react";
 import { useTranslations } from "next-intl";
 import { useRef } from "react";
 import type { Song } from "@/lib/api/types";
-import { formatDuration } from "@/lib/format";
 import { usePlayerStore } from "@/lib/player/store";
 import { useScrollToCurrentOnEnter } from "@/lib/player/use-scroll-to-current";
 import { isJapanese } from "@/lib/text";
@@ -124,11 +123,6 @@ export function TrackRow({
           </span>
         </button>
         <CacheDot songId={track.id} />
-        <span className="shrink-0 text-[13px] text-muted-foreground tabular-nums">
-          {typeof track.duration === "number"
-            ? formatDuration(track.duration)
-            : "—"}
-        </span>
         <TrackActions
           song={song}
           onRemove={onRemove ? () => onRemove(song) : undefined}

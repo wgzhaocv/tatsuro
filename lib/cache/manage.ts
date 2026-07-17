@@ -163,12 +163,14 @@ async function runMeasure(): Promise<CacheUsage> {
   // No Cache API (very old browser / SSR): resolve as ready with zeros rather
   // than leaving the panel stuck on its loading skeleton forever.
   if (!hasCaches()) return { ...EMPTY, ready: true };
-  const [dl, au, cover, { usage, quota }] = await Promise.all([
-    statsOf(DOWNLOAD_CACHE_NAME, true),
-    statsOf(AUDIO_CACHE_NAME, true),
-    statsOf(COVER_CACHE_NAME, false),
-    estimate(),
-  ]);
+  // estimate() reads no cache bodies, so it runs alongside; the three buckets
+  // are scanned serially so peak concurrency stays at MATCH_CONCURRENCY (not ×3).
+  const estimating = estimate();
+  const dl = await statsOf(DOWNLOAD_CACHE_NAME, true);
+  const au = await statsOf(AUDIO_CACHE_NAME, true);
+  const cover = await statsOf(COVER_CACHE_NAME, false);
+  const { usage, quota } = await estimating;
+
   const songBytes: Record<string, number> = {};
   for (const [url, bytes] of [...dl.sizes, ...au.sizes]) {
     const id = songIdFromStreamUrl(url);
@@ -189,11 +191,27 @@ async function runMeasure(): Promise<CacheUsage> {
 
 // One measurement at a time: overlapping triggers (mount + broadcast + a clear's
 // refresh, especially during playback) share the in-flight run instead of each
-// spawning its own full bucket scan — so the heavy work can never stack up.
+// spawning its own full bucket scan. A trigger that arrives mid-scan queues
+// exactly one more run afterward, so the resolved value always reflects the
+// latest cache state (e.g. a clear that lands while a measure is in flight —
+// clearImageCache has no broadcast of its own to force a later refresh).
 let inFlightMeasure: Promise<CacheUsage> | null = null;
+let remeasureQueued = false;
 
 function measure(): Promise<CacheUsage> {
-  inFlightMeasure ??= runMeasure().finally(() => {
+  if (inFlightMeasure) {
+    remeasureQueued = true;
+    return inFlightMeasure;
+  }
+  const cycle = async () => {
+    let result = await runMeasure();
+    while (remeasureQueued) {
+      remeasureQueued = false;
+      result = await runMeasure();
+    }
+    return result;
+  };
+  inFlightMeasure = cycle().finally(() => {
     inFlightMeasure = null;
   });
   return inFlightMeasure;

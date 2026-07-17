@@ -23,15 +23,41 @@ export function sizeOf(resp: Response | undefined): number {
   return Number.parseInt(resp?.headers.get("Content-Length") ?? "0", 10) || 0;
 }
 
+// Only ever read Content-Length, never the body; but match() still hands back a
+// Response whose body stream the browser may buffer. Match in small batches and
+// cancel each body right away so peak memory stays flat no matter how big the
+// bucket is (opening a whole ~800 MB bucket at once OOM-reloads mobile Safari).
+const MATCH_CONCURRENCY = 6;
+
+async function entrySize(cache: Cache, req: Request): Promise<number> {
+  const resp = await cache.match(req);
+  const n = sizeOf(resp);
+  await resp?.body?.cancel().catch(() => {});
+  return n;
+}
+
+/** `[{url, size}]` for a bucket's keys, matched in small batches. */
+async function sizeEntries(
+  cache: Cache,
+  keys: readonly Request[],
+): Promise<{ url: string; size: number }[]> {
+  const out: { url: string; size: number }[] = [];
+  for (let i = 0; i < keys.length; i += MATCH_CONCURRENCY) {
+    const batch = keys.slice(i, i + MATCH_CONCURRENCY);
+    const sized = await Promise.all(
+      batch.map(async (k) => ({ url: k.url, size: await entrySize(cache, k) })),
+    );
+    out.push(...sized);
+  }
+  return out;
+}
+
 /** Total bytes pinned in the download bucket. */
 export async function getDownloadBytes(): Promise<number> {
   try {
     const cache = await caches.open(DOWNLOAD_CACHE_NAME);
-    const keys = await cache.keys();
-    const sizes = await Promise.all(
-      keys.map(async (k) => sizeOf(await cache.match(k))),
-    );
-    return sizes.reduce((sum, n) => sum + n, 0);
+    const entries = await sizeEntries(cache, await cache.keys());
+    return entries.reduce((sum, e) => sum + e.size, 0);
   } catch {
     return 0;
   }
@@ -72,13 +98,7 @@ export async function evictAutoLru(opts: {
 
   try {
     const cache = await caches.open(AUDIO_CACHE_NAME);
-    const keys = await cache.keys();
-    const entries = await Promise.all(
-      keys.map(async (k) => ({
-        url: k.url,
-        size: sizeOf(await cache.match(k)),
-      })),
-    );
+    const entries = await sizeEntries(cache, await cache.keys());
     let total = entries.reduce((sum, e) => sum + e.size, 0);
 
     // Already under budget and nothing specific to free — skip the access-time

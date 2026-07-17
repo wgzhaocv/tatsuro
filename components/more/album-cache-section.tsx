@@ -61,9 +61,12 @@ export function AlbumCacheSection({
     }
     let live = true;
     cachedAlbums(key.split(",")).then((res) => {
+      // Ignore a result from an effect instance that's already been superseded,
+      // so a stale async can't overwrite the module cache or state.
+      if (!live) return;
       lastAlbums = res;
       lastKey = key;
-      if (live) setAlbums(res);
+      setAlbums(res);
     });
     return () => {
       live = false;

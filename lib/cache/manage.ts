@@ -139,7 +139,9 @@ async function estimate(): Promise<{ usage: number; quota: number }> {
 }
 
 async function measure(): Promise<CacheUsage> {
-  if (!hasCaches()) return EMPTY;
+  // No Cache API (very old browser / SSR): resolve as ready with zeros rather
+  // than leaving the panel stuck on its loading skeleton forever.
+  if (!hasCaches()) return { ...EMPTY, ready: true };
   const [dl, au, cover, { usage, quota }] = await Promise.all([
     statsOf(DOWNLOAD_CACHE_NAME, true),
     statsOf(AUDIO_CACHE_NAME, true),
@@ -315,16 +317,33 @@ export async function clearAlbumCache(
 
 // ── Read hook ────────────────────────────────────────────────────────────────
 
-/** Live cache usage for the More page. Measures on mount, then re-measures
- *  (debounced) on any cache-event broadcast or downloads-store change, so the
- *  readout tracks background eviction, downloads finishing, and toggles made on
- *  album/playlist pages. Returns a manual `refresh` for post-clear updates. */
-export function useCacheUsage(): CacheUsage & { refresh: () => void } {
-  const [usage, setUsage] = useState<CacheUsage>(EMPTY);
+// Last measurement, kept at module scope so re-entering the More page shows the
+// previous numbers instantly (with a refreshing loader) instead of resetting to
+// a skeleton every time. Survives route changes within the session; a full
+// reload starts fresh (skeleton once).
+let lastUsage: CacheUsage = EMPTY;
+
+/** Live cache usage for the More page. Seeds from the last measurement, then
+ *  re-measures on mount and (debounced) on any cache-event broadcast or
+ *  downloads-store change, so the readout tracks background eviction, downloads
+ *  finishing, and toggles made on album/playlist pages. `measuring` is true
+ *  while a measurement is in flight (drives the refresh loader); `refresh`
+ *  forces one after a clear. */
+export function useCacheUsage(): CacheUsage & {
+  measuring: boolean;
+  refresh: () => void;
+} {
+  const [usage, setUsage] = useState<CacheUsage>(lastUsage);
+  const [measuring, setMeasuring] = useState(false);
   const timer = useRef<number | null>(null);
 
   const refresh = useCallback(() => {
-    measure().then(setUsage);
+    setMeasuring(true);
+    measure().then((u) => {
+      lastUsage = u;
+      setUsage(u);
+      setMeasuring(false);
+    });
   }, []);
 
   useEffect(() => {
@@ -351,5 +370,5 @@ export function useCacheUsage(): CacheUsage & { refresh: () => void } {
     };
   }, [refresh]);
 
-  return { ...usage, refresh };
+  return { ...usage, measuring, refresh };
 }

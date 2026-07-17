@@ -21,6 +21,12 @@ import { CacheRow } from "./cache-row";
  * own. Clearing tombstones any offline intent for the album first, so a pinned
  * album won't just re-download.
  */
+// Last resolved albums + the cached-set key they belong to, at module scope so
+// re-entering the More page shows them instantly instead of flashing empty while
+// the server action re-resolves.
+let lastAlbums: CachedAlbum[] = [];
+let lastKey = "";
+
 export function AlbumCacheSection({
   songBytes,
   onCleared,
@@ -31,7 +37,14 @@ export function AlbumCacheSection({
 }) {
   const t = useTranslations("more");
   const intents = useDownloadsStore((s) => s.intents);
-  const [albums, setAlbums] = useState<CachedAlbum[]>([]);
+
+  // Resolve cached song ids → albums whenever the cached set changes. Keying on
+  // the joined string (song ids never contain commas) means the effect only
+  // refires when the set actually changes, not on every identical re-measure.
+  const key = Object.keys(songBytes).sort().join(",");
+  const [albums, setAlbums] = useState<CachedAlbum[]>(() =>
+    key === lastKey ? lastAlbums : [],
+  );
 
   // Ids the user pinned — those albums are shown in the Saved-offline list, so
   // they're filtered out here to avoid listing the same album twice.
@@ -39,17 +52,17 @@ export function AlbumCacheSection({
     intents.filter((i) => !i.deletedAt && i.kind === "album").map((i) => i.id),
   );
 
-  // Resolve cached song ids → albums whenever the cached set changes. Keying on
-  // the joined string (song ids never contain commas) means the effect only
-  // refires when the set actually changes, not on every identical re-measure.
-  const key = Object.keys(songBytes).sort().join(",");
   useEffect(() => {
     if (key === "") {
+      lastAlbums = [];
+      lastKey = "";
       setAlbums([]);
       return;
     }
     let live = true;
     cachedAlbums(key.split(",")).then((res) => {
+      lastAlbums = res;
+      lastKey = key;
       if (live) setAlbums(res);
     });
     return () => {

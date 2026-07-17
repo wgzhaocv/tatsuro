@@ -1,6 +1,12 @@
 "use client";
 
-import { ArrowLineDown, Images, Trash, Waveform } from "@phosphor-icons/react";
+import {
+  ArrowLineDown,
+  CircleNotch,
+  Images,
+  Trash,
+  Waveform,
+} from "@phosphor-icons/react";
 import { useTranslations } from "next-intl";
 import { type ReactNode, useState } from "react";
 import { toast } from "sonner";
@@ -40,6 +46,7 @@ export function OfflineManager() {
     cover,
     sources,
     songBytes,
+    measuring,
     refresh,
   } = useCacheUsage();
   const [confirming, setConfirming] = useState(false);
@@ -78,11 +85,25 @@ export function OfflineManager() {
     },
   ];
 
+  // Until the first measurement resolves, show a skeleton rather than flashing a
+  // misleading "0 MB" / empty rows.
+  if (!ready) return <StorageSkeleton title={t("storageTitle")} />;
+
   return (
     <GlassPanel className="rounded-[20px] p-5 shadow-postcard sm:p-6">
-      <h2 className="font-display font-semibold text-foreground text-xl">
-        {t("storageTitle")}
-      </h2>
+      <div className="flex items-center gap-2">
+        <h2 className="font-display font-semibold text-foreground text-xl">
+          {t("storageTitle")}
+        </h2>
+        {measuring && (
+          <CircleNotch
+            size={16}
+            weight="bold"
+            aria-label={t("measuring")}
+            className="animate-spin text-muted-foreground motion-reduce:animate-none"
+          />
+        )}
+      </div>
 
       {/* Usage meter — used on this device, and how much room is left. */}
       <div className="mt-3">
@@ -213,6 +234,34 @@ export function OfflineManager() {
           <LegendRow state="active">{t("legendActive")}</LegendRow>
         </div>
       </Section>
+    </GlassPanel>
+  );
+}
+
+/** Loading state for the storage panel — same title + shape as the real one, so
+ *  nothing shifts when the measurement resolves. Pulse stills under global
+ *  reduced-motion. */
+function StorageSkeleton({ title }: { title: string }) {
+  return (
+    <GlassPanel className="rounded-[20px] p-5 shadow-postcard sm:p-6">
+      <h2 className="font-display font-semibold text-foreground text-xl">
+        {title}
+      </h2>
+      <div className="mt-3" aria-hidden>
+        <div className="h-8 w-32 animate-pulse rounded-lg bg-foreground/10" />
+        <div className="mt-4 h-2 animate-pulse rounded-full bg-foreground/10" />
+      </div>
+      <div className="mt-5 flex flex-col gap-4 border-white/40 border-t pt-5 dark:border-white/10">
+        {["a", "b", "c"].map((k) => (
+          <div key={k} className="flex items-center gap-3" aria-hidden>
+            <div className="size-[1.05rem] shrink-0 animate-pulse rounded bg-foreground/10" />
+            <div className="min-w-0 flex-1">
+              <div className="h-3.5 w-24 animate-pulse rounded bg-foreground/10" />
+              <div className="mt-1.5 h-3 w-16 animate-pulse rounded bg-foreground/10" />
+            </div>
+          </div>
+        ))}
+      </div>
     </GlassPanel>
   );
 }

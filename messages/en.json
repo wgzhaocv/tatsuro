@@ -234,6 +234,7 @@
     "likedSongs": "Liked Songs",
     "cachedAlbumsTitle": "Cached albums",
     "available": "{size} available",
-    "typeComp": "Compilation"
+    "typeComp": "Compilation",
+    "measuring": "Refreshing"
   }
 }

@@ -234,6 +234,7 @@
     "likedSongs": "喜欢的歌曲",
     "cachedAlbumsTitle": "已缓存的专辑",
     "available": "剩余 {size}",
-    "typeComp": "精选"
+    "typeComp": "精选",
+    "measuring": "刷新中"
   }
 }

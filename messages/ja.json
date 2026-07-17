@@ -234,6 +234,7 @@
     "likedSongs": "お気に入り",
     "cachedAlbumsTitle": "キャッシュ済みアルバム",
     "available": "残り {size}",
-    "typeComp": "コンピ"
+    "typeComp": "コンピ",
+    "measuring": "更新中"
   }
 }

@@ -4,18 +4,24 @@ import { useTranslations } from "next-intl";
 import { GlassPanel } from "@/components/glass-panel";
 
 /**
- * What the library still doesn't hold — the band-era and collaboration records
- * that aren't in yet (discography/collaborations.md; the solo catalogue is
- * complete per discography/README.md). Just the list: title, artist, year, and
- * a type tag — no prose. Static: this is a small, hand-kept set, not catalogue
- * data.
+ * What the library still doesn't hold — the band-era / collaboration records and
+ * the long-tail best-of compilations that aren't in yet (the seven main
+ * compilations and the whole solo catalogue are complete; see
+ * discography/compilations.md, collaborations.md). Just the list: title, artist,
+ * year, and a type tag — no prose. Static: a small, hand-kept set.
  */
+const TYPE_KEY = {
+  band: "typeBand",
+  collab: "typeCollab",
+  comp: "typeComp",
+} as const;
+
 const MISSING: {
   album: string;
-  artist: string;
+  artist?: string;
   artistJa?: boolean;
   year: number;
-  type: "band" | "collab";
+  type: keyof typeof TYPE_KEY;
 }[] = [
   { album: "SONGS", artist: "Sugar Babe", year: 1975, type: "band" },
   {
@@ -25,6 +31,13 @@ const MISSING: {
     year: 1976,
     type: "collab",
   },
+  { album: "Tatsuro Collection", year: 1985, type: "comp" },
+  { album: "Ballad for You", year: 1986, type: "comp" },
+  { album: "Rock'n Funk Tatsu", year: 1986, type: "comp" },
+  { album: "Best Pack I", year: 1990, type: "comp" },
+  { album: "Best Pack II", year: 1990, type: "comp" },
+  { album: "Tatsuro Songs From L.A.", year: 1990, type: "comp" },
+  { album: "Tatsuro Songs From L.A. 2", year: 1991, type: "comp" },
 ];
 
 export function MissingAlbums() {
@@ -46,16 +59,18 @@ export function MissingAlbums() {
               <p className="text-[0.95rem] text-foreground leading-tight">
                 {m.album}
               </p>
-              <p
-                lang={m.artistJa ? "ja" : undefined}
-                className="text-muted-foreground text-sm"
-              >
-                {m.artist}
-              </p>
+              {m.artist && (
+                <p
+                  lang={m.artistJa ? "ja" : undefined}
+                  className="text-muted-foreground text-sm"
+                >
+                  {m.artist}
+                </p>
+              )}
             </div>
             <div className="flex shrink-0 items-center gap-2.5">
               <span className="rounded-full bg-sky/60 px-2.5 py-0.5 font-medium text-navy text-xs dark:bg-white/10 dark:text-foreground">
-                {m.type === "band" ? t("typeBand") : t("typeCollab")}
+                {t(TYPE_KEY[m.type])}
               </span>
               <span className="text-muted-foreground text-sm tabular-nums">
                 {m.year}

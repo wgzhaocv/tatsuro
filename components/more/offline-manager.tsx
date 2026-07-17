@@ -2,9 +2,10 @@
 
 import { ArrowLineDown, Images, Trash, Waveform } from "@phosphor-icons/react";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 import { toast } from "sonner";
 import { GlassPanel } from "@/components/glass-panel";
+import { cacheDotClass } from "@/components/track/cache-dot";
 import { Button } from "@/components/ui/button";
 import {
   clearDownloads,
@@ -16,23 +17,36 @@ import {
 } from "@/lib/cache/manage";
 import { formatFileSize } from "@/lib/format";
 import { LIKED_ID } from "@/lib/playlists/types";
+import { cn } from "@/lib/utils";
+import { AlbumCacheSection } from "./album-cache-section";
+import { CacheRow } from "./cache-row";
 
 /**
- * Offline storage — the device-storage readout and every clear control. All
- * data comes from useCacheUsage() (the three CacheStorage buckets + the origin
- * estimate); the clear* helpers do the eviction and the hook re-measures off
- * the same broadcasts. One glass panel, hairline-divided sections (no glass on
- * glass): usage meter → per-bucket breakdown → saved albums/playlists → clear
- * all → the track-dot legend.
+ * Offline storage — the device-storage readout and every clear control. All data
+ * comes from useCacheUsage() (the three CacheStorage buckets + the origin
+ * estimate); the clear* helpers do the eviction and the hook re-measures off the
+ * same broadcasts. One glass panel, hairline-divided sections (no glass on
+ * glass): usage meter → per-bucket breakdown → saved sources → cached albums →
+ * clear all → the track-dot legend.
  */
 export function OfflineManager() {
   const t = useTranslations("more");
-  const { ready, usage, quota, download, auto, cover, sources, refresh } =
-    useCacheUsage();
+  const {
+    ready,
+    usage,
+    quota,
+    download,
+    auto,
+    cover,
+    sources,
+    songBytes,
+    refresh,
+  } = useCacheUsage();
   const [confirming, setConfirming] = useState(false);
 
   const nSongs = (n: number) => t("nSongs", { n });
   const ratio = quota > 0 ? Math.min(1, usage / quota) : 0;
+  const free = Math.max(0, quota - usage);
 
   async function run(fn: () => Promise<void>) {
     await fn();
@@ -40,13 +54,37 @@ export function OfflineManager() {
     toast.success(t("clearedToast"));
   }
 
+  const buckets = [
+    {
+      key: "saved",
+      icon: <ArrowLineDown weight="bold" aria-hidden />,
+      stats: download,
+      clear: clearDownloads,
+      count: (n: number) => nSongs(n),
+    },
+    {
+      key: "playback",
+      icon: <Waveform weight="bold" aria-hidden />,
+      stats: auto,
+      clear: clearPlaybackCache,
+      count: (n: number) => nSongs(n),
+    },
+    {
+      key: "covers",
+      icon: <Images weight="bold" aria-hidden />,
+      stats: cover,
+      clear: clearImageCache,
+      count: (n: number) => t("nItems", { n }),
+    },
+  ];
+
   return (
     <GlassPanel className="rounded-[20px] p-5 shadow-postcard sm:p-6">
       <h2 className="font-display font-semibold text-foreground text-xl">
         {t("storageTitle")}
       </h2>
 
-      {/* Usage meter — the honest "space this app takes on your device" figure. */}
+      {/* Usage meter — used on this device, and how much room is left. */}
       <div className="mt-3">
         <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
           <span className="font-display font-semibold text-3xl text-foreground tabular-nums">
@@ -54,7 +92,8 @@ export function OfflineManager() {
           </span>
           <span className="text-muted-foreground text-sm">
             {t("usedOnDevice")}
-            {quota > 0 && ` · ${t("ofTotal", { size: formatFileSize(quota) })}`}
+            {quota > 0 &&
+              ` · ${t("available", { size: formatFileSize(free) })}`}
           </span>
         </div>
         <div className="mt-3 h-2 overflow-hidden rounded-full bg-foreground/10">
@@ -67,77 +106,74 @@ export function OfflineManager() {
 
       {/* Per-bucket breakdown. */}
       <div className="mt-5 flex flex-col border-white/40 border-t pt-1 dark:border-white/10">
-        <BucketRow
-          icon={<ArrowLineDown weight="bold" aria-hidden />}
-          label={t("saved")}
-          detail={
-            download.count > 0
-              ? `${nSongs(download.count)} · ${formatFileSize(download.bytes)}`
-              : "—"
-          }
-          onClear={download.count > 0 ? () => run(clearDownloads) : undefined}
-          clearLabel={t("clear")}
-        />
-        <BucketRow
-          icon={<Waveform weight="bold" aria-hidden />}
-          label={t("playback")}
-          detail={
-            auto.count > 0
-              ? `${nSongs(auto.count)} · ${formatFileSize(auto.bytes)}`
-              : "—"
-          }
-          onClear={auto.count > 0 ? () => run(clearPlaybackCache) : undefined}
-          clearLabel={t("clear")}
-        />
-        <BucketRow
-          icon={<Images weight="bold" aria-hidden />}
-          label={t("covers")}
-          detail={
-            cover.count > 0
-              ? `${t("nItems", { n: cover.count })} · ${formatFileSize(cover.bytes)}`
-              : "—"
-          }
-          onClear={cover.count > 0 ? () => run(clearImageCache) : undefined}
-          clearLabel={t("clear")}
-        />
+        {buckets.map((b) => (
+          <CacheRow
+            key={b.key}
+            leading={b.icon}
+            title={t(b.key)}
+            detail={
+              b.stats.count > 0
+                ? `${b.count(b.stats.count)} · ${formatFileSize(b.stats.bytes)}`
+                : "—"
+            }
+            trailing={
+              b.stats.count > 0 ? (
+                <ClearButton onClick={() => run(b.clear)}>
+                  {t("clear")}
+                </ClearButton>
+              ) : undefined
+            }
+          />
+        ))}
       </div>
 
       {/* Saved albums & playlists — per-source removal. */}
       {sources.length > 0 && (
-        <div className="mt-5 border-white/40 border-t pt-4 dark:border-white/10">
-          <p className="font-medium text-muted-foreground text-xs uppercase tracking-[0.06em]">
-            {t("savedSources")}
-          </p>
-          <ul className="mt-1 flex flex-col">
+        <Section title={t("savedSources")}>
+          <ul className="flex flex-col">
             {sources.map((s) => (
-              <SourceRow
-                key={s.id}
-                label={
-                  s.id === LIKED_ID
-                    ? t("likedSongs")
-                    : s.label || t("albumFallback")
-                }
-                detail={
-                  s.count > 0
-                    ? `${nSongs(s.count)} · ${formatFileSize(s.bytes)}`
-                    : t("pending")
-                }
-                removeLabel={t("remove")}
-                onRemove={async () => {
-                  await clearSource(s);
-                  refresh();
-                  toast.success(t("removedToast"));
-                }}
-              />
+              <li key={s.id}>
+                <CacheRow
+                  title={
+                    s.id === LIKED_ID
+                      ? t("likedSongs")
+                      : s.label || t("albumFallback")
+                  }
+                  detail={
+                    s.count > 0
+                      ? `${nSongs(s.count)} · ${formatFileSize(s.bytes)}`
+                      : t("pending")
+                  }
+                  trailing={
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      aria-label={t("remove")}
+                      title={t("remove")}
+                      className="shrink-0 text-muted-foreground hover:text-foreground"
+                      onClick={async () => {
+                        await clearSource(s.id);
+                        refresh();
+                        toast.success(t("removedToast"));
+                      }}
+                    >
+                      <Trash aria-hidden />
+                    </Button>
+                  }
+                />
+              </li>
             ))}
           </ul>
-        </div>
+        </Section>
       )}
+
+      {/* Per-album clear — resolves cached songs (incl. playback-only) to albums. */}
+      <AlbumCacheSection songBytes={songBytes} onCleared={refresh} />
 
       {/* Clear everything — a deliberate two-step (coral confirm, the one warm
           accent for a decisive action). Hidden until there's anything to clear. */}
       {ready && usage > 0 && (
-        <div className="mt-5 border-white/40 border-t pt-4 dark:border-white/10">
+        <Section>
           {confirming ? (
             <div className="flex flex-wrap items-center gap-2">
               <span className="mr-1 text-foreground text-sm">
@@ -162,116 +198,72 @@ export function OfflineManager() {
               </Button>
             </div>
           ) : (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-muted-foreground hover:text-foreground"
-              onClick={() => setConfirming(true)}
-            >
+            <ClearButton onClick={() => setConfirming(true)}>
               <Trash aria-hidden />
               {t("clearAll")}
-            </Button>
+            </ClearButton>
           )}
-        </div>
+        </Section>
       )}
 
-      {/* Legend — the same two dots the track rows show. */}
-      <div className="mt-5 flex flex-col gap-2.5 border-white/40 border-t pt-4 dark:border-white/10">
-        <p className="font-medium text-muted-foreground text-xs uppercase tracking-[0.06em]">
-          {t("legendTitle")}
-        </p>
-        <div className="flex items-start gap-2.5">
-          <span
-            aria-hidden
-            className="mt-1 size-[0.6rem] shrink-0 rounded-full border-[1.6px] border-muted-foreground"
-          />
-          <span className="text-muted-foreground text-sm">
-            {t("legendAuto")}
-          </span>
+      {/* Legend — the same two marks the track rows show (cacheDotClass). */}
+      <Section title={t("legendTitle")}>
+        <div className="flex flex-col gap-2.5">
+          <LegendRow state="auto">{t("legendAuto")}</LegendRow>
+          <LegendRow state="active">{t("legendActive")}</LegendRow>
         </div>
-        <div className="flex items-start gap-2.5">
-          <span
-            aria-hidden
-            className="mt-1 size-[0.52rem] shrink-0 rounded-full bg-turquoise-deep dark:bg-turquoise"
-          />
-          <span className="text-muted-foreground text-sm">
-            {t("legendActive")}
-          </span>
-        </div>
-      </div>
+      </Section>
     </GlassPanel>
   );
 }
 
-function BucketRow({
-  icon,
-  label,
-  detail,
-  onClear,
-  clearLabel,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  detail: string;
-  onClear?: () => void;
-  clearLabel: string;
-}) {
+/** A hairline-topped block; optional uppercase label. */
+function Section({ title, children }: { title?: string; children: ReactNode }) {
   return (
-    <div className="flex items-center justify-between gap-3 py-2.5">
-      <div className="flex min-w-0 items-center gap-3">
-        <span className="text-muted-foreground [&_svg]:size-[1.05rem]">
-          {icon}
-        </span>
-        <div className="min-w-0">
-          <p className="text-[0.95rem] text-foreground leading-tight">
-            {label}
-          </p>
-          <p className="text-muted-foreground text-sm tabular-nums">{detail}</p>
-        </div>
-      </div>
-      {onClear && (
-        <Button
-          variant="ghost"
-          size="sm"
-          className="text-muted-foreground hover:text-foreground"
-          onClick={onClear}
-        >
-          {clearLabel}
-        </Button>
+    <div className="mt-5 border-white/40 border-t pt-4 dark:border-white/10">
+      {title && (
+        <p className="mb-1 font-medium text-muted-foreground text-xs uppercase tracking-[0.06em]">
+          {title}
+        </p>
       )}
+      {children}
     </div>
   );
 }
 
-function SourceRow({
-  label,
-  detail,
-  removeLabel,
-  onRemove,
+function ClearButton({
+  onClick,
+  children,
 }: {
-  label: string;
-  detail: string;
-  removeLabel: string;
-  onRemove: () => void;
+  onClick: () => void;
+  children: ReactNode;
 }) {
   return (
-    <li className="flex items-center justify-between gap-3 py-2.5">
-      <div className="min-w-0">
-        <p className="truncate text-[0.95rem] text-foreground leading-tight">
-          {label}
-        </p>
-        <p className="text-muted-foreground text-sm tabular-nums">{detail}</p>
-      </div>
-      <Button
-        variant="ghost"
-        size="icon-sm"
-        aria-label={removeLabel}
-        title={removeLabel}
-        className="shrink-0 text-muted-foreground hover:text-foreground"
-        onClick={onRemove}
-      >
-        <Trash aria-hidden />
-      </Button>
-    </li>
+    <Button
+      variant="ghost"
+      size="sm"
+      className="shrink-0 text-muted-foreground hover:text-foreground"
+      onClick={onClick}
+    >
+      {children}
+    </Button>
+  );
+}
+
+function LegendRow({
+  state,
+  children,
+}: {
+  state: "auto" | "active";
+  children: ReactNode;
+}) {
+  return (
+    <div className="flex items-start gap-2.5">
+      <span
+        aria-hidden
+        className={cn("mt-1 shrink-0 rounded-full", cacheDotClass(state))}
+      />
+      <span className="text-muted-foreground text-sm">{children}</span>
+    </div>
   );
 }

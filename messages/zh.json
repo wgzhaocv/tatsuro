@@ -211,7 +211,6 @@
     "typeCollab": "合作",
     "storageTitle": "离线存储",
     "usedOnDevice": "已用于本设备",
-    "ofTotal": "共 {size}",
     "saved": "已离线保存",
     "playback": "播放缓存",
     "covers": "封面图片",
@@ -232,6 +231,9 @@
     "legendAuto": "播放时自动缓存，设备空间不足时会自动清理。",
     "legendActive": "已离线保存，不会自动清理，需手动移除。",
     "albumFallback": "已保存专辑",
-    "likedSongs": "喜欢的歌曲"
+    "likedSongs": "喜欢的歌曲",
+    "cachedAlbumsTitle": "已缓存的专辑",
+    "available": "剩余 {size}",
+    "typeComp": "精选"
   }
 }

@@ -11,8 +11,8 @@
 // Everything is best-effort and browser-only (guards for SSR / no-Cache-API).
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { songStreamUrl } from "@/lib/api/urls";
-import { useDownloadsStore } from "@/lib/downloads/store";
+import { songIdFromStreamUrl, songStreamUrl } from "@/lib/api/urls";
+import { intentSongIds, useDownloadsStore } from "@/lib/downloads/store";
 import type { OfflineIntent } from "@/lib/downloads/types";
 import { sizeOf } from "@/lib/offline/auto-evict";
 import { postCacheEvent } from "@/lib/offline/broadcast";
@@ -25,7 +25,6 @@ import {
   DOWNLOAD_EVENTS_CHANNEL,
 } from "@/lib/offline/constants";
 import { clearAllAccessTimes, deleteAccessTime } from "@/lib/offline/lru-db";
-import { usePlaylistStore } from "@/lib/playlists/store";
 
 export type BucketStats = { count: number; bytes: number };
 
@@ -57,6 +56,9 @@ export type CacheUsage = {
   cover: BucketStats;
   /** Per-source breakdown of the download bucket, largest first. */
   sources: SavedSource[];
+  /** Cached bytes per song id (both buckets summed) — feeds the per-album clear
+   *  and its size readout. Its keys are the cached song ids. */
+  songBytes: Record<string, number>;
 };
 
 const EMPTY: CacheUsage = {
@@ -67,16 +69,19 @@ const EMPTY: CacheUsage = {
   auto: { count: 0, bytes: 0 },
   cover: { count: 0, bytes: 0 },
   sources: [],
+  songBytes: {},
 };
 
 function hasCaches(): boolean {
   return typeof window !== "undefined" && "caches" in window;
 }
 
-/** Count + total bytes of a bucket, plus a canonical-url → bytes map (used to
- *  attribute the download bucket to its saved sources). */
+/** Count + total bytes of a bucket. With `withSizes` (audio buckets) it also
+ *  returns a canonical-url → bytes map used to attribute songs to sources and
+ *  albums; the cover bucket skips it (nothing consumes cover sizes per-entry). */
 async function statsOf(
   name: string,
+  withSizes: boolean,
 ): Promise<{ stats: BucketStats; sizes: Map<string, number> }> {
   const sizes = new Map<string, number>();
   try {
@@ -88,21 +93,12 @@ async function statsOf(
     let bytes = 0;
     keys.forEach((k, i) => {
       bytes += each[i];
-      sizes.set(canonicalStreamUrl(k.url), each[i]);
+      if (withSizes) sizes.set(canonicalStreamUrl(k.url), each[i]);
     });
     return { stats: { count: keys.length, bytes }, sizes };
   } catch {
     return { stats: { count: 0, bytes: 0 }, sizes };
   }
-}
-
-/** Song ids that belong to an intent: albums carry a snapshot; playlists
- *  resolve live from the playlists store (mirrors getDesiredSongIds). */
-function intentSongIds(intent: OfflineIntent): string[] {
-  if (intent.kind === "album") return intent.songIds ?? [];
-  const { playlists } = usePlaylistStore.getState();
-  const pl = playlists.find((p) => p.id === intent.id && !p.deletedAt);
-  return pl ? pl.entries.map((e) => e.song.id) : [];
 }
 
 /** Attribute the download bucket to each active saved source. */
@@ -131,22 +127,30 @@ function savedSources(downloadSizes: Map<string, number>): SavedSource[] {
   return out.sort((a, b) => b.bytes - a.bytes);
 }
 
-async function measure(): Promise<CacheUsage> {
-  if (!hasCaches()) return EMPTY;
-  const [dl, au, cover] = await Promise.all([
-    statsOf(DOWNLOAD_CACHE_NAME),
-    statsOf(AUDIO_CACHE_NAME),
-    statsOf(COVER_CACHE_NAME),
-  ]);
-  let usage = 0;
-  let quota = 0;
+/** navigator.storage.estimate(), 0/0 when unavailable (older Safari). */
+async function estimate(): Promise<{ usage: number; quota: number }> {
   try {
     const est = await navigator.storage.estimate();
-    usage = est.usage ?? 0;
-    quota = est.quota ?? 0;
+    return { usage: est.usage ?? 0, quota: est.quota ?? 0 };
   } catch {
-    // estimate() unavailable (older Safari) — leave the meter at 0.
+    return { usage: 0, quota: 0 };
   }
+}
+
+async function measure(): Promise<CacheUsage> {
+  if (!hasCaches()) return EMPTY;
+  const [dl, au, cover, { usage, quota }] = await Promise.all([
+    statsOf(DOWNLOAD_CACHE_NAME, true),
+    statsOf(AUDIO_CACHE_NAME, true),
+    statsOf(COVER_CACHE_NAME, false),
+    estimate(),
+  ]);
+  const songBytes: Record<string, number> = {};
+  for (const [url, bytes] of [...dl.sizes, ...au.sizes]) {
+    const id = songIdFromStreamUrl(url);
+    if (id) songBytes[id] = (songBytes[id] ?? 0) + bytes;
+  }
+
   return {
     ready: true,
     usage,
@@ -155,6 +159,7 @@ async function measure(): Promise<CacheUsage> {
     auto: au.stats,
     cover: cover.stats,
     sources: savedSources(dl.sizes),
+    songBytes,
   };
 }
 
@@ -176,14 +181,13 @@ async function clearAudioBucket(
   }
 }
 
-/** Drop the playback (auto) cache and its LRU bookkeeping. */
+/** Drop the playback (auto) cache and its LRU bookkeeping (independent stores,
+ *  cleared together). */
 export async function clearPlaybackCache(): Promise<void> {
-  await clearAudioBucket(
-    AUDIO_CACHE_NAME,
-    AUDIO_EVENTS_CHANNEL,
-    "cache-removed",
-  );
-  await clearAllAccessTimes();
+  await Promise.all([
+    clearAudioBucket(AUDIO_CACHE_NAME, AUDIO_EVENTS_CHANNEL, "cache-removed"),
+    clearAllAccessTimes(),
+  ]);
 }
 
 /** Remove every pinned download. Tombstones all intents first so the reconciler
@@ -209,29 +213,26 @@ export async function clearImageCache(): Promise<void> {
   }
 }
 
-/** Everything: downloads, playback cache, covers. */
+/** Everything: downloads, playback cache, covers — disjoint stores, in parallel. */
 export async function clearEverything(): Promise<void> {
-  await clearDownloads();
-  await clearPlaybackCache();
-  await clearImageCache();
+  await Promise.all([
+    clearDownloads(),
+    clearPlaybackCache(),
+    clearImageCache(),
+  ]);
 }
 
-/** Remove one saved source: tombstone its intent, then delete its songs from
- *  both audio buckets (a pinned song may also sit in the auto bucket). */
-export async function clearSource(intent: {
-  id: string;
-  kind: OfflineIntent["kind"];
-}): Promise<void> {
-  const { intents, clearIntent } = useDownloadsStore.getState();
-  const full = intents.find((i) => i.id === intent.id);
-  const ids = full ? intentSongIds(full) : [];
-  clearIntent(intent.id);
+/** Delete specific songs from both audio buckets (a pinned song may also sit in
+ *  the auto bucket) + their LRU rows, broadcasting each removal. The shared core
+ *  of every per-song clear. */
+export async function clearSongs(songIds: string[]): Promise<void> {
+  if (songIds.length === 0) return;
   try {
     const [dl, au] = await Promise.all([
       caches.open(DOWNLOAD_CACHE_NAME),
       caches.open(AUDIO_CACHE_NAME),
     ]);
-    for (const id of ids) {
+    for (const id of songIds) {
       const url = canonicalStreamUrl(songStreamUrl(id));
       if (await dl.delete(url))
         postCacheEvent(
@@ -248,6 +249,29 @@ export async function clearSource(intent: {
   } catch {
     // best-effort
   }
+}
+
+/** Remove one saved source by id: tombstone its intent, then delete its songs. */
+export async function clearSource(id: string): Promise<void> {
+  const { intents, clearIntent } = useDownloadsStore.getState();
+  const intent = intents.find((i) => i.id === id);
+  const ids = intent ? intentSongIds(intent) : [];
+  clearIntent(id);
+  await clearSongs(ids);
+}
+
+/** Clear one album's cached audio regardless of how it got there (playback or a
+ *  pinned download). Tombstones any offline intent for its editions first (so a
+ *  pinned album doesn't just re-download), then deletes the songs. */
+export async function clearAlbumCache(
+  songIds: string[],
+  editionIds: string[],
+): Promise<void> {
+  const { intents, clearIntent } = useDownloadsStore.getState();
+  const pinned = new Set(editionIds);
+  for (const i of intents)
+    if (!i.deletedAt && pinned.has(i.id)) clearIntent(i.id);
+  await clearSongs(songIds);
 }
 
 // ── Read hook ────────────────────────────────────────────────────────────────

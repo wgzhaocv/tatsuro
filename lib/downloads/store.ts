@@ -118,19 +118,25 @@ export function useIsOfflineEnabled(id: string): boolean {
 export function getDesiredSongIds(): Set<string> {
   const desired = new Set<string>();
   const { intents } = useDownloadsStore.getState();
-  const { playlists } = usePlaylistStore.getState();
-
   for (const intent of intents) {
     if (intent.deletedAt) continue;
-    if (intent.kind === "album") {
-      for (const id of intent.songIds ?? []) desired.add(id);
-      continue;
-    }
-    const playlist = playlists.find((p) => p.id === intent.id && !p.deletedAt);
-    if (!playlist) continue; // orphan — pruneOrphans tombstones it separately
-    for (const entry of playlist.entries) desired.add(entry.song.id);
+    for (const id of intentSongIds(intent)) desired.add(id);
   }
   return desired;
+}
+
+/**
+ * The song ids one intent pins right now: albums use their toggle-time snapshot;
+ * playlists resolve live from the playlists store (so membership edits flow
+ * through), and an orphaned playlist resolves to none (pruneOrphans tombstones
+ * it separately). Shared by getDesiredSongIds (the reconciler) and the More
+ * page's cache accounting so "which songs a source pins" has one definition.
+ */
+export function intentSongIds(intent: OfflineIntent): string[] {
+  if (intent.kind === "album") return intent.songIds ?? [];
+  const { playlists } = usePlaylistStore.getState();
+  const playlist = playlists.find((p) => p.id === intent.id && !p.deletedAt);
+  return playlist ? playlist.entries.map((e) => e.song.id) : [];
 }
 
 /**

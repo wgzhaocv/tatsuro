@@ -52,6 +52,46 @@ export async function getAlbum(
   return toAlbumDetail((await res.json()) as ApiReleaseDetail);
 }
 
+/** Where a song lives: its release (for display) and the edition holding it. */
+export type SongReleaseInfo = {
+  albumId: string;
+  name: string;
+  year?: number;
+  editionId: string;
+};
+
+/** Reverse index songId → its release + edition, built once over the whole
+ *  catalog and cached. Lets a flat set of cached song ids (which carry no album
+ *  id in Cache Storage) be grouped into albums with plain lookups, instead of
+ *  re-walking every release on each call. Song ids are unique per disc, so one
+ *  song maps to exactly one edition. */
+export async function songReleaseIndex(): Promise<
+  Record<string, SongReleaseInfo>
+> {
+  "use cache";
+  cacheLife("max");
+  cacheTag("albums");
+
+  const albums = await getAlbums();
+  const details = await Promise.all(albums.map((a) => getAlbum(a.id)));
+  const index: Record<string, SongReleaseInfo> = {};
+  for (const album of details) {
+    for (const edition of album.editions) {
+      for (const disc of edition.discs) {
+        for (const track of disc.tracks) {
+          index[track.id] = {
+            albumId: album.id,
+            name: album.name,
+            year: album.year,
+            editionId: edition.id,
+          };
+        }
+      }
+    }
+  }
+  return index;
+}
+
 /** Locate the release + edition + queue-ready songs that hold a given source
  *  album (a disc id — what /music/{songId} returns as `albumId`). The song page
  *  needs this because the wire song only knows its disc, not the logical release

@@ -38,12 +38,16 @@ export function CacheDot({ songId }: { songId: string }) {
     <span
       role="img"
       aria-label={state === "active" ? t("downloaded") : t("auto")}
-      className={cn(
-        "shrink-0 rounded-full",
-        state === "auto"
-          ? "size-[0.6rem] border-[1.6px] border-muted-foreground"
-          : "size-[0.52rem] bg-turquoise-deep dark:bg-turquoise",
-      )}
+      className={cn("shrink-0 rounded-full", cacheDotClass(state))}
     />
   );
+}
+
+/** Geometry + colour of the two resting offline marks — a thin muted ring
+ *  (auto, evictable) / a solid deep-water dot (pinned download). Shared so the
+ *  More-page legend renders the exact same marks the track rows do. */
+export function cacheDotClass(state: "auto" | "active"): string {
+  return state === "auto"
+    ? "size-[0.6rem] border-[1.6px] border-muted-foreground"
+    : "size-[0.52rem] bg-turquoise-deep dark:bg-turquoise";
 }

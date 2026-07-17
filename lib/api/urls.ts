@@ -16,6 +16,13 @@ export function songStreamUrl(songId: string): string {
   return `${API}/stream/new_play/${songId}`;
 }
 
+/** Inverse of songStreamUrl: the song id out of a cached stream URL, or null if
+ *  it isn't one. Lives beside its builder so the /stream/new_play contract has a
+ *  single home — the offline cache reads song ids back out of bucket keys. */
+export function songIdFromStreamUrl(url: string): string | null {
+  return url.match(/\/stream\/new_play\/([^/?#]+)/)?.[1] ?? null;
+}
+
 /** Downloadable audio file. */
 export function songDownloadUrl(songId: string): string {
   return `${API}/stream/download/${songId}`;

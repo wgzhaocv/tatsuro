@@ -25,7 +25,10 @@ export function MoreView() {
         </h1>
       </div>
 
-      <div className="mx-auto flex w-full max-w-2xl flex-col gap-4 px-5 pb-20 sm:px-8">
+      {/* One readable column on phones; on large screens the two panels sit
+          side by side (items-start so the shorter one doesn't stretch) so the
+          surface fills the width instead of stranding a narrow strip. */}
+      <div className="mx-auto grid w-full max-w-5xl gap-4 px-5 pb-20 sm:px-8 lg:grid-cols-2 lg:items-start">
         <MissingAlbums />
         <OfflineManager />
       </div>

@@ -211,7 +211,6 @@
     "typeCollab": "コラボ",
     "storageTitle": "オフライン保存",
     "usedOnDevice": "この端末で使用中",
-    "ofTotal": "全 {size} 中",
     "saved": "オフライン保存済み",
     "playback": "再生キャッシュ",
     "covers": "ジャケット画像",
@@ -232,6 +231,9 @@
     "legendAuto": "再生時に自動キャッシュ。空き容量が少なくなると自動的に消去されます。",
     "legendActive": "オフライン保存済み。手動で削除するまで残ります。",
     "albumFallback": "保存したアルバム",
-    "likedSongs": "お気に入り"
+    "likedSongs": "お気に入り",
+    "cachedAlbumsTitle": "キャッシュ済みアルバム",
+    "available": "残り {size}",
+    "typeComp": "コンピ"
   }
 }

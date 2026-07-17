@@ -4,6 +4,8 @@ import type { Metadata, Viewport } from "next";
 import { Inter, Jost, Quicksand } from "next/font/google";
 import "./globals.css";
 import { DownloadsReconciler } from "@/components/downloads/downloads-reconciler";
+// TEMP one-shot — remove after it has run once (see file header).
+import { OnomatopeCachePurge } from "@/components/onoma-cache-purge";
 import { AudioEngine } from "@/components/player/audio-engine";
 import { QueryProvider } from "@/components/query-provider";
 import { ServiceWorkerProvider } from "@/components/sw-provider";
@@ -100,6 +102,9 @@ export default function RootLayout({
             <TooltipProvider>{children}</TooltipProvider>
           </QueryProvider>
           <ServiceWorkerProvider />
+          {/* TEMP one-shot: evict the re-ripped オノマトペ single from the SW
+              audio cache. Remove this + its import + the file, then redeploy. */}
+          <OnomatopeCachePurge />
           {/* Above [locale] so a language switch never remounts it — a
               remounted <audio> element would ghost-play alongside its
               replacement (the double-audio bug). */}

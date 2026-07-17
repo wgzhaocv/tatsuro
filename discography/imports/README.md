@@ -67,6 +67,15 @@
 
 **至此官方作品 100% 收全。**
 
+### rerip · オノマトペISLAND／MOVE ON 重抓修正 — 2026-07-17 ✅
+
+站主发现 batch-03 那张(release/album id=`7167079766655044`)**抓错轨了**(整体错位:旧 02 的时长=现 03,以此类推),全部音轨重抓。修正:
+
+- **原 key 原地覆盖**:6 个 opus 覆盖到既有 R2 key(`Otyp1OryF`/`vMIDcP0j9`/`esGJ4TQAG`/`RJsn79bZO`/`7pU3eYJf6`/`ALnMOI5jO`),下载 zip 覆盖 `uXO7NvGN1.zip`。源:`~/Downloads/tatsuro-flac/2025 - …[Standard]/opus` + `~/Downloads/tatsuro-aac192-zip/2025 - …[Standard].zip`。**不新建 key**——边缘缓存按 `/stream/new_play/{songId}`、`/music/edition_zip/{editionId}` 的 **id URL** 缓存,与 encoded_filename 无关,换 key 无益且 R2 近满。
+- **D1**:只改变了的字段——6 首 `songs.duration`(5 首因错位而变)+ `albums.zip_size`(38026144→39011142)。id/结构/封面全不动。
+- **刷缓存**:`wrangler deploy` 冲边缘(唯一有效)。验证:6 首 `/stream/new_play` 200 且 content-length 逐首=新本地字节,`/music/edition_zip` 200/39011142/`PK`。
+- ⚠️ 客户端 immutable 残留:URL(=id)没变,已在本地缓存过这 6 首的浏览器 30 天内仍会放旧音频,硬刷即可(私站刚上线一天,基本只有站主自己碰过)。**前端时长显示**走 Next `'use cache'`,需按下方 ② 清 Vercel Data Cache 才更新(音频播放本身直连后端,已全局修好)。
+
 ## 补数据后怎么让前端刷新(缓存两层,踩过大坑,务必按此做)
 
 灌完 D1/R2,**后端 API 直连已是新数据,但两层缓存都会挡在前面**,要分别刷:

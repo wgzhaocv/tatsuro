@@ -10,6 +10,7 @@ import {
   syncNow,
 } from "@/lib/account/sync";
 import { nameLang } from "@/lib/api/types";
+import { useDownloadsStore } from "@/lib/downloads/store";
 import { usePinStore } from "@/lib/pins/store";
 import { usePlaylistStore } from "@/lib/playlists/store";
 
@@ -48,6 +49,7 @@ export function AccountBootstrap() {
       await Promise.all([
         whenHydrated(usePlaylistStore),
         whenHydrated(usePinStore),
+        whenHydrated(useDownloadsStore),
       ]);
       if (cancelled) return;
       // Profile is persisted; only refresh it from /me once a day (it barely

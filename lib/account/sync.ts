@@ -13,6 +13,8 @@ import type { AccountUser } from "@/lib/account/store";
 import { useAccountStore } from "@/lib/account/store";
 import { fetchSong } from "@/lib/api/client";
 import type { NameLang, Song } from "@/lib/api/types";
+import { useDownloadsStore } from "@/lib/downloads/store";
+import { type OfflineIntentRow, toIntentRow } from "@/lib/downloads/types";
 import { usePinStore } from "@/lib/pins/store";
 import { type PinRow, toPinRow } from "@/lib/pins/types";
 import { usePlaylistStore } from "@/lib/playlists/store";
@@ -79,6 +81,10 @@ export async function syncNow(): Promise<void> {
       // keyed on albumId). They're albums, not songs, so they can't share the
       // playlist channel — see lib/pins/types.
       pins: usePinStore.getState().pins.map(toPinRow),
+      // Offline-download intents ride along too — only the small "keep offline"
+      // list syncs, never the cached bytes (each device caches locally). Backend
+      // for this field is a later addition; an older server ignores it.
+      downloads: useDownloadsStore.getState().intents.map(toIntentRow),
     };
     const res = await fetch(`${API}/me/sync`, {
       method: "POST",
@@ -94,12 +100,16 @@ export async function syncNow(): Promise<void> {
     const data = (await res.json()) as {
       playlists: WirePlaylist[];
       pins?: PinRow[];
+      downloads?: OfflineIntentRow[];
     };
     const stubbed = withRemoteApplied(() => {
-      // Only adopt pins when the server actually returned them: an older backend
-      // (no pin support) omits the field, and adopting [] would wipe local pins.
+      // Only adopt a sibling array when the server actually returned it: an
+      // older backend omits the field, and adopting [] would wipe local data.
       if (Array.isArray(data.pins)) {
         usePinStore.getState().adoptRemote(data.pins);
+      }
+      if (Array.isArray(data.downloads)) {
+        useDownloadsStore.getState().adoptRemote(data.downloads);
       }
       return usePlaylistStore.getState().adoptRemote(data.playlists);
     });
@@ -140,9 +150,13 @@ export function startAutoSync(): () => void {
   const unsubPins = usePinStore.subscribe((state, prev) => {
     if (state.pins !== prev.pins) trigger();
   });
+  const unsubDownloads = useDownloadsStore.subscribe((state, prev) => {
+    if (state.intents !== prev.intents) trigger();
+  });
   return () => {
     unsubPlaylists();
     unsubPins();
+    unsubDownloads();
   };
 }
 

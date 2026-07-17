@@ -138,7 +138,7 @@ export function PlaylistDetail({ id }: { id: string }) {
               >
                 {meta}
               </p>
-              <div className="mt-5 flex items-center gap-2.5 sm:mt-6">
+              <div className="mt-5 flex flex-col items-start gap-2.5 sm:mt-6 sm:flex-row sm:items-center">
                 <PlayQueueButton
                   playText={t("playAll")}
                   pauseText={tRoot("album.pause")}

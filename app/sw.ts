@@ -8,6 +8,7 @@
 
 import type { PrecacheEntry, SerwistGlobalConfig } from "serwist";
 import { CacheFirst, ExpirationPlugin, Serwist } from "serwist";
+import { COVER_CACHE_NAME } from "@/lib/offline/constants";
 import { audioStreamHandler } from "./sw/audio-cache";
 
 declare global {
@@ -45,7 +46,7 @@ serwist.registerCapture(
     url.pathname === "/_next/image" &&
     (url.searchParams.get("url") ?? "").includes("/stream/img/"),
   new CacheFirst({
-    cacheName: "cover-cache",
+    cacheName: COVER_CACHE_NAME,
     plugins: [
       new ExpirationPlugin({
         maxEntries: 300,

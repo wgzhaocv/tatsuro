@@ -2,7 +2,7 @@
 
 import type { Icon } from "@phosphor-icons/react";
 import {
-  Compass,
+  DotsThreeOutline,
   FilmSlate,
   Playlist,
   VinylRecord,
@@ -19,7 +19,7 @@ import { cn } from "@/lib/utils";
 // path — /album/[id] still belongs to Albums, /mv/* to MV. `usePathname` from
 // i18n/navigation is already locale-stripped, so the predicates stay simple.
 const SECTIONS: {
-  key: "albums" | "discover" | "mv" | "playlists";
+  key: "albums" | "mv" | "playlists" | "more";
   icon: Icon;
   href?: string;
   match?: (p: string) => boolean;
@@ -30,7 +30,6 @@ const SECTIONS: {
     icon: VinylRecord,
     match: (p) => p === "/" || p.startsWith("/album"),
   },
-  { key: "discover", icon: Compass },
   {
     key: "mv",
     href: "/mv",
@@ -42,6 +41,12 @@ const SECTIONS: {
     href: "/playlists",
     icon: Playlist,
     match: (p) => p.startsWith("/playlists"),
+  },
+  {
+    key: "more",
+    href: "/more",
+    icon: DotsThreeOutline,
+    match: (p) => p.startsWith("/more"),
   },
 ];
 

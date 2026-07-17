@@ -9,6 +9,10 @@
 export const AUDIO_CACHE_NAME = "audio-cache";
 /** Download cache: written only by the page-side reconciler; never LRU-swept. */
 export const DOWNLOAD_CACHE_NAME = "audio-download";
+/** Cover-art cache: written by the SW's cache-first route (app/sw.ts); bounded
+ *  by serwist's ExpirationPlugin. Named here so the More page's cache manager
+ *  and the SW agree on the one bucket name. */
+export const COVER_CACHE_NAME = "cover-cache";
 
 /** SW → page events for the auto bucket ({type:"cache-added"|"cache-removed"}). */
 export const AUDIO_EVENTS_CHANNEL = "audio-cache-events";

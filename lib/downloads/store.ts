@@ -21,8 +21,15 @@ type DownloadsState = {
    *  an empty snapshot can't overwrite the server. Not persisted. */
   hasHydrated: boolean;
   /** Turn offline on for a source. Albums pass a song-id snapshot; playlists
-   *  omit it (resolved live). Re-enabling drops any stale row then appends. */
-  setIntent(id: string, kind: OfflineIntent["kind"], songIds?: string[]): void;
+   *  omit it (resolved live). `label` is the source's display name, kept local
+   *  for the More page's saved-sources list. Re-enabling drops any stale row
+   *  then appends. */
+  setIntent(
+    id: string,
+    kind: OfflineIntent["kind"],
+    songIds?: string[],
+    label?: string,
+  ): void;
   /** Turn offline off — tombstoned (soft delete) so it can propagate on sync. */
   clearIntent(id: string): void;
   setHasHydrated(v: boolean): void;
@@ -41,13 +48,13 @@ export const useDownloadsStore = create<DownloadsState>()(
       intents: [],
       hasHydrated: false,
 
-      setIntent(id, kind, songIds) {
+      setIntent(id, kind, songIds, label) {
         set((s) => {
           const t = now();
           return {
             intents: [
               ...s.intents.filter((i) => i.id !== id),
-              { id, kind, songIds, enabledAt: t, updatedAt: t },
+              { id, kind, songIds, label, enabledAt: t, updatedAt: t },
             ],
           };
         });

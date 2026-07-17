@@ -24,12 +24,15 @@ export function OfflineSwitch({
   contextId,
   kind,
   songs,
+  label,
   className,
 }: {
   contextId: string;
   kind: "playlist" | "album";
   /** Album only: the edition's songs, snapshotted into the intent on enable. */
   songs?: Song[];
+  /** Source display name, stored on the intent for the More page's list. */
+  label?: string;
   className?: string;
 }) {
   const t = useTranslations("cache");
@@ -40,7 +43,7 @@ export function OfflineSwitch({
   const toggle = (checked: boolean) => {
     if (checked) {
       const songIds = kind === "album" ? songs?.map((s) => s.id) : undefined;
-      setIntent(contextId, kind, songIds);
+      setIntent(contextId, kind, songIds, label);
       toast.success(t("keepOfflineOn"), {
         description: t("keepOfflineOnDesc"),
       });

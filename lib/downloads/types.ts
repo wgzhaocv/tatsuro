@@ -17,6 +17,14 @@ export type OfflineIntent = {
    * catalog fetch offline.
    */
   songIds?: string[];
+  /**
+   * Display name captured at toggle time (release/playlist name), so the More
+   * page can list each saved source by name without a catalog fetch. Local-only
+   * — deliberately absent from the wire row below (a future sync re-derives it
+   * from the source), so an old intent without one just falls back to a generic
+   * label. Not a conflict key.
+   */
+  label?: string;
   /** epoch ms — when offline was turned on. */
   enabledAt: number;
   /** epoch ms — bumped on every mutation; future last-write-wins conflict key. */

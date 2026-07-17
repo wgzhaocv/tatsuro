@@ -1,7 +1,7 @@
 {
   "nav": {
     "albums": "アルバム",
-    "discover": "見つける",
+    "more": "その他",
     "mv": "MV",
     "playlists": "プレイリスト",
     "comingSoon": "近日公開",
@@ -200,6 +200,38 @@
     "playlistsDescription": "あなたの山下達郎プレイリストとお気に入りの曲。",
     "albumDescription": "山下達郎のアルバム「{name}」。",
     "gateTitle": "パスワードが必要です",
-    "gateDescription": "山下達郎のプライベートライブラリです。続けるにはパスワードを入力してください。"
+    "gateDescription": "山下達郎のプライベートライブラリです。続けるにはパスワードを入力してください。",
+    "more": "その他",
+    "moreDescription": "オフライン保存とライブラリの状況。"
+  },
+  "more": {
+    "heading": "その他",
+    "missingTitle": "未収録",
+    "typeBand": "バンド",
+    "typeCollab": "コラボ",
+    "storageTitle": "オフライン保存",
+    "usedOnDevice": "この端末で使用中",
+    "ofTotal": "全 {size} 中",
+    "saved": "オフライン保存済み",
+    "playback": "再生キャッシュ",
+    "covers": "ジャケット画像",
+    "nSongs": "{n, plural, other {# 曲}}",
+    "nItems": "{n, plural, other {# 枚}}",
+    "clear": "消去",
+    "empty": "まだありません",
+    "savedSources": "保存したアルバム・プレイリスト",
+    "remove": "削除",
+    "pending": "ダウンロード中…",
+    "clearAll": "オフラインデータを全消去",
+    "clearAllConfirm": "すべて消去しますか？",
+    "confirm": "消去",
+    "cancel": "キャンセル",
+    "clearedToast": "キャッシュを消去しました",
+    "removedToast": "オフラインから削除しました",
+    "legendTitle": "トラックの点",
+    "legendAuto": "再生時に自動キャッシュ。空き容量が少なくなると自動的に消去されます。",
+    "legendActive": "オフライン保存済み。手動で削除するまで残ります。",
+    "albumFallback": "保存したアルバム",
+    "likedSongs": "お気に入り"
   }
 }

@@ -1,7 +1,7 @@
 {
   "nav": {
     "albums": "专辑",
-    "discover": "发现",
+    "more": "更多",
     "mv": "MV",
     "playlists": "歌单",
     "comingSoon": "敬请期待",
@@ -200,6 +200,38 @@
     "playlistsDescription": "你的山下达郎歌单与喜欢的歌曲。",
     "albumDescription": "山下达郎的专辑《{name}》。",
     "gateTitle": "需要密码",
-    "gateDescription": "这是一个私享的山下达郎音乐库，输入密码后继续。"
+    "gateDescription": "这是一个私享的山下达郎音乐库，输入密码后继续。",
+    "more": "更多",
+    "moreDescription": "离线存储与收录状况。"
+  },
+  "more": {
+    "heading": "更多",
+    "missingTitle": "尚未收录",
+    "typeBand": "乐队",
+    "typeCollab": "合作",
+    "storageTitle": "离线存储",
+    "usedOnDevice": "已用于本设备",
+    "ofTotal": "共 {size}",
+    "saved": "已离线保存",
+    "playback": "播放缓存",
+    "covers": "封面图片",
+    "nSongs": "{n, plural, other {# 首}}",
+    "nItems": "{n, plural, other {# 张}}",
+    "clear": "清理",
+    "empty": "暂无内容",
+    "savedSources": "已保存的专辑与歌单",
+    "remove": "移除",
+    "pending": "下载中…",
+    "clearAll": "清理全部离线数据",
+    "clearAllConfirm": "确定清理全部？",
+    "confirm": "清理",
+    "cancel": "取消",
+    "clearedToast": "已清理缓存",
+    "removedToast": "已移除离线",
+    "legendTitle": "曲目圆点",
+    "legendAuto": "播放时自动缓存，设备空间不足时会自动清理。",
+    "legendActive": "已离线保存，不会自动清理，需手动移除。",
+    "albumFallback": "已保存专辑",
+    "likedSongs": "喜欢的歌曲"
   }
 }

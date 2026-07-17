@@ -137,6 +137,7 @@ export async function EditionView({
                     contextId={edition.id}
                     kind="album"
                     songs={queueSongs}
+                    label={album.name}
                   />
                 </div>
               </div>

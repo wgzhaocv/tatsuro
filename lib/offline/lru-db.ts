@@ -53,6 +53,17 @@ export async function deleteAccessTime(url: string): Promise<void> {
   }
 }
 
+/** Wipe every access-time row — used when the whole audio cache is cleared from
+ *  the More page, so no stale LRU bookkeeping outlives the bytes it tracked. */
+export async function clearAllAccessTimes(): Promise<void> {
+  try {
+    const db = await initDB();
+    db.transaction([STORE_NAME], "readwrite").objectStore(STORE_NAME).clear();
+  } catch {
+    // best-effort
+  }
+}
+
 export async function getAllAccessTimes(): Promise<
   { url: string; accessTime: number }[]
 > {

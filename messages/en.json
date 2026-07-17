@@ -1,7 +1,7 @@
 {
   "nav": {
     "albums": "Albums",
-    "discover": "Discover",
+    "more": "More",
     "mv": "MV",
     "playlists": "Playlists",
     "comingSoon": "Coming soon",
@@ -200,6 +200,38 @@
     "playlistsDescription": "Your Tatsuro Yamashita playlists and liked songs.",
     "albumDescription": "{name} by Tatsuro Yamashita.",
     "gateTitle": "Password required",
-    "gateDescription": "A private Tatsuro Yamashita library. Enter the password to continue."
+    "gateDescription": "A private Tatsuro Yamashita library. Enter the password to continue.",
+    "more": "More",
+    "moreDescription": "Offline storage and library status."
+  },
+  "more": {
+    "heading": "More",
+    "missingTitle": "Not in the library",
+    "typeBand": "Band",
+    "typeCollab": "Collaboration",
+    "storageTitle": "Offline storage",
+    "usedOnDevice": "used on this device",
+    "ofTotal": "of {size}",
+    "saved": "Saved offline",
+    "playback": "Playback cache",
+    "covers": "Cover images",
+    "nSongs": "{n, plural, one {# song} other {# songs}}",
+    "nItems": "{n, plural, one {# image} other {# images}}",
+    "clear": "Clear",
+    "empty": "Nothing here yet",
+    "savedSources": "Saved albums & playlists",
+    "remove": "Remove",
+    "pending": "Downloading…",
+    "clearAll": "Clear all offline data",
+    "clearAllConfirm": "Clear everything?",
+    "confirm": "Clear",
+    "cancel": "Cancel",
+    "clearedToast": "Cache cleared",
+    "removedToast": "Removed from offline",
+    "legendTitle": "Track dots",
+    "legendAuto": "Cached from playback. Clears itself when the device runs low on space.",
+    "legendActive": "Saved offline. Stays until you remove it.",
+    "albumFallback": "Saved album",
+    "likedSongs": "Liked Songs"
   }
 }

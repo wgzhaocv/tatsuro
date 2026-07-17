@@ -9,13 +9,13 @@ import { Link } from "@/components/ui/link";
 // (their screens land in a later phase) — shown, but never a dead click.
 // `key` indexes the `nav` messages and identifies the active section.
 const SECTIONS: {
-  key: "albums" | "discover" | "mv" | "playlists";
+  key: "albums" | "mv" | "playlists" | "more";
   href?: string;
 }[] = [
   { key: "albums", href: "/" },
-  { key: "discover" },
   { key: "mv", href: "/mv" },
   { key: "playlists", href: "/playlists" },
+  { key: "more", href: "/more" },
 ];
 
 /** The browse-screen top bar, floating over the hero photo. */
@@ -24,7 +24,7 @@ export function HomeNav({
   search,
 }: {
   /** Key of the active section (matches SECTIONS). */
-  current: "albums" | "mv" | "playlists";
+  current: "albums" | "mv" | "playlists" | "more";
   /** Search affordance for the right rail (the command-palette trigger). */
   search?: ReactNode;
 }) {

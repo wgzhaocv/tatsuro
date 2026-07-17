@@ -184,6 +184,10 @@
     "close": "Close",
     "disconnect": "Disconnect"
   },
+  "cache": {
+    "auto": "Cached for offline",
+    "downloaded": "Downloaded"
+  },
   "metadata": {
     "musicVideos": "Music Videos",
     "playlists": "Playlists",

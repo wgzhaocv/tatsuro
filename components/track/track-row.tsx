@@ -9,6 +9,7 @@ import { usePlayerStore } from "@/lib/player/store";
 import { useScrollToCurrentOnEnter } from "@/lib/player/use-scroll-to-current";
 import { isJapanese } from "@/lib/text";
 import { cn } from "@/lib/utils";
+import { CacheDot } from "./cache-dot";
 import { useQueuePlayback } from "./playback-context";
 import { TrackActions } from "./track-actions";
 
@@ -122,6 +123,7 @@ export function TrackRow({
             {track.name}
           </span>
         </button>
+        <CacheDot songId={track.id} />
         <span className="shrink-0 text-[13px] text-muted-foreground tabular-nums">
           {typeof track.duration === "number"
             ? formatDuration(track.duration)

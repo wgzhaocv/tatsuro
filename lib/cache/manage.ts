@@ -77,12 +77,22 @@ function hasCaches(): boolean {
   return typeof window !== "undefined" && "caches" in window;
 }
 
-// How many cache entries to match() at once. sizeOf reads only the header, but
-// each match() still hands back a Response referencing a multi-MB body; opening
-// a whole bucket at once (Promise.all over every key) makes mobile Safari hold
-// hundreds of those bodies simultaneously and crash. A small window keeps peak
-// memory flat regardless of how much is cached.
+// How many cache entries to match() at once. We only ever read Content-Length
+// (never the body), but match() still hands back a Response whose body stream
+// the browser may buffer; a small window + an explicit body cancel keeps peak
+// memory flat regardless of how much is cached (an ~800 MB audio cache opened
+// all at once is enough to OOM-reload mobile Safari).
 const MATCH_CONCURRENCY = 6;
+
+/** Content-Length of a cached entry, then immediately release its body stream so
+ *  nothing gets buffered into memory (we only need the header). */
+async function entrySize(cache: Cache, req: Request): Promise<number> {
+  const resp = await cache.match(req);
+  const n = sizeOf(resp);
+  // Discard the unread body right away rather than waiting for GC.
+  await resp?.body?.cancel().catch(() => {});
+  return n;
+}
 
 /** Count + total bytes of a bucket. With `withSizes` (audio buckets) it also
  *  returns a canonical-url → bytes map used to attribute songs to sources and
@@ -100,10 +110,7 @@ async function statsOf(
     for (let i = 0; i < keys.length; i += MATCH_CONCURRENCY) {
       const batch = keys.slice(i, i + MATCH_CONCURRENCY);
       const measured = await Promise.all(
-        batch.map(async (k) => ({
-          url: k.url,
-          n: sizeOf(await cache.match(k)),
-        })),
+        batch.map(async (k) => ({ url: k.url, n: await entrySize(cache, k) })),
       );
       for (const m of measured) {
         bytes += m.n;

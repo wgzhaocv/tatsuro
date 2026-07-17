@@ -1,8 +1,9 @@
 // Shared vocabulary of the offline system, imported by BOTH the service
 // worker bundle (app/sw/*, compiled separately by @serwist/turbopack's
-// esbuild) and client modules. Hard rule for everything under lib/offline/:
-// zero imports, no process.env (the SW bundle defines none), no React, no
-// DOM types beyond what workers also have.
+// esbuild) and client modules. Hard rule for everything under lib/offline/: no
+// imports from outside lib/offline, no process.env (the SW bundle defines
+// none), no React, no DOM beyond what workers also have. (This file in
+// particular has zero imports.)
 
 /** Auto cache: written only by the SW as a byproduct of playback; LRU-evicted. */
 export const AUDIO_CACHE_NAME = "audio-cache";

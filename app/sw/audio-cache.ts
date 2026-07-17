@@ -1,9 +1,12 @@
 // Audio stream caching in the service worker. Two buckets, one handler:
 //
-// - "audio-download" (pinned): written only by the page-side reconciler, never
+// - "audio-download" (pinned): only the page-side reconciler writes it, never
 //   LRU-swept. Checked FIRST so downloaded songs serve offline and survive.
-// - "audio-cache" (auto): written only here as a byproduct of playback,
-//   LRU-evicted against a budget that shrinks as the download bucket grows.
+// - "audio-cache" (auto): only the SW *populates* it from the network (here),
+//   LRU-evicted against a budget that shrinks as the download bucket grows. The
+//   reconciler may still move entries in/out of it (promote/demote) via the
+//   shared lib/offline helpers — "SW is the sole network writer", not "sole
+//   writer".
 //
 // Cache miss (unmarked): pass the original (possibly ranged) request straight
 // through so playback starts immediately, and kick off a background download
@@ -22,6 +25,7 @@
 
 import type { RouteHandlerCallbackOptions } from "serwist";
 import { evictAutoLru, getAutoCacheBudget } from "@/lib/offline/auto-evict";
+import { postCacheEvent } from "@/lib/offline/broadcast";
 import {
   AUDIO_CACHE_NAME,
   AUDIO_EVENTS_CHANNEL,
@@ -94,9 +98,7 @@ async function downloadAndCache(url: string, cache: Cache) {
     if (response.ok && response.status === 200) {
       await cache.put(url, response.clone());
       await setAccessTime(url, Date.now());
-      const broadcast = new BroadcastChannel(AUDIO_EVENTS_CHANNEL);
-      broadcast.postMessage({ type: "cache-added", data: { url } });
-      broadcast.close();
+      postCacheEvent(AUDIO_EVENTS_CHANNEL, "cache-added", url);
     }
   } catch {
     // Cache population is opportunistic; playback already went through.

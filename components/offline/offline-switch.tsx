@@ -41,8 +41,6 @@ export function OfflineSwitch({
     if (checked) {
       const songIds = kind === "album" ? songs?.map((s) => s.id) : undefined;
       setIntent(contextId, kind, songIds);
-      // Ask for durable storage so downloads survive storage pressure.
-      navigator.storage?.persist?.().catch(() => {});
       toast.success(t("keepOfflineOn"), {
         description: t("keepOfflineOnDesc"),
       });

@@ -3,6 +3,7 @@
 // recovery, and shrinking the auto bucket as the download bucket grows).
 // Worker-safe: only caches / navigator.storage / BroadcastChannel / IDB.
 
+import { postCacheEvent } from "./broadcast";
 import {
   AUDIO_CACHE_NAME,
   AUDIO_EVENTS_CHANNEL,
@@ -14,7 +15,11 @@ import { deleteAccessTime, getAllAccessTimes } from "./lru-db";
 // default budget — while still shrinking once real downloads land.
 const FALLBACK_QUOTA = 600 * 1024 * 1024;
 
-function sizeOf(resp: Response | undefined): number {
+/** Fallback bytes to free on a QuotaExceeded put when Content-Length is absent. */
+export const MIN_QUOTA_RESERVE = 30 * 1024 * 1024;
+
+/** Bytes of a cached response from its Content-Length (0 when absent). */
+export function sizeOf(resp: Response | undefined): number {
   return Number.parseInt(resp?.headers.get("Content-Length") ?? "0", 10) || 0;
 }
 
@@ -76,6 +81,11 @@ export async function evictAutoLru(opts: {
     );
     let total = entries.reduce((sum, e) => sum + e.size, 0);
 
+    // Already under budget and nothing specific to free — skip the access-time
+    // read + sort entirely (the common playback hot path).
+    if (freeAtLeast == null && (toBudget == null || total <= toBudget))
+      return 0;
+
     const accessTimes = new Map(
       (await getAllAccessTimes()).map((t) => [t.url, t.accessTime]),
     );
@@ -84,7 +94,6 @@ export async function evictAutoLru(opts: {
       (a, b) => (accessTimes.get(a.url) || 0) - (accessTimes.get(b.url) || 0),
     );
 
-    const broadcast = new BroadcastChannel(AUDIO_EVENTS_CHANNEL);
     let freed = 0;
     for (const item of entries) {
       if (item.url === exclude) continue;
@@ -95,12 +104,13 @@ export async function evictAutoLru(opts: {
       await deleteAccessTime(item.url);
       total -= item.size;
       freed += item.size;
-      broadcast.postMessage({
-        type: "cache-removed",
-        data: { url: item.url, reason: "lru-eviction" },
-      });
+      postCacheEvent(
+        AUDIO_EVENTS_CHANNEL,
+        "cache-removed",
+        item.url,
+        "lru-eviction",
+      );
     }
-    broadcast.close();
     return freed;
   } catch {
     return 0;

@@ -23,8 +23,10 @@ import {
 
 export type CacheState = "none" | "auto" | "active";
 
-let cachedUrls = new Set<string>();
-let downloadedUrls = new Set<string>();
+// Mutated in place: the exposed snapshot is a plain string, so referential
+// stability of the Sets is irrelevant and emit() forces the re-read.
+const cachedUrls = new Set<string>();
+const downloadedUrls = new Set<string>();
 const listeners = new Set<() => void>();
 let started = false;
 
@@ -32,14 +34,10 @@ function emit(): void {
   for (const fn of listeners) fn();
 }
 
-async function seed(bucket: string, apply: (urls: Set<string>) => void) {
+async function seed(bucket: string, urls: Set<string>): Promise<void> {
   try {
     const cache = await caches.open(bucket);
-    const keys = await cache.keys();
-    if (keys.length === 0) return;
-    const next = new Set<string>();
-    for (const req of keys) next.add(canonicalStreamUrl(req.url));
-    apply(next);
+    for (const req of await cache.keys()) urls.add(canonicalStreamUrl(req.url));
     emit();
   } catch {
     // best-effort snapshot
@@ -47,14 +45,13 @@ async function seed(bucket: string, apply: (urls: Set<string>) => void) {
 }
 
 function listen(
-  channel: string,
+  channelName: string,
   addType: string,
   removeType: string,
-  get: () => Set<string>,
-  set: (s: Set<string>) => void,
-) {
+  urls: Set<string>,
+): void {
   try {
-    const bc = new BroadcastChannel(channel);
+    const bc = new BroadcastChannel(channelName);
     bc.onmessage = (event: MessageEvent) => {
       const { type, data } = (event.data ?? {}) as {
         type?: string;
@@ -62,11 +59,9 @@ function listen(
       };
       if (!data?.url) return;
       const url = canonicalStreamUrl(data.url);
-      const next = new Set(get());
-      if (type === addType) next.add(url);
-      else if (type === removeType) next.delete(url);
+      if (type === addType) urls.add(url);
+      else if (type === removeType) urls.delete(url);
       else return;
-      set(next);
       emit();
     };
   } catch {
@@ -79,30 +74,14 @@ function start(): void {
   if (started || typeof window === "undefined" || !("caches" in window)) return;
   started = true;
 
-  seed(AUDIO_CACHE_NAME, (s) => {
-    cachedUrls = s;
-  });
-  seed(DOWNLOAD_CACHE_NAME, (s) => {
-    downloadedUrls = s;
-  });
-
-  listen(
-    AUDIO_EVENTS_CHANNEL,
-    "cache-added",
-    "cache-removed",
-    () => cachedUrls,
-    (s) => {
-      cachedUrls = s;
-    },
-  );
+  seed(AUDIO_CACHE_NAME, cachedUrls);
+  seed(DOWNLOAD_CACHE_NAME, downloadedUrls);
+  listen(AUDIO_EVENTS_CHANNEL, "cache-added", "cache-removed", cachedUrls);
   listen(
     DOWNLOAD_EVENTS_CHANNEL,
     "download-added",
     "download-removed",
-    () => downloadedUrls,
-    (s) => {
-      downloadedUrls = s;
-    },
+    downloadedUrls,
   );
 }
 

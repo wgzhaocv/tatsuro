@@ -16,7 +16,13 @@
 
 import { useSyncExternalStore } from "react";
 import { songStreamUrl } from "@/lib/api/urls";
-import { evictAutoLru, getAutoCacheBudget } from "@/lib/offline/auto-evict";
+import {
+  evictAutoLru,
+  getAutoCacheBudget,
+  MIN_QUOTA_RESERVE,
+  sizeOf,
+} from "@/lib/offline/auto-evict";
+import { postCacheEvent } from "@/lib/offline/broadcast";
 import {
   AUDIO_CACHE_NAME,
   AUDIO_EVENTS_CHANNEL,
@@ -42,39 +48,16 @@ const activityListeners = new Set<() => void>();
 let running = false;
 let scheduled = false;
 let dirty = false;
-let activePump: (() => void) | null = null;
 let interval: ReturnType<typeof setInterval> | null = null;
 let initialized = false;
+let persistRequested = false;
 
-const MIN_QUOTA_RESERVE = 30 * 1024 * 1024;
+const RECONCILE_INTERVAL_MS = 3 * 60 * 1000;
 
 // ── small helpers ────────────────────────────────────────────────────────────
 
-function contentLength(resp: Response): number {
-  return Number.parseInt(resp.headers.get("Content-Length") ?? "0", 10) || 0;
-}
-
 function isQuotaError(e: unknown): boolean {
   return e instanceof DOMException && e.name === "QuotaExceededError";
-}
-
-function postDownload(
-  type: "download-added" | "download-removed",
-  url: string,
-) {
-  const ch = new BroadcastChannel(DOWNLOAD_EVENTS_CHANNEL);
-  ch.postMessage({ type, data: { url } });
-  ch.close();
-}
-
-function postAuto(
-  type: "cache-added" | "cache-removed",
-  url: string,
-  reason?: string,
-) {
-  const ch = new BroadcastChannel(AUDIO_EVENTS_CHANNEL);
-  ch.postMessage({ type, data: { url, reason } });
-  ch.close();
 }
 
 function bumpAttempts(id: string): number {
@@ -93,11 +76,11 @@ function markNetworkFail(id: string) {
 }
 
 function eligible(id: string): boolean {
+  // permanent/quota records carry nextEligibleAt = Infinity so this covers them
+  // too; quota records are additionally cleared when a demotion frees space
+  // (see reconcileOnce), which re-arms them.
   const f = failures.get(id);
-  if (!f) return true;
-  if (f.kind === "permanent") return false;
-  if (f.kind === "quota") return false; // cleared when a demotion frees space
-  return f.nextEligibleAt <= Date.now();
+  return !f || f.nextEligibleAt <= Date.now();
 }
 
 function setDownloading(id: string, on: boolean) {
@@ -119,10 +102,10 @@ async function demote(url: string, dl: Cache, auto: Cache) {
     ) {
       await auto.put(url, resp);
       setAccessTime(url, Date.now());
-      postAuto("cache-added", url);
+      postCacheEvent(AUDIO_EVENTS_CHANNEL, "cache-added", url);
     }
     await dl.delete(url);
-    postDownload("download-removed", url);
+    postCacheEvent(DOWNLOAD_EVENTS_CHANNEL, "download-removed", url);
   } catch {
     // best-effort; next pass retries from the recomputed actual set.
   }
@@ -140,7 +123,7 @@ async function promote(
   try {
     let resp = await auto.match(url, { ignoreVary: true });
     if (!resp || resp.status !== 200) return false;
-    const size = contentLength(resp);
+    const size = sizeOf(resp);
     try {
       await dl.put(url, resp);
     } catch (e) {
@@ -152,8 +135,8 @@ async function promote(
       if (freed <= 0) {
         failures.set(id, {
           kind: "quota",
-          attempts: bumpAttempts(id),
-          nextEligibleAt: 0,
+          attempts: 0,
+          nextEligibleAt: Number.POSITIVE_INFINITY,
         });
         return true;
       }
@@ -161,10 +144,10 @@ async function promote(
       if (!resp) return false;
       await dl.put(url, resp);
     }
-    postDownload("download-added", url);
+    postCacheEvent(DOWNLOAD_EVENTS_CHANNEL, "download-added", url);
     await auto.delete(url);
     deleteAccessTime(url);
-    postAuto("cache-removed", url, "promoted");
+    postCacheEvent(AUDIO_EVENTS_CHANNEL, "cache-removed", url, "promoted");
     failures.delete(id);
     return true;
   } catch {
@@ -189,16 +172,16 @@ async function downloadOne(id: string, dl: Cache, auto: Cache) {
     if (resp.status === 404 || resp.status === 410) {
       failures.set(id, {
         kind: "permanent",
-        attempts: bumpAttempts(id),
-        nextEligibleAt: 0,
+        attempts: 0,
+        nextEligibleAt: Number.POSITIVE_INFINITY,
       });
       return;
     }
-    if (!resp.ok || resp.status !== 200) {
+    if (resp.status !== 200) {
       markNetworkFail(id);
       return;
     }
-    const size = contentLength(resp);
+    const size = sizeOf(resp);
     try {
       await dl.put(canonical, resp);
     } catch (e) {
@@ -209,8 +192,8 @@ async function downloadOne(id: string, dl: Cache, auto: Cache) {
       if (freed <= 0) {
         failures.set(id, {
           kind: "quota",
-          attempts: bumpAttempts(id),
-          nextEligibleAt: 0,
+          attempts: 0,
+          nextEligibleAt: Number.POSITIVE_INFINITY,
         });
         return;
       }
@@ -221,12 +204,17 @@ async function downloadOne(id: string, dl: Cache, auto: Cache) {
       }
       await dl.put(canonical, resp);
     }
-    postDownload("download-added", canonical);
+    postCacheEvent(DOWNLOAD_EVENTS_CHANNEL, "download-added", canonical);
     // If it was also auto-cached (e.g. a race with playback), drop that copy.
     if (await auto.match(canonical, { ignoreVary: true })) {
       await auto.delete(canonical);
       deleteAccessTime(canonical);
-      postAuto("cache-removed", canonical, "promoted");
+      postCacheEvent(
+        AUDIO_EVENTS_CHANNEL,
+        "cache-removed",
+        canonical,
+        "promoted",
+      );
     }
     failures.delete(id);
   } catch (e) {
@@ -245,7 +233,6 @@ function runPool(queue: string[], dl: Cache, auto: Cache): Promise<void> {
     const cap = () => (usePlayerStore.getState().isPlaying ? 1 : 2);
     const pump = () => {
       if (queue.length === 0 && active === 0) {
-        activePump = null;
         resolve();
         return;
       }
@@ -258,7 +245,6 @@ function runPool(queue: string[], dl: Cache, auto: Cache): Promise<void> {
         });
       }
     };
-    activePump = pump;
     pump();
   });
 }
@@ -271,6 +257,12 @@ async function reconcileOnce() {
 
   pruneOrphans();
   const desired = getDesiredSongIds();
+  // Ask for durable storage the first time anything is actually wanted offline
+  // — here rather than the switch, so a synced-in intent gets it too.
+  if (!persistRequested && desired.size > 0) {
+    persistRequested = true;
+    navigator.storage?.persist?.().catch(() => {});
+  }
   const dl = await caches.open(DOWNLOAD_CACHE_NAME);
   const auto = await caches.open(AUDIO_CACHE_NAME);
   const dlUrls = new Set(
@@ -347,7 +339,7 @@ function abortUndesired() {
 }
 
 /** Debounced entry point for every trigger. */
-export function requestReconcile() {
+function requestReconcile() {
   abortUndesired();
   if (running) {
     dirty = true;
@@ -364,7 +356,7 @@ export function requestReconcile() {
 function onVisibility() {
   if (document.visibilityState === "visible") {
     requestReconcile();
-    interval ??= setInterval(requestReconcile, 3 * 60 * 1000);
+    interval ??= setInterval(requestReconcile, RECONCILE_INTERVAL_MS);
   } else if (interval) {
     clearInterval(interval);
     interval = null;
@@ -383,13 +375,10 @@ export function initDownloadsReconciler() {
   usePlaylistStore.subscribe((s, p) => {
     if (s.playlists !== p.playlists) requestReconcile();
   });
-  usePlayerStore.subscribe((s, p) => {
-    if (s.isPlaying !== p.isPlaying) activePump?.();
-  });
   window.addEventListener("online", requestReconcile);
   document.addEventListener("visibilitychange", onVisibility);
   if (document.visibilityState === "visible") {
-    interval ??= setInterval(requestReconcile, 3 * 60 * 1000);
+    interval ??= setInterval(requestReconcile, RECONCILE_INTERVAL_MS);
   }
 
   requestReconcile();

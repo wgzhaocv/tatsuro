@@ -100,10 +100,6 @@ export function useIsOfflineEnabled(id: string): boolean {
   );
 }
 
-export function useHasDownloadsHydrated(): boolean {
-  return useDownloadsStore((s) => s.hasHydrated);
-}
-
 // ── Non-reactive helpers for the reconciler ─────────────────────────────────
 
 /**

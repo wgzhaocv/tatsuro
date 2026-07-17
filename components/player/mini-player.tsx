@@ -70,20 +70,18 @@ export function MiniPlayer() {
           controls. Rounded, lifted on a navy shadow; overflow-hidden lets the
           progress line ride the rounded top edge. pointer-events-auto re-arms
           the bar (the wrapper opts out above). */}
-      <div className="pointer-events-auto relative mx-auto max-w-2xl overflow-hidden rounded-2xl border border-white/55 bg-white/30 text-foreground shadow-float-navy backdrop-blur-xl backdrop-saturate-150 dark:border-white/15 dark:bg-dusk-navy/34">
-        {/* Cover-cast: the old site's trick — the cover's colour IS the bar,
-            half-lit and see-through. The neutral glass is pulled thin (just a
-            light/dark base tone so ink text keeps its contrast whatever the
-            cover is — Deep-Water Rule), and the cover colour rides strong on
-            top: a real cast, not a whisper. The colour is pre-refined
-            (saturation floored, lightness mid-banded) so it stays clean rather
-            than muddy at this strength, heavier in dusk where it glows on the
-            dark base. Under the progress line + content (both stack above);
-            crossfades on song change; transparent (glass left clean) while it
-            resolves / for an all-neutral cover. */}
+      <div className="pointer-events-auto relative mx-auto max-w-2xl overflow-hidden rounded-2xl border border-white/55 bg-white/48 text-foreground shadow-float-navy backdrop-blur-xl backdrop-saturate-150 dark:border-white/15 dark:bg-dusk-navy/52">
+        {/* Translucency comes from the glass itself — a thin fill over a strong,
+            saturated frost, so the room behind shows through alive rather than
+            greyed. The cover colour is only a whisper of tint on top (a flat
+            wash of it just muddies the glass), riding over the neutral base so
+            the light/dark tone — and ink-text contrast — holds whatever colour
+            the cover is (Deep-Water Rule). Under the progress line and content
+            (both stack above); crossfades on song change; transparent while it
+            resolves / for an all-neutral cover leaves the glass clean. */}
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-0 opacity-[0.34] transition-colors duration-700 ease-lazy dark:opacity-[0.48]"
+          className="pointer-events-none absolute inset-0 opacity-[0.10] transition-colors duration-700 ease-lazy dark:opacity-[0.16]"
           style={{ backgroundColor: tint ?? "transparent" }}
         />
         <MiniProgress />

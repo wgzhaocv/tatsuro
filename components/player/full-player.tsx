@@ -114,179 +114,195 @@ export function FullPlayer() {
           // notch; this keeps the bottom transport row (the lowest control on
           // phones) above the home indicator / gesture bar, matching BottomNav
           // and MiniPlayer. 0 on desktop where the inset resolves to 0.
-          className="fixed inset-0 isolate z-50 flex flex-col overflow-y-auto bg-background pb-[env(safe-area-inset-bottom)] outline-none duration-500 ease-lazy data-closed:animate-out data-closed:fade-out-0 data-closed:slide-out-to-bottom-8 data-open:animate-in data-open:fade-in-0 data-open:slide-in-from-bottom-8"
+          //
+          // The Popup itself only *fades* — the bottom-up slide lives on the
+          // inner chrome+content wrapper (group-data below). Reason: the
+          // ambient wash is a viewport-filling `blur-xl`, and transform-
+          // animating an ancestor of a blurred layer forces the GPU to re-
+          // rasterise that blur every frame (profiled: two ~180ms freezes on
+          // open). Opacity on the ancestor composites the already-rastered
+          // blur cheaply, so the wash cross-fades while the controls slide.
+          className="group fixed inset-0 isolate z-50 flex flex-col overflow-y-auto bg-background pb-[env(safe-area-inset-bottom)] outline-none duration-500 ease-lazy data-closed:animate-out data-closed:fade-out-0 data-open:animate-in data-open:fade-in-0"
         >
           {/* ── Ambient: the cover's own colour fills the room — the same
               Cover Ambient material as the album screen, one recipe ── */}
           {cover && <AlbumAmbient cover={coverUrl(cover)} />}
 
-          {/* ── Chrome: collapse + context ──
+          {/* Everything but the ambient rides the bottom-up slide, driven off
+              the Popup's data-open (group-data) so it stays in lockstep with
+              the dialog's own fade. Kept a flex-col that fills the Popup so the
+              header/stage/transport layout is unchanged. */}
+          <div className="flex min-h-0 flex-1 flex-col duration-500 ease-lazy group-data-closed:animate-out group-data-closed:slide-out-to-bottom-8 group-data-open:animate-in group-data-open:slide-in-from-bottom-8">
+            {/* ── Chrome: collapse + context ──
               flex-wrap so on phones the action buttons stay up on the
               close button's row and the "playing from" caption folds onto its
               own full-width line below (basis-full) — legible, not squeezed to
               an ellipsis between the buttons. On lg the caption goes back inline
               and centred (flex-1) with room to spare. */}
-          <header className="mx-auto flex w-full max-w-3xl flex-wrap items-center gap-x-3 gap-y-1.5 px-5 pt-[max(1.25rem,env(safe-area-inset-top))] sm:px-8 lg:max-w-6xl lg:flex-nowrap">
-            <DialogPrimitive.Close
-              render={
-                <Button
-                  variant="glass-ink"
-                  size="icon-lg"
-                  aria-label={t("close")}
-                  className="size-11 rounded-full"
-                />
-              }
-            >
-              <CaretDown size={20} weight="bold" aria-hidden />
-            </DialogPrimitive.Close>
-            {contextLabel &&
-              (contextHref ? (
-                // Tap to return to where the queue is playing from — the album
-                // or playlist — landing on the current song. Full-width own row
-                // on phones (basis-full) so the tap target stays generous.
-                <button
-                  type="button"
-                  onClick={() => jumpAndHighlight(contextHref)}
-                  lang={isJapanese(contextLabel) ? "ja" : undefined}
-                  className="order-last flex min-h-11 basis-full items-center justify-center gap-1.5 rounded-full text-center text-[13px] font-medium text-foreground/80 outline-none transition-colors duration-500 ease-lazy hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50 lg:order-none lg:min-h-0 lg:min-w-0 lg:flex-1 lg:basis-auto"
-                >
-                  <span className="truncate">
-                    {t("playingFrom", { context: contextLabel })}
-                  </span>
-                </button>
-              ) : (
-                <p
-                  lang={isJapanese(contextLabel) ? "ja" : undefined}
-                  className="order-last basis-full truncate text-center text-[13px] font-medium text-foreground/80 lg:order-none lg:min-w-0 lg:flex-1 lg:basis-auto"
-                >
-                  {t("playingFrom", { context: contextLabel })}
-                </p>
-              ))}
-            <div className="ml-auto flex shrink-0 items-center gap-1">
-              <LikeButton song={enrichedSong} className="size-11" />
-              <AddToPlaylistButton song={enrichedSong} className="size-11" />
-              {song.albumId && (
-                <Tooltip>
-                  <TooltipTrigger
-                    render={
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        aria-label={tSong("openAlbum")}
-                        onClick={viewAlbum}
-                        className="size-11 rounded-full"
-                      >
-                        <VinylRecord
-                          className="size-[18px] text-muted-foreground group-hover/button:text-foreground"
-                          aria-hidden
-                        />
-                      </Button>
-                    }
+            <header className="mx-auto flex w-full max-w-3xl flex-wrap items-center gap-x-3 gap-y-1.5 px-5 pt-[max(1.25rem,env(safe-area-inset-top))] sm:px-8 lg:max-w-6xl lg:flex-nowrap">
+              <DialogPrimitive.Close
+                render={
+                  <Button
+                    variant="glass-ink"
+                    size="icon-lg"
+                    aria-label={t("close")}
+                    className="size-11 rounded-full"
                   />
-                  <TooltipContent>{tSong("openAlbum")}</TooltipContent>
-                </Tooltip>
-              )}
-              <ShareButton song={enrichedSong} className="size-11" />
-              <Button
-                variant={showLyrics ? "action" : "glass-ink"}
-                size="icon-lg"
-                aria-label={showLyrics ? t("hideLyrics") : t("showLyrics")}
-                aria-pressed={showLyrics}
-                onClick={() => setShowLyrics((v) => !v)}
-                // Desktop shows lyrics beside the cover permanently — the flip
-                // is a phone affordance.
-                className="size-11 rounded-full lg:hidden"
+                }
               >
-                {/* Mic = lyrics/sing-along — the convention the old site used
+                <CaretDown size={20} weight="bold" aria-hidden />
+              </DialogPrimitive.Close>
+              {contextLabel &&
+                (contextHref ? (
+                  // Tap to return to where the queue is playing from — the album
+                  // or playlist — landing on the current song. Full-width own row
+                  // on phones (basis-full) so the tap target stays generous.
+                  <button
+                    type="button"
+                    onClick={() => jumpAndHighlight(contextHref)}
+                    lang={isJapanese(contextLabel) ? "ja" : undefined}
+                    className="order-last flex min-h-11 basis-full items-center justify-center gap-1.5 rounded-full text-center text-[13px] font-medium text-foreground/80 outline-none transition-colors duration-500 ease-lazy hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50 lg:order-none lg:min-h-0 lg:min-w-0 lg:flex-1 lg:basis-auto"
+                  >
+                    <span className="truncate">
+                      {t("playingFrom", { context: contextLabel })}
+                    </span>
+                  </button>
+                ) : (
+                  <p
+                    lang={isJapanese(contextLabel) ? "ja" : undefined}
+                    className="order-last basis-full truncate text-center text-[13px] font-medium text-foreground/80 lg:order-none lg:min-w-0 lg:flex-1 lg:basis-auto"
+                  >
+                    {t("playingFrom", { context: contextLabel })}
+                  </p>
+                ))}
+              <div className="ml-auto flex shrink-0 items-center gap-1">
+                <LikeButton song={enrichedSong} className="size-11" />
+                <AddToPlaylistButton song={enrichedSong} className="size-11" />
+                {song.albumId && (
+                  <Tooltip>
+                    <TooltipTrigger
+                      render={
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          aria-label={tSong("openAlbum")}
+                          onClick={viewAlbum}
+                          className="size-11 rounded-full"
+                        >
+                          <VinylRecord
+                            className="size-[18px] text-muted-foreground group-hover/button:text-foreground"
+                            aria-hidden
+                          />
+                        </Button>
+                      }
+                    />
+                    <TooltipContent>{tSong("openAlbum")}</TooltipContent>
+                  </Tooltip>
+                )}
+                <ShareButton song={enrichedSong} className="size-11" />
+                <Button
+                  variant={showLyrics ? "action" : "glass-ink"}
+                  size="icon-lg"
+                  aria-label={showLyrics ? t("hideLyrics") : t("showLyrics")}
+                  aria-pressed={showLyrics}
+                  onClick={() => setShowLyrics((v) => !v)}
+                  // Desktop shows lyrics beside the cover permanently — the flip
+                  // is a phone affordance.
+                  className="size-11 rounded-full lg:hidden"
+                >
+                  {/* Mic = lyrics/sing-along — the convention the old site used
                     too; a bare quote glyph read as nothing to actual users. */}
-                <MicrophoneStage size={20} weight="fill" aria-hidden />
-              </Button>
-            </div>
-          </header>
+                  <MicrophoneStage size={20} weight="fill" aria-hidden />
+                </Button>
+              </div>
+            </header>
 
-          {/* ── Cover ⇄ lyrics · identity · transport. Phones flip between a
+            {/* ── Cover ⇄ lyrics · identity · transport. Phones flip between a
               big cover and a lyrics-first view (thumbnail row + full-height
               list). Desktop (lg+) is ONE view: cover + caption left, lyrics
               right, and the control strip (spectrum · seek · transport)
               spanning the bottom of the same rail as the header. ── */}
-          <div
-            className={cn(
-              "mx-auto flex min-h-0 w-full max-w-3xl flex-1 flex-col items-center justify-evenly gap-6 px-6 py-6 sm:gap-8 sm:px-8 sm:py-8",
-              "lg:grid lg:max-w-6xl lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)] lg:grid-rows-[minmax(0,1fr)_auto] lg:gap-x-16 lg:gap-y-6",
-            )}
-          >
-            {/* Left cell / phone flip area. Only the phone presentation
+            <div
+              className={cn(
+                "mx-auto flex min-h-0 w-full max-w-3xl flex-1 flex-col items-center justify-evenly gap-6 px-6 py-6 sm:gap-8 sm:px-8 sm:py-8",
+                "lg:grid lg:max-w-6xl lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)] lg:grid-rows-[minmax(0,1fr)_auto] lg:gap-x-16 lg:gap-y-6",
+              )}
+            >
+              {/* Left cell / phone flip area. Only the phone presentation
                 differs between the two modes — on lg both render the same
                 cover + caption. */}
-            {showLyrics ? (
-              <div className="flex w-full max-w-xl shrink-0 items-center gap-3.5 lg:col-start-1 lg:row-start-1 lg:max-w-none lg:flex-col lg:items-center lg:justify-center lg:gap-6 lg:self-stretch">
-                <div className="relative aspect-square w-12 shrink-0 overflow-hidden rounded-[10px] bg-secondary shadow-postcard lg:w-[min(18rem,30vh)] lg:rounded-[20px]">
-                  {cover && (
-                    <FadeImage
-                      src={coverUrl(cover)}
-                      sizes="(min-width: 1024px) 288px, 48px"
-                    />
-                  )}
+              {showLyrics ? (
+                <div className="flex w-full max-w-xl shrink-0 items-center gap-3.5 lg:col-start-1 lg:row-start-1 lg:max-w-none lg:flex-col lg:items-center lg:justify-center lg:gap-6 lg:self-stretch">
+                  <div className="relative aspect-square w-12 shrink-0 overflow-hidden rounded-[10px] bg-secondary shadow-postcard lg:w-[min(18rem,30vh)] lg:rounded-[20px]">
+                    {cover && (
+                      <FadeImage
+                        src={coverUrl(cover)}
+                        sizes="(min-width: 1024px) 288px, 48px"
+                      />
+                    )}
+                  </div>
+                  <Caption
+                    song={song}
+                    albumName={albumName}
+                    className="min-w-0 lg:w-full lg:text-center"
+                    titleClassName="truncate text-[17px] leading-snug lg:text-[1.375rem] lg:leading-[1.25]"
+                    subClassName="text-[13px] lg:mt-1 lg:text-sm"
+                  />
                 </div>
-                <Caption
-                  song={song}
-                  albumName={albumName}
-                  className="min-w-0 lg:w-full lg:text-center"
-                  titleClassName="truncate text-[17px] leading-snug lg:text-[1.375rem] lg:leading-[1.25]"
-                  subClassName="text-[13px] lg:mt-1 lg:text-sm"
-                />
-              </div>
-            ) : (
-              // `contents` keeps the phone flex layout flat; on lg this
-              // becomes the left cell: artwork with its caption beneath.
-              <div className="contents lg:col-start-1 lg:row-start-1 lg:flex lg:min-h-0 lg:flex-col lg:items-center lg:justify-center lg:gap-6 lg:self-stretch">
-                <div className="relative aspect-square w-[min(78vw,38vh)] shrink-0 overflow-hidden rounded-[20px] bg-secondary shadow-postcard sm:w-[min(52vw,44vh)] lg:w-[min(18rem,30vh)]">
-                  {cover && (
-                    <FadeImage
-                      src={coverUrl(cover)}
-                      priority
-                      sizes="(max-width: 640px) 78vw, 44vh"
-                    />
-                  )}
+              ) : (
+                // `contents` keeps the phone flex layout flat; on lg this
+                // becomes the left cell: artwork with its caption beneath.
+                <div className="contents lg:col-start-1 lg:row-start-1 lg:flex lg:min-h-0 lg:flex-col lg:items-center lg:justify-center lg:gap-6 lg:self-stretch">
+                  <div className="relative aspect-square w-[min(78vw,38vh)] shrink-0 overflow-hidden rounded-[20px] bg-secondary shadow-postcard sm:w-[min(52vw,44vh)] lg:w-[min(18rem,30vh)]">
+                    {cover && (
+                      <FadeImage
+                        src={coverUrl(cover)}
+                        priority
+                        sizes="(max-width: 640px) 78vw, 44vh"
+                      />
+                    )}
+                  </div>
+                  <Caption
+                    song={song}
+                    albumName={albumName}
+                    className="hidden text-center lg:block"
+                    titleClassName="text-[1.375rem] leading-[1.25] [text-wrap:balance]"
+                    subClassName="mt-1 text-sm"
+                  />
                 </div>
-                <Caption
-                  song={song}
-                  albumName={albumName}
-                  className="hidden text-center lg:block"
-                  titleClassName="text-[1.375rem] leading-[1.25] [text-wrap:balance]"
-                  subClassName="mt-1 text-sm"
-                />
-              </div>
-            )}
+              )}
 
-            {/* The words themselves: the flipped-to view on phones, always
+              {/* The words themselves: the flipped-to view on phones, always
                 beside the cover on lg. max-lg:hidden (not `hidden lg:block`)
                 so each panel state keeps its own display type. */}
-            <LyricsPanel
-              songId={song.id}
-              className={cn(
-                showLyrics ? "min-h-0 w-full max-w-xl flex-1" : "max-lg:hidden",
-                "lg:col-start-2 lg:row-start-1 lg:min-h-0 lg:max-w-none lg:self-stretch",
-              )}
-            />
+              <LyricsPanel
+                songId={song.id}
+                className={cn(
+                  showLyrics
+                    ? "min-h-0 w-full max-w-xl flex-1"
+                    : "max-lg:hidden",
+                  "lg:col-start-2 lg:row-start-1 lg:min-h-0 lg:max-w-none lg:self-stretch",
+                )}
+              />
 
-            {/* Control strip: on lg it always spans the stage bottom, with
+              {/* Control strip: on lg it always spans the stage bottom, with
                 the spectrum breathing just above the scrubber. */}
-            <div className="w-full max-w-xl shrink-0 lg:col-span-full lg:col-start-1 lg:row-start-2 lg:max-w-none">
-              {!showLyrics && (
-                <Caption
-                  song={song}
-                  albumName={albumName}
-                  className="text-center lg:hidden"
-                  titleClassName="text-2xl leading-[1.2] sm:text-[1.75rem] [text-wrap:balance]"
-                  subClassName="mt-1.5 text-[15px] text-foreground/85"
-                />
-              )}
+              <div className="w-full max-w-xl shrink-0 lg:col-span-full lg:col-start-1 lg:row-start-2 lg:max-w-none">
+                {!showLyrics && (
+                  <Caption
+                    song={song}
+                    albumName={albumName}
+                    className="text-center lg:hidden"
+                    titleClassName="text-2xl leading-[1.2] sm:text-[1.75rem] [text-wrap:balance]"
+                    subClassName="mt-1.5 text-[15px] text-foreground/85"
+                  />
+                )}
 
-              <Spectrum className="hidden h-12 lg:block" />
-              <SeekBar />
-              <TransportControls />
-              <VolumeControl />
+                <Spectrum className="hidden h-12 lg:block" />
+                <SeekBar />
+                <TransportControls />
+                <VolumeControl />
+              </div>
             </div>
           </div>
         </DialogPrimitive.Popup>

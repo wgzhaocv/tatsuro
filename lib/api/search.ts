@@ -31,26 +31,54 @@ const SONG_CAP = 50;
 
 export type SearchResults = { albums: SearchAlbum[]; songs: SearchSong[] };
 
+// Folding runs per haystack: doing it inside the keystroke filter cost ~2000
+// normalize() calls (each a lowercase + kana regex pass) per key. Fold each
+// row once per fetched index instead — the WeakMap keys on the index object,
+// so a refetched index just re-folds and the old one is collected. A song's
+// three names share one haystack ("\n"-joined; queries never contain one).
+type Folded = {
+  albums: [string, SearchAlbum][];
+  songs: [string, SearchSong][];
+};
+const foldedCache = new WeakMap<SearchIndex, Folded>();
+
+function foldedIndex(index: SearchIndex): Folded {
+  let folded = foldedCache.get(index);
+  if (!folded) {
+    folded = {
+      albums: index.albums.map((a) => [normalize(a.name), a]),
+      songs: index.songs.map((s) => [
+        `${normalize(s.ja)}\n${normalize(s.en)}\n${normalize(s.n)}`,
+        s,
+      ]),
+    };
+    foldedCache.set(index, folded);
+  }
+  return folded;
+}
+
 /** In-memory substring search. Albums match their name; songs match ja / en /
  *  bare name (any). Empty query → no results. Capped so the palette renders only
- *  a screenful (no virtualization needed). */
+ *  a screenful (no virtualization needed) — and the scan stops at the caps. */
 export function filterIndex(
   index: SearchIndex | undefined,
   query: string,
 ): SearchResults {
   const q = normalize(query);
   if (!index || !q) return { albums: [], songs: [] };
-  const albums = index.albums
-    .filter((a) => normalize(a.name).includes(q))
-    .slice(0, ALBUM_CAP);
-  const songs = index.songs
-    .filter(
-      (s) =>
-        normalize(s.ja).includes(q) ||
-        normalize(s.en).includes(q) ||
-        normalize(s.n).includes(q),
-    )
-    .slice(0, SONG_CAP);
+  const folded = foldedIndex(index);
+  const albums: SearchAlbum[] = [];
+  for (const [haystack, album] of folded.albums) {
+    if (!haystack.includes(q)) continue;
+    albums.push(album);
+    if (albums.length === ALBUM_CAP) break;
+  }
+  const songs: SearchSong[] = [];
+  for (const [haystack, song] of folded.songs) {
+    if (!haystack.includes(q)) continue;
+    songs.push(song);
+    if (songs.length === SONG_CAP) break;
+  }
   return { albums, songs };
 }
 

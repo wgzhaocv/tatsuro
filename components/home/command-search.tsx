@@ -3,7 +3,13 @@
 import { MagnifyingGlassIcon } from "@phosphor-icons/react";
 import Image from "next/image";
 import { useLocale, useTranslations } from "next-intl";
-import { type ReactNode, useEffect, useMemo, useState } from "react";
+import {
+  type ReactNode,
+  useDeferredValue,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { Button } from "@/components/ui/button";
 import {
   Command,
@@ -50,9 +56,16 @@ export function CommandSearch() {
   const arm = () => setArmed(true);
 
   const { data, isLoading } = useSearchIndex(armed || open);
-  const results = useMemo(() => filterIndex(data, query), [data, query]);
+  // Deferred: the input echoes at typing speed; the list (and the "no
+  // results" verdict, which must not flash while the filter lags a beat)
+  // follows on the deferred value.
+  const deferredQuery = useDeferredValue(query);
+  const results = useMemo(
+    () => filterIndex(data, deferredQuery),
+    [data, deferredQuery],
+  );
   const lang = nameLang(locale);
-  const hasQuery = query.trim().length > 0;
+  const hasQuery = deferredQuery.trim().length > 0;
   const noResults =
     hasQuery && results.albums.length === 0 && results.songs.length === 0;
 

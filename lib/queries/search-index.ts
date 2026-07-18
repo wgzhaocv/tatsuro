@@ -10,9 +10,13 @@ import type { SearchIndex } from "@/lib/api/types";
 
 export const searchIndexKey = ["search-index"] as const;
 
-export function useSearchIndex() {
+/** `enabled` gates the fetch on search intent (palette opened / button
+ *  hovered) — otherwise every session paid the ~17KB download on first paint,
+ *  searched or not. The index arrives well within the palette's open beat. */
+export function useSearchIndex(enabled = true) {
   return useQuery<SearchIndex>({
     queryKey: searchIndexKey,
     queryFn: fetchSearchIndex,
+    enabled,
   });
 }

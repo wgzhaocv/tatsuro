@@ -43,7 +43,13 @@ export function CommandSearch() {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
 
-  const { data, isLoading } = useSearchIndex();
+  // Fetch the index on intent, not on page load: hovering/focusing the search
+  // button arms it (same philosophy as HoverPrefetchLink), opening the palette
+  // does too (the touch path, where there's no hover).
+  const [armed, setArmed] = useState(false);
+  const arm = () => setArmed(true);
+
+  const { data, isLoading } = useSearchIndex(armed || open);
   const results = useMemo(() => filterIndex(data, query), [data, query]);
   const lang = nameLang(locale);
   const hasQuery = query.trim().length > 0;
@@ -74,6 +80,8 @@ export function CommandSearch() {
         variant="glass"
         size="icon"
         onClick={() => setOpen(true)}
+        onPointerEnter={arm}
+        onFocus={arm}
         aria-label={tn("search")}
         className="size-11 rounded-full"
       >

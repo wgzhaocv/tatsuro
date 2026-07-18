@@ -11,6 +11,15 @@ export function coverUrl(coverId: string): string {
   return `${API}/stream/img/${coverId}`;
 }
 
+/** The next/image optimizer variant of a remote image — the URL the on-screen
+ *  <Image> actually requests, so fetching it usually hits the HTTP cache (and
+ *  the SW cover cache, so it works offline) instead of pulling the ~1MB
+ *  original. `width` must be one of next.config's imageSizes/deviceSizes and
+ *  75 is the only configured quality, or /_next/image rejects the request. */
+export function nextImageUrl(src: string, width: number): string {
+  return `/_next/image?url=${encodeURIComponent(src)}&w=${width}&q=75`;
+}
+
 /** Playable audio stream (supports HTTP Range). */
 export function songStreamUrl(songId: string): string {
   return `${API}/stream/new_play/${songId}`;

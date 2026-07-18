@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { coverUrl, songStreamUrl } from "@/lib/api/urls";
+import { coverUrl, nextImageUrl, songStreamUrl } from "@/lib/api/urls";
 import { ARTIST } from "@/lib/constants";
 import { ensureAnalyser } from "@/lib/player/analyser";
 import { usePlayerStore, useProgressStore } from "@/lib/player/store";
@@ -241,9 +241,12 @@ export function AudioEngine() {
     if (!("mediaSession" in navigator)) return;
     const ms = navigator.mediaSession;
     if (song) {
+      // Optimizer variants, not the raw backend URL: the original is ~1MB per
+      // cover, never in any cache the pages warmed, and invisible to the SW
+      // cover cache — so lock screens cost a megabyte and lost art offline.
       const artwork = song.coverFrontId
-        ? [128, 256, 512].map((s) => ({
-            src: coverUrl(song.coverFrontId as string),
+        ? [128, 256, 640].map((s) => ({
+            src: nextImageUrl(coverUrl(song.coverFrontId as string), s),
             sizes: `${s}x${s}`,
           }))
         : [];

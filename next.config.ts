@@ -19,7 +19,20 @@ const nextConfig: NextConfig = {
   // built-in checker needs — `bun run build` runs `tsc --noEmit` itself
   // before next build, so types are still enforced, just not by Next.
   typescript: { ignoreBuildErrors: true },
+  // Rewrite the icon barrel imports into direct paths: the barrel re-exports
+  // ~1500 modules, which dev/build otherwise parse in full and tree-shaking
+  // has to unpick (Next's built-in optimize list doesn't cover phosphor).
+  experimental: {
+    optimizePackageImports: [
+      "@phosphor-icons/react",
+      "@phosphor-icons/react/dist/ssr",
+    ],
+  },
   images: {
+    // AVIF first: covers and beach photos are photographic content, where
+    // AVIF runs ~20-30% smaller than WebP at the same quality. Doubles the
+    // set of unique Vercel transforms (~240 → ~500), still well inside quota.
+    formats: ["image/avif", "image/webp"],
     // Only the backend serves runtime remote images. Gate/demo photos are local
     // static imports (app/**/_assets), which don't need remotePatterns.
     remotePatterns: [

@@ -174,7 +174,12 @@ async function downloadOne(id: string, dl: Cache, auto: Cache) {
   inFlight.set(id, ctrl);
   setDownloading(id, true);
   try {
-    let resp = await fetch(reqUrl.href, { signal: ctrl.signal });
+    // no-store: skip the browser HTTP cache (30d immutable, but content can
+    // change under the same URL after a re-import) — mirror of the SW handler.
+    let resp = await fetch(reqUrl.href, {
+      signal: ctrl.signal,
+      cache: "no-store",
+    });
     if (resp.status === 404 || resp.status === 410) {
       failures.set(id, {
         kind: "permanent",
@@ -203,7 +208,11 @@ async function downloadOne(id: string, dl: Cache, auto: Cache) {
         });
         return;
       }
-      resp = await fetch(reqUrl.href, { signal: ctrl.signal }); // body consumed by the failed put
+      // body consumed by the failed put
+      resp = await fetch(reqUrl.href, {
+        signal: ctrl.signal,
+        cache: "no-store",
+      });
       if (!resp.ok || resp.status !== 200) {
         markNetworkFail(id);
         return;

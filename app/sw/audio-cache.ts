@@ -22,6 +22,14 @@
 //
 // Eviction budget + LRU + the 206 slicer live in lib/offline/* so this handler
 // and the client share them (that code is worker-safe: no env, no DOM/React).
+//
+// Every network fetch here uses `cache: "no-store"`: audio URLs are served with
+// a 30-day immutable Cache-Control, but their content CAN change under the same
+// URL (a re-import fixing a bad track extraction). The Cache Storage buckets are
+// the single client-side cache for audio — if the HTTP cache were consulted, a
+// More-page clear would just re-fill the SW cache with the stale HTTP copy and
+// the fix would never reach the listener. no-store skips the HTTP cache in both
+// directions (no read, no write) while leaving CF's edge cache untouched.
 
 import type { RouteHandlerCallbackOptions } from "serwist";
 import {
@@ -74,12 +82,12 @@ export const audioStreamHandler = {
     // URL (marker stripped) so the origin never sees the param; the reconciler
     // stores the body into the download bucket itself.
     if (isMarked) {
-      return fetch(new Request(canonical), { signal: request.signal });
+      return fetch(canonical, { signal: request.signal, cache: "no-store" });
     }
 
     // Unmarked miss: play now from the network, cache the full file in the
     // background (keyed canonically).
-    const originalResponse = fetch(request.clone());
+    const originalResponse = fetch(request.clone(), { cache: "no-store" });
 
     if (!downloadingUrls.has(canonical)) {
       downloadingUrls.add(canonical);
@@ -98,7 +106,7 @@ async function downloadAndCache(url: string, cache: Cache) {
     await evictAutoLru({ toBudget: await getAutoCacheBudget() });
 
     // Fetch the complete file — explicitly without a Range header.
-    const response = await fetch(new Request(url, { method: "GET" }));
+    const response = await fetch(url, { method: "GET", cache: "no-store" });
     if (response.ok && response.status === 200) {
       await cache.put(url, response.clone());
       await setAccessTime(url, Date.now());

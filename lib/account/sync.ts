@@ -135,9 +135,21 @@ export function scheduleSync(): void {
   }, DEBOUNCE_MS);
 }
 
+// Every user mutation stamps updatedAt = now() on some playlist, so the max
+// stamp is a cheap edit signature. Reference changes without a new stamp —
+// persist.rehydrate(), hydrateSongs' metadata backfill — are not edits and
+// must not schedule a push (they used to cost 1–2 redundant whole-library
+// POSTs per app open).
+function playlistEditStamp(playlists: { updatedAt: number }[]): number {
+  let max = 0;
+  for (const p of playlists) if (p.updatedAt > max) max = p.updatedAt;
+  return max;
+}
+
 /** Wire a debounced push to every user playlist/pin mutation. Returns
- *  unsubscribe. Skips changes made by our own adopt/hydrate, and no-ops without
- *  a token. */
+ *  unsubscribe. Skips changes made by our own adopt/hydrate, pre-hydration
+ *  writes (the bootstrap's explicit first syncNow covers those), and no-ops
+ *  without a token. */
 export function startAutoSync(): () => void {
   const trigger = () => {
     if (applyingRemote) return; // our own adopt writing back — not a user edit
@@ -145,12 +157,18 @@ export function startAutoSync(): () => void {
     scheduleSync();
   };
   const unsubPlaylists = usePlaylistStore.subscribe((state, prev) => {
-    if (state.playlists !== prev.playlists) trigger();
+    if (!state.hasHydrated) return;
+    if (
+      playlistEditStamp(state.playlists) !== playlistEditStamp(prev.playlists)
+    )
+      trigger();
   });
   const unsubPins = usePinStore.subscribe((state, prev) => {
+    if (!state.hasHydrated) return;
     if (state.pins !== prev.pins) trigger();
   });
   const unsubDownloads = useDownloadsStore.subscribe((state, prev) => {
+    if (!state.hasHydrated) return;
     if (state.intents !== prev.intents) trigger();
   });
   return () => {

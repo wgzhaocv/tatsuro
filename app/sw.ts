@@ -22,7 +22,16 @@ declare global {
 declare const self: ServiceWorkerGlobalScope;
 
 const serwist = new Serwist({
-  precacheEntries: self.__SW_MANIFEST,
+  // The build manifest lists every /_next/static asset — including the hero
+  // photo originals (~3MB of JPEG). Pages never request those URLs (they
+  // render /_next/image variants), so precaching them charges every new
+  // visitor megabytes for zero hits. Keep code and fonts; drop images.
+  // Serwist's activate cleanup also evicts the photos already precached on
+  // existing installs once they leave this list.
+  precacheEntries: (self.__SW_MANIFEST ?? []).filter((entry) => {
+    const url = typeof entry === "string" ? entry : entry.url;
+    return !/\.(?:jpe?g|png|webp|avif|gif)(?:\?|$)/i.test(url);
+  }),
   skipWaiting: true,
   clientsClaim: true,
 });

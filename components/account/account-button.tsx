@@ -51,7 +51,7 @@ export function AccountButton() {
               aria-label={t("label")}
               // Padding drops to 0 when the avatar fills the button, so the
               // photo reaches the rim; the cloud icons keep the inset.
-              className="group relative grid size-11 place-items-center overflow-hidden rounded-full border border-white/60 bg-card/80 text-foreground shadow-lift-navy backdrop-blur-xl transition-shadow duration-400 ease-lazy hover:shadow-lift-ocean focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean/40 dark:border-white/15 dark:hover:shadow-lift-coral dark:focus-visible:ring-sky-bright/40"
+              className="group relative grid size-11 place-items-center overflow-hidden rounded-full border border-white/60 bg-card/80 text-foreground shadow-lift-navy backdrop-blur-xs transition-shadow duration-400 ease-lazy hover:shadow-lift-ocean focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean/40 dark:border-white/15 dark:hover:shadow-lift-coral dark:focus-visible:ring-sky-bright/40"
             >
               {connected ? (
                 <ConnectedGlyph user={user} />

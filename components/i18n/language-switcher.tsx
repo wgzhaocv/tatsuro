@@ -36,7 +36,7 @@ export function LanguageSwitcher() {
     >
       <SelectTrigger
         aria-label={t("label")}
-        className="gap-1 rounded-full border-white/60 bg-card/80 px-4 font-medium text-foreground shadow-lift-navy backdrop-blur-xl dark:border-white/15"
+        className="gap-1 rounded-full border-white/60 bg-card/80 px-4 font-medium text-foreground shadow-lift-navy backdrop-blur-xs dark:border-white/15"
       >
         <SelectValue>{SHORT[locale]}</SelectValue>
       </SelectTrigger>

@@ -31,7 +31,7 @@ export function ThemeToggle({ className }: { className?: string }) {
             aria-label={t("toggle")}
             onClick={() => setTheme(isDark ? "light" : "dark")}
             className={cn(
-              "group relative grid size-11 place-items-center rounded-full border border-white/60 bg-card/80 text-foreground shadow-lift-navy backdrop-blur-xl transition-shadow duration-400 ease-lazy hover:shadow-lift-ocean focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean/40 dark:border-white/15 dark:hover:shadow-lift-coral dark:focus-visible:ring-sky-bright/40",
+              "group relative grid size-11 place-items-center rounded-full border border-white/60 bg-card/80 text-foreground shadow-lift-navy backdrop-blur-xs transition-shadow duration-400 ease-lazy hover:shadow-lift-ocean focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean/40 dark:border-white/15 dark:hover:shadow-lift-coral dark:focus-visible:ring-sky-bright/40",
               className,
             )}
           >

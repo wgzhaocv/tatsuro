@@ -19,6 +19,16 @@ import { useEffect, useState } from "react";
 // second player instance) reuses the result instead of refetching.
 const cache = new Map<string, string>();
 
+// The next/image optimizer variant of a cover, at the smallest width that
+// covers a 48×48 read. The raw backend original is ~1MB per cover and is never
+// what the on-screen <Image> requested; the mini bar's 44px cover at DPR 2
+// requests exactly w=96/q=75, so this URL is usually already in the HTTP cache
+// AND matches the SW cover cache (works offline). w must be one of Next's
+// imageSizes and q a configured quality, or /_next/image rejects the request.
+function optimizedCoverSrc(src: string): string {
+  return `/_next/image?url=${encodeURIComponent(src)}&w=96&q=75`;
+}
+
 /**
  * The dominant colour of `src` as a `#rrggbb` hex, or `null` while it resolves
  * / if it can't (unsupported browser, fetch or decode failure) — callers should
@@ -52,9 +62,11 @@ export function useDominantColor(
     let cancelled = false;
     (async () => {
       try {
-        // force-cache: the cover is very likely already in the browser cache
-        // from the <Image> that shows it, so this rarely costs a real request.
-        const res = await fetch(src, { cache: "force-cache" });
+        // force-cache: the same variant was just fetched by the <Image> that
+        // shows this cover, so this rarely costs a real request.
+        const res = await fetch(optimizedCoverSrc(src), {
+          cache: "force-cache",
+        });
         if (!res.ok) return;
         const blob = await res.blob();
         const bitmap = await createImageBitmap(blob, {

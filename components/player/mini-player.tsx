@@ -70,7 +70,7 @@ export function MiniPlayer() {
           controls. Rounded, lifted on a navy shadow; overflow-hidden lets the
           progress line ride the rounded top edge. pointer-events-auto re-arms
           the bar (the wrapper opts out above). */}
-      <div className="pointer-events-auto relative mx-auto max-w-2xl overflow-hidden rounded-2xl border border-white/55 bg-white/48 text-foreground shadow-float-navy backdrop-blur-xl backdrop-saturate-150 dark:border-white/15 dark:bg-dusk-navy/52">
+      <div className="pointer-events-auto relative mx-auto max-w-2xl overflow-hidden rounded-2xl border border-white/55 bg-white/48 text-foreground shadow-float-navy backdrop-blur-md backdrop-saturate-150 dark:border-white/15 dark:bg-dusk-navy/52">
         {/* Translucency comes from the glass itself — a thin fill over a strong,
             saturated frost, so the room behind shows through alive rather than
             greyed. The cover colour is only a whisper of tint on top (a flat
@@ -193,11 +193,14 @@ function MiniProgress() {
   // Hug the very top edge, but inset horizontally past the card's rounded
   // corners (radius ~36px) so the line never rides into the curve — the played
   // fill starts cleanly at the left of the straight edge, with a rounded cap.
+  // scaleX, not width: a 4Hz-updated width under a 300ms transition kept this
+  // line in layout+paint for the whole of playback; a transform stays on the
+  // compositor (the cap's rounding distortion is invisible at 3px).
   return (
     <div aria-hidden className="absolute inset-x-10 top-0 z-10 h-[3px]">
       <div
-        className="h-full rounded-full bg-[image:var(--gradient-action)] transition-[width] duration-300 ease-linear"
-        style={{ width: `${percent}%` }}
+        className="h-full w-full origin-left rounded-full bg-[image:var(--gradient-action)] transition-transform duration-300 ease-linear"
+        style={{ transform: `scaleX(${percent / 100})` }}
       />
     </div>
   );

@@ -23,9 +23,7 @@ export function PlayerDock() {
     <>
       <div
         aria-hidden
-        className={
-          hasSong ? "h-[5rem] shrink-0 transition-[height]" : "h-0 shrink-0"
-        }
+        className={hasSong ? "h-[5rem] shrink-0" : "h-0 shrink-0"}
       />
       <MiniPlayer />
       <FullPlayer />

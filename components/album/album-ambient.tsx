@@ -35,8 +35,11 @@ export function AlbumAmbient({
       {/* Decorative and heavily blurred — no priority preload (the crisp
           hero cover deserves that), but eager: it fills the viewport, so
           the browser flags it as LCP and lazy-loading it only delays it.
-          A small variant suffices: under blur-xl anything past a few hundred
-          pixels is invisible, and the saved bandwidth goes to real content. */}
+          A small variant suffices: under blur-xl anything past a hundred-odd
+          pixels is invisible. sizes multiplies by DPR when picking from the
+          srcset — 128px lands on the w=384 variant on a DPR-3 phone, which is
+          still far more than the blur can show ("384px" here used to resolve
+          to w=828+ and shipped 50-100KB of invisible detail per screen). */}
       {/* A still layer, deliberately: this used to breathe (12s infinite
           scale/opacity), but an animation nobody can see still keeps the
           compositor awake forever and forces the fixed backdrop-blur chrome
@@ -46,7 +49,7 @@ export function AlbumAmbient({
         <FadeImage
           src={cover}
           eager
-          sizes="384px"
+          sizes="128px"
           className="blur-xl saturate-[1.35]"
         />
       </div>

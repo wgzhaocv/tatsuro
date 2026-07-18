@@ -16,10 +16,11 @@ export function AlbumGrid({ albums }: { albums: Album[] }) {
     >
       {albums.map((album, i) => (
         <li key={album.id}>
-          {/* Eager-load the first row's covers: one of them is the LCP element,
-              and next/image lazy-loads by default. Covers the widest first row
-              (desktop ~6 cols); the rest stay lazy. */}
-          <AlbumCard album={album} priority={i < 6} />
+          {/* Eager-load the first row's covers (widest first row = desktop ~6
+              cols; the rest stay lazy), but mark only the first two
+              fetchpriority=high — the hero photo is the LCP and shouldn't
+              race six covers for bandwidth. */}
+          <AlbumCard album={album} eager={i < 6} high={i < 2} />
         </li>
       ))}
     </BrowseGrid>

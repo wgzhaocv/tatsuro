@@ -265,7 +265,10 @@ export function FullPlayer() {
                       <FadeImage
                         src={coverUrl(cover)}
                         priority
-                        sizes="(max-width: 640px) 78vw, 44vh"
+                        // lg caps the box at min(18rem,30vh) = 288px — without
+                        // this branch, 44vh on a tall desktop window jumped a
+                        // whole srcset step (w=828 for a 288px render).
+                        sizes="(max-width: 640px) 78vw, (min-width: 1024px) 288px, 44vh"
                       />
                     )}
                   </div>

@@ -14,12 +14,15 @@ import { isJapanese } from "@/lib/text";
  *  a small pin next to its title — a status marker only, off the cover. */
 export function AlbumCard({
   album,
-  priority,
+  eager,
+  high,
 }: {
   album: Album;
-  /** Set on the first row so the cover — the grid's LCP element — loads eager
-   *  with fetchpriority=high instead of next/image's default lazy. */
-  priority?: boolean;
+  /** First-row covers load eager instead of next/image's default lazy. */
+  eager?: boolean;
+  /** fetchpriority=high — only the first couple of covers: seven high-priority
+   *  requests just diluted each other and starved the hero photo (the LCP). */
+  high?: boolean;
 }) {
   const tc = useTranslations("category");
   const ta = useTranslations("album");
@@ -44,10 +47,9 @@ export function AlbumCard({
           src={coverUrl(album.coverFrontId)}
           alt=""
           fill
-          // Next 16 deprecated `priority`; drive the LCP hint directly. First
-          // row loads eager + high so the grid's LCP cover isn't lazy.
-          loading={priority ? "eager" : "lazy"}
-          fetchPriority={priority ? "high" : "auto"}
+          // Next 16 deprecated `priority`; drive the LCP hint directly.
+          loading={eager ? "eager" : "lazy"}
+          fetchPriority={high ? "high" : "auto"}
           sizes="(max-width: 640px) 45vw, 230px"
           className="object-cover"
         />

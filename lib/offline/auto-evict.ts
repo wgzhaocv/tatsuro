@@ -9,7 +9,14 @@ import {
   AUDIO_EVENTS_CHANNEL,
   DOWNLOAD_CACHE_NAME,
 } from "./constants";
-import { deleteAccessTime, deleteEntry, getAllAccessTimes } from "./lru-db";
+import {
+  type CacheEntry,
+  deleteAccessTime,
+  deleteEntry,
+  getAllAccessTimes,
+  getAllEntries,
+  putEntry,
+} from "./lru-db";
 
 // When estimate() is unavailable, 600 MiB × 0.5 reproduces the old 300 MB
 // default budget — while still shrinking once real downloads land.
@@ -23,10 +30,13 @@ export function sizeOf(resp: Response | undefined): number {
   return Number.parseInt(resp?.headers.get("Content-Length") ?? "0", 10) || 0;
 }
 
-// Only ever read Content-Length, never the body; but match() still hands back a
-// Response whose body stream the browser may buffer. Match in small batches and
-// cancel each body right away so peak memory stays flat no matter how big the
-// bucket is (opening a whole ~800 MB bucket at once OOM-reloads mobile Safari).
+// Sizes come from the IndexedDB metadata rows written at every cache mutation
+// (same source the More page reads) — NOT from cache.match, which hands back a
+// Response the browser may buffer per call. Every first play used to trigger a
+// full-bucket match sweep right as the stream was starting; now it's one IDB
+// getAll. match() survives only as a batched backfill for entries cached
+// before the metadata store existed, and each backfilled size is recorded so
+// it's paid once.
 const MATCH_CONCURRENCY = 6;
 
 async function entrySize(cache: Cache, req: Request): Promise<number> {
@@ -36,18 +46,34 @@ async function entrySize(cache: Cache, req: Request): Promise<number> {
   return n;
 }
 
-/** `[{url, size}]` for a bucket's keys, matched in small batches. */
-async function sizeEntries(
+/** `[{url, size}]` for a bucket — IDB metadata first, match only for gaps. */
+async function sizedBucketEntries(
   cache: Cache,
-  keys: readonly Request[],
+  bucket: CacheEntry["bucket"],
 ): Promise<{ url: string; size: number }[]> {
+  const keys = await cache.keys();
+  const recorded = new Map(
+    (await getAllEntries())
+      .filter((e) => e.bucket === bucket)
+      .map((e) => [e.url, e.bytes]),
+  );
+
   const out: { url: string; size: number }[] = [];
-  for (let i = 0; i < keys.length; i += MATCH_CONCURRENCY) {
-    const batch = keys.slice(i, i + MATCH_CONCURRENCY);
+  const missing: Request[] = [];
+  for (const k of keys) {
+    const bytes = recorded.get(k.url);
+    if (bytes) out.push({ url: k.url, size: bytes });
+    else missing.push(k);
+  }
+  for (let i = 0; i < missing.length; i += MATCH_CONCURRENCY) {
+    const batch = missing.slice(i, i + MATCH_CONCURRENCY);
     const sized = await Promise.all(
       batch.map(async (k) => ({ url: k.url, size: await entrySize(cache, k) })),
     );
-    out.push(...sized);
+    for (const e of sized) {
+      out.push(e);
+      if (e.size > 0) putEntry({ url: e.url, bucket, bytes: e.size });
+    }
   }
   return out;
 }
@@ -56,7 +82,7 @@ async function sizeEntries(
 export async function getDownloadBytes(): Promise<number> {
   try {
     const cache = await caches.open(DOWNLOAD_CACHE_NAME);
-    const entries = await sizeEntries(cache, await cache.keys());
+    const entries = await sizedBucketEntries(cache, "download");
     return entries.reduce((sum, e) => sum + e.size, 0);
   } catch {
     return 0;
@@ -98,7 +124,7 @@ export async function evictAutoLru(opts: {
 
   try {
     const cache = await caches.open(AUDIO_CACHE_NAME);
-    const entries = await sizeEntries(cache, await cache.keys());
+    const entries = await sizedBucketEntries(cache, "auto");
     let total = entries.reduce((sum, e) => sum + e.size, 0);
 
     // Already under budget and nothing specific to free — skip the access-time

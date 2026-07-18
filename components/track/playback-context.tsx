@@ -1,7 +1,7 @@
 "use client";
 
 import { Pause, Play } from "@phosphor-icons/react";
-import { createContext, useContext } from "react";
+import { createContext, useContext, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import type { Song } from "@/lib/api/types";
 import { usePlayerStore } from "@/lib/player/store";
@@ -35,10 +35,15 @@ export function QueuePlaybackProvider({
   href,
   children,
 }: QueuePlayback & { children: React.ReactNode }) {
+  // Memoized so a provider re-render with the same queue doesn't hand every
+  // consuming row a fresh context object (memo'd TrackRows would all re-render
+  // for nothing).
+  const value = useMemo(
+    () => ({ songs, label, queueId, href }),
+    [songs, label, queueId, href],
+  );
   return (
-    <QueueContext.Provider value={{ songs, label, queueId, href }}>
-      {children}
-    </QueueContext.Provider>
+    <QueueContext.Provider value={value}>{children}</QueueContext.Provider>
   );
 }
 

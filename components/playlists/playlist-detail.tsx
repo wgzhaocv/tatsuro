@@ -2,7 +2,7 @@
 
 import { ArrowLeft } from "@phosphor-icons/react";
 import { useTranslations } from "next-intl";
-import { useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { toast } from "sonner";
 import { AlbumAmbient } from "@/components/album/album-ambient";
 import { SharedSongHighlight } from "@/components/album/shared-song-highlight";
@@ -17,6 +17,7 @@ import { TrackRow } from "@/components/track/track-row";
 import { buttonVariants } from "@/components/ui/button";
 import { Link } from "@/components/ui/link";
 import { useRouter } from "@/i18n/navigation";
+import type { Song } from "@/lib/api/types";
 import { coverUrl } from "@/lib/api/urls";
 import { durationLabel } from "@/lib/format";
 import {
@@ -49,6 +50,28 @@ export function PlaylistDetail({ id }: { id: string }) {
   useEffect(() => {
     if (hydrated && !playlist) router.replace("/playlists");
   }, [hydrated, playlist, router]);
+
+  // Stable across renders (reads the entry via getState, not a closure over
+  // `playlist`), so the memo'd TrackRows aren't all re-rendered by a new
+  // callback identity every time anything in the store changes.
+  const handleRemove = useCallback(
+    (song: Song, index: number) => {
+      const entry = usePlaylistStore
+        .getState()
+        .playlists.find((p) => p.id === id)?.entries[index];
+      if (!entry) return;
+      removeSong(id, song.id);
+      toast(t("removedFromPlaylist"), {
+        // A touch longer than the default so there's a real window to hit undo.
+        duration: 6000,
+        action: {
+          label: t("undo"),
+          onClick: () => restoreSong(id, entry, index),
+        },
+      });
+    },
+    [id, removeSong, restoreSong, t],
+  );
 
   const isLiked = playlist?.kind === "liked";
   const name = playlist ? (isLiked ? t("likedSongs") : playlist.name) : "";
@@ -179,21 +202,7 @@ export function PlaylistDetail({ id }: { id: string }) {
                     queueIndex={i}
                     hideLike={isLiked}
                     showAlbumLink
-                    onRemove={(s) => {
-                      // Remove immediately (low-stakes, reversible) but offer
-                      // an undo that puts the entry back where it was.
-                      const entry = playlist.entries[i];
-                      removeSong(playlist.id, s.id);
-                      toast(t("removedFromPlaylist"), {
-                        // A touch longer than the default so there's a real
-                        // window to hit undo.
-                        duration: 6000,
-                        action: {
-                          label: t("undo"),
-                          onClick: () => restoreSong(playlist.id, entry, i),
-                        },
-                      });
-                    }}
+                    onRemove={handleRemove}
                   />
                 ))}
               </ol>

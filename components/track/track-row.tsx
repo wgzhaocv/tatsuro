@@ -2,7 +2,7 @@
 
 import { Pause, Play } from "@phosphor-icons/react";
 import { useTranslations } from "next-intl";
-import { useRef } from "react";
+import { memo, useRef } from "react";
 import type { Song } from "@/lib/api/types";
 import { usePlayerStore } from "@/lib/player/store";
 import { useScrollToCurrentOnEnter } from "@/lib/player/use-scroll-to-current";
@@ -20,8 +20,13 @@ import { TrackActions } from "./track-actions";
  * a play glyph; clicking starts this queue at the track (or toggles it while
  * current). The current track keeps its glyph and turns deep-water. Used by
  * both album discs and playlist detail (via QueuePlaybackProvider).
+ *
+ * memo'd: long lists re-render their rows only when a row's own props or the
+ * queue context actually change — not because the parent list re-rendered
+ * (playlist detail re-runs on every store edit; keep onRemove referentially
+ * stable there or the memo is defeated).
  */
-export function TrackRow({
+export const TrackRow = memo(function TrackRow({
   index,
   queueIndex,
   track,
@@ -38,8 +43,10 @@ export function TrackRow({
    *  passing it there would serialize every track into the RSC payload twice
    *  (once per row, once in the provider) — 20-40KB extra on big live sets. */
   track?: Song;
-  /** When set, the row shows a remove button (playlist detail). */
-  onRemove?: (song: Song) => void;
+  /** When set, the row shows a remove button (playlist detail). Receives the
+   *  row's index too, so the callback needn't close over the list (a stable
+   *  identity is what lets the memo above actually skip work). */
+  onRemove?: (song: Song, index: number) => void;
   /** Drop the like heart (the Liked list, where it duplicates remove). */
   hideLike?: boolean;
   /** Offer "view album" in the overflow menu (playlist / Liked rows). */
@@ -136,11 +143,11 @@ export function TrackRow({
         <CacheDot songId={song.id} />
         <TrackActions
           song={song}
-          onRemove={onRemove ? () => onRemove(song) : undefined}
+          onRemove={onRemove ? () => onRemove(song, index) : undefined}
           hideLike={hideLike}
           showAlbumLink={showAlbumLink}
         />
       </div>
     </li>
   );
-}
+});

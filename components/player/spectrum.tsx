@@ -51,14 +51,27 @@ export function Spectrum({ className }: { className?: string }) {
     // release) so the strip pulses with the beat instead of flickering.
     const shown = new Float32Array(BARS);
     let raf = 0;
+    // 30fps: a decorative strip reads the same at half rate, for half the
+    // raster + GPU-upload cost (a real dent in laptop battery). Every other
+    // rAF tick is skipped; the easing factors below are tuned for 30fps.
+    let skipFrame = true;
+    const pollStart = performance.now();
 
     const draw = () => {
       raf = requestAnimationFrame(draw);
+      skipFrame = !skipFrame;
+      if (skipFrame) return;
       // The analyser is built inside the engine's onPlay gesture, which can
       // land *after* this effect runs (always, in production — dev's strict
-      // double-effects masked it). Keep polling until it exists.
+      // double-effects masked it). Keep polling until it exists — but not
+      // forever: if Web Audio is permanently unavailable (blocked, or the
+      // CORS-silent failure in ensureAnalyser), stop the empty loop instead
+      // of spinning rAF for the rest of the session.
       const analyser = getAnalyser();
-      if (!analyser) return;
+      if (!analyser) {
+        if (performance.now() - pollStart > 5000) cancelAnimationFrame(raf);
+        return;
+      }
       data ??= new Uint8Array(analyser.frequencyBinCount);
       const width = canvas.clientWidth;
       const height = canvas.clientHeight;
@@ -105,7 +118,8 @@ export function Spectrum({ className }: { className?: string }) {
         // letting loud ones flatline at the ceiling.
         const level = (peak / 255) ** 1.6;
         // Fast attack, slow release: beats still land, micro-jitter doesn't.
-        shown[i] += (level - shown[i]) * (level > shown[i] ? 0.45 : 0.12);
+        // (0.70/0.23 at 30fps ≈ the original 0.45/0.12 time constants at 60.)
+        shown[i] += (level - shown[i]) * (level > shown[i] ? 0.7 : 0.23);
         const barHeight = Math.max(2, shown[i] * height);
         const x = i * (barWidth + gap);
         ctx.beginPath();

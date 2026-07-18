@@ -48,6 +48,7 @@ function listen(
   channelName: string,
   addType: string,
   removeType: string,
+  clearedType: string,
   urls: Set<string>,
 ): void {
   try {
@@ -57,6 +58,13 @@ function listen(
         type?: string;
         data?: { url?: string };
       };
+      // Whole-bucket clear: one message, no url (a per-entry fan-out woke
+      // every subscribed row once per cached song).
+      if (type === clearedType) {
+        urls.clear();
+        emit();
+        return;
+      }
       if (!data?.url) return;
       const url = canonicalStreamUrl(data.url);
       if (type === addType) urls.add(url);
@@ -76,11 +84,18 @@ function start(): void {
 
   seed(AUDIO_CACHE_NAME, cachedUrls);
   seed(DOWNLOAD_CACHE_NAME, downloadedUrls);
-  listen(AUDIO_EVENTS_CHANNEL, "cache-added", "cache-removed", cachedUrls);
+  listen(
+    AUDIO_EVENTS_CHANNEL,
+    "cache-added",
+    "cache-removed",
+    "cache-cleared",
+    cachedUrls,
+  );
   listen(
     DOWNLOAD_EVENTS_CHANNEL,
     "download-added",
     "download-removed",
+    "download-cleared",
     downloadedUrls,
   );
 }

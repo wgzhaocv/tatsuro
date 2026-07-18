@@ -11,11 +11,11 @@ import {
 } from "./constants";
 import {
   type CacheEntry,
-  deleteAccessTime,
-  deleteEntry,
+  deleteAccessTimes,
+  deleteEntries,
   getAllAccessTimes,
   getAllEntries,
-  putEntry,
+  putEntries,
 } from "./lru-db";
 
 // When estimate() is unavailable, 600 MiB × 0.5 reproduces the old 300 MB
@@ -65,6 +65,7 @@ async function sizedBucketEntries(
     if (bytes) out.push({ url: k.url, size: bytes });
     else missing.push(k);
   }
+  const backfilled: CacheEntry[] = [];
   for (let i = 0; i < missing.length; i += MATCH_CONCURRENCY) {
     const batch = missing.slice(i, i + MATCH_CONCURRENCY);
     const sized = await Promise.all(
@@ -72,9 +73,10 @@ async function sizedBucketEntries(
     );
     for (const e of sized) {
       out.push(e);
-      if (e.size > 0) putEntry({ url: e.url, bucket, bytes: e.size });
+      if (e.size > 0) backfilled.push({ url: e.url, bucket, bytes: e.size });
     }
   }
+  putEntries(backfilled);
   return out;
 }
 
@@ -141,14 +143,14 @@ export async function evictAutoLru(opts: {
     );
 
     let freed = 0;
+    const evicted: string[] = [];
     for (const item of entries) {
       if (item.url === exclude) continue;
       const budgetOk = toBudget == null || total <= toBudget;
       const freeOk = freeAtLeast == null || freed >= freeAtLeast;
       if (budgetOk && freeOk) break;
       await cache.delete(item.url);
-      await deleteAccessTime(item.url);
-      await deleteEntry(item.url);
+      evicted.push(item.url);
       total -= item.size;
       freed += item.size;
       postCacheEvent(
@@ -158,6 +160,9 @@ export async function evictAutoLru(opts: {
         "lru-eviction",
       );
     }
+    // Bookkeeping in two batched transactions, not two per eviction.
+    deleteAccessTimes(evicted);
+    deleteEntries(evicted);
     return freed;
   } catch {
     return 0;

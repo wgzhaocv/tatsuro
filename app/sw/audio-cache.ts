@@ -58,6 +58,11 @@ const downloadQueue: string[] = [];
 const queuedUrls = new Set<string>();
 let downloading = false;
 
+// Last LRU stamp per URL (in-memory: an SW restart just means one extra
+// write). 60s granularity is plenty for least-recently-used ordering.
+const ACCESS_STAMP_MS = 60_000;
+const accessStamped = new Map<string, number>();
+
 function enqueueDownload(url: string) {
   if (queuedUrls.has(url)) return;
   queuedUrls.add(url);
@@ -97,7 +102,16 @@ export const audioStreamHandler = {
 
     if (hit) {
       // Only the auto bucket is LRU-tracked; the download bucket is immune.
-      if (fromAuto) setAccessTime(canonical, Date.now());
+      // Throttled per URL: Safari plays one song through several ranged
+      // requests, and each was opening its own IDB readwrite transaction for
+      // an LRU stamp that needs nothing near second precision.
+      if (fromAuto) {
+        const now = Date.now();
+        if (now - (accessStamped.get(canonical) ?? 0) > ACCESS_STAMP_MS) {
+          accessStamped.set(canonical, now);
+          setAccessTime(canonical, now);
+        }
+      }
 
       const rangeHeader = request.headers.get("range");
       if (rangeHeader) {

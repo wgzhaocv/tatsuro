@@ -29,10 +29,11 @@ import {
   type CacheEntry,
   clearAllAccessTimes,
   deleteAccessTime,
+  deleteEntries,
   deleteEntriesByBucket,
   deleteEntry,
   getAllEntries,
-  putEntry,
+  putEntries,
 } from "@/lib/offline/lru-db";
 
 export type BucketStats = { count: number; bytes: number };
@@ -126,6 +127,7 @@ async function auditBucket(
       if (entry && entry.bucket === bucket) sizes.set(url, entry.bytes);
       else missing.push(k);
     }
+    const backfilled: CacheEntry[] = [];
     for (let i = 0; i < missing.length; i += MATCH_CONCURRENCY) {
       const batch = missing.slice(i, i + MATCH_CONCURRENCY);
       const sized = await Promise.all(
@@ -136,9 +138,10 @@ async function auditBucket(
       );
       for (const s of sized) {
         sizes.set(s.url, s.n);
-        await putEntry({ url: s.url, bucket, bytes: s.n });
+        backfilled.push({ url: s.url, bucket, bytes: s.n });
       }
     }
+    await putEntries(backfilled);
     let bytes = 0;
     for (const n of sizes.values()) bytes += n;
     return { count: keys.length, bytes, sizes };
@@ -200,8 +203,8 @@ async function runMeasure(): Promise<CacheUsage> {
   const cover = await auditBucket(COVER_CACHE_NAME, "cover", known, seen);
   // Prune records for entries that left the cache without going through our
   // delete paths (e.g. an ExpirationPlugin cover eviction), so totals can't
-  // drift upward over time.
-  for (const url of known.keys()) if (!seen.has(url)) await deleteEntry(url);
+  // drift upward over time. One transaction for the lot.
+  await deleteEntries([...known.keys()].filter((url) => !seen.has(url)));
 
   const { usage, quota } = await estimating;
 
@@ -255,20 +258,20 @@ function measure(): Promise<CacheUsage> {
 
 // ── Clear operations ────────────────────────────────────────────────────────
 
-/** Nuke a whole audio bucket, drop its entry records, and tell status UIs each
- *  entry is gone. */
+/** Nuke a whole audio bucket, drop its entry records, and tell status UIs the
+ *  bucket is empty — one `*-cleared` broadcast, not one message per entry (a
+ *  200-song bucket used to fan out 200 messages, each waking every subscribed
+ *  track row). */
 async function clearAudioBucket(
   name: string,
   bucket: CacheEntry["bucket"],
   channel: string,
-  removeType: string,
+  clearedType: string,
 ): Promise<void> {
   try {
-    const cache = await caches.open(name);
-    const keys = await cache.keys();
     await caches.delete(name);
     await deleteEntriesByBucket(bucket);
-    for (const k of keys) postCacheEvent(channel, removeType, k.url, "cleared");
+    postCacheEvent(channel, clearedType, "", "cleared");
   } catch {
     // best-effort
   }
@@ -341,7 +344,7 @@ export async function clearPlaybackCache(): Promise<void> {
         AUDIO_CACHE_NAME,
         "auto",
         AUDIO_EVENTS_CHANNEL,
-        "cache-removed",
+        "cache-cleared",
       ),
       clearAllAccessTimes(),
     ]);
@@ -357,7 +360,7 @@ export async function clearDownloads(): Promise<void> {
       DOWNLOAD_CACHE_NAME,
       "download",
       DOWNLOAD_EVENTS_CHANNEL,
-      "download-removed",
+      "download-cleared",
     ),
   );
 }
@@ -383,13 +386,13 @@ export async function clearEverything(): Promise<void> {
           DOWNLOAD_CACHE_NAME,
           "download",
           DOWNLOAD_EVENTS_CHANNEL,
-          "download-removed",
+          "download-cleared",
         ),
         clearAudioBucket(
           AUDIO_CACHE_NAME,
           "auto",
           AUDIO_EVENTS_CHANNEL,
-          "cache-removed",
+          "cache-cleared",
         ),
         clearAllAccessTimes(),
       ]);

@@ -74,6 +74,53 @@ export async function deleteEntry(url: string): Promise<void> {
   }
 }
 
+// ── Batch forms — one transaction instead of one per row. The loops that use
+// these (LRU eviction, measure backfill, stale-row pruning) used to open a
+// fresh readwrite transaction per URL, which adds up over a big sweep. ──────
+
+/** Record many entries in one transaction. */
+export async function putEntries(entries: CacheEntry[]): Promise<void> {
+  if (entries.length === 0) return;
+  try {
+    const db = await initDB();
+    const store = db
+      .transaction([ENTRIES_STORE], "readwrite")
+      .objectStore(ENTRIES_STORE);
+    for (const e of entries)
+      store.put({ ...e, url: canonicalStreamUrl(e.url) });
+  } catch {
+    // best-effort
+  }
+}
+
+/** Forget many entries in one transaction. */
+export async function deleteEntries(urls: string[]): Promise<void> {
+  if (urls.length === 0) return;
+  try {
+    const db = await initDB();
+    const store = db
+      .transaction([ENTRIES_STORE], "readwrite")
+      .objectStore(ENTRIES_STORE);
+    for (const url of urls) store.delete(canonicalStreamUrl(url));
+  } catch {
+    // best-effort
+  }
+}
+
+/** Forget many access-time rows in one transaction. */
+export async function deleteAccessTimes(urls: string[]): Promise<void> {
+  if (urls.length === 0) return;
+  try {
+    const db = await initDB();
+    const store = db
+      .transaction([STORE_NAME], "readwrite")
+      .objectStore(STORE_NAME);
+    for (const url of urls) store.delete(url);
+  } catch {
+    // best-effort
+  }
+}
+
 /** All recorded entries — the More page's size source (no cache.match). */
 export async function getAllEntries(): Promise<CacheEntry[]> {
   try {

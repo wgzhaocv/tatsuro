@@ -50,6 +50,10 @@ export function OfflineManager() {
     refresh,
   } = useCacheUsage();
   const [confirming, setConfirming] = useState(false);
+  // Key of the clear currently running (bucket:*, source:*, or "all"), so its
+  // button shows a spinner and every clear is blocked meanwhile — no double-tap,
+  // no two clears racing on the same caches.
+  const [pending, setPending] = useState<string | null>(null);
 
   const nSongs = (n: number) => t("nSongs", { n });
   // Headline = the caches we actually manage here (so it equals the breakdown
@@ -60,10 +64,20 @@ export function OfflineManager() {
   const ratio = quota > 0 ? Math.min(1, cacheTotal / quota) : 0;
   const free = Math.max(0, quota - usage);
 
-  async function run(fn: () => Promise<void>) {
-    await fn();
-    refresh();
-    toast.success(t("clearedToast"));
+  async function runClear(
+    key: string,
+    fn: () => Promise<void>,
+    doneMsg?: string,
+  ) {
+    if (pending) return; // already clearing something — ignore repeat taps
+    setPending(key);
+    try {
+      await fn();
+      refresh();
+      toast.success(doneMsg ?? t("clearedToast"));
+    } finally {
+      setPending(null);
+    }
   }
 
   const buckets = [
@@ -145,7 +159,11 @@ export function OfflineManager() {
             }
             trailing={
               b.stats.count > 0 ? (
-                <ClearButton onClick={() => run(b.clear)}>
+                <ClearButton
+                  pending={pending === `bucket:${b.key}`}
+                  disabled={pending !== null}
+                  onClick={() => runClear(`bucket:${b.key}`, b.clear)}
+                >
                   {t("clear")}
                 </ClearButton>
               ) : undefined
@@ -177,14 +195,24 @@ export function OfflineManager() {
                       size="icon-sm"
                       aria-label={t("remove")}
                       title={t("remove")}
+                      disabled={pending !== null}
                       className="shrink-0 text-muted-foreground hover:text-foreground"
-                      onClick={async () => {
-                        await clearSource(s.id);
-                        refresh();
-                        toast.success(t("removedToast"));
-                      }}
+                      onClick={() =>
+                        runClear(
+                          `source:${s.id}`,
+                          () => clearSource(s.id),
+                          t("removedToast"),
+                        )
+                      }
                     >
-                      <Trash aria-hidden />
+                      {pending === `source:${s.id}` ? (
+                        <CircleNotch
+                          className="animate-spin motion-reduce:animate-none"
+                          aria-hidden
+                        />
+                      ) : (
+                        <Trash aria-hidden />
+                      )}
                     </Button>
                   }
                 />
@@ -209,24 +237,35 @@ export function OfflineManager() {
               <Button
                 variant="cta"
                 size="sm"
+                disabled={pending !== null}
                 onClick={async () => {
+                  await runClear("all", clearEverything);
                   setConfirming(false);
-                  await run(clearEverything);
                 }}
               >
+                {pending === "all" && (
+                  <CircleNotch
+                    className="animate-spin motion-reduce:animate-none"
+                    aria-hidden
+                  />
+                )}
                 {t("confirm")}
               </Button>
               <Button
                 variant="ghost"
                 size="sm"
+                disabled={pending !== null}
                 onClick={() => setConfirming(false)}
               >
                 {t("cancel")}
               </Button>
             </div>
           ) : (
-            <ClearButton onClick={() => setConfirming(true)}>
-              <Trash aria-hidden />
+            <ClearButton
+              icon={<Trash aria-hidden />}
+              disabled={pending !== null}
+              onClick={() => setConfirming(true)}
+            >
               {t("clearAll")}
             </ClearButton>
           )}
@@ -288,18 +327,33 @@ function Section({ title, children }: { title?: string; children: ReactNode }) {
 
 function ClearButton({
   onClick,
+  pending,
+  disabled,
+  icon,
   children,
 }: {
   onClick: () => void;
+  pending?: boolean;
+  disabled?: boolean;
+  icon?: ReactNode;
   children: ReactNode;
 }) {
   return (
     <Button
       variant="ghost"
       size="sm"
+      disabled={disabled || pending}
       className="shrink-0 text-muted-foreground hover:text-foreground"
       onClick={onClick}
     >
+      {pending ? (
+        <CircleNotch
+          className="animate-spin motion-reduce:animate-none"
+          aria-hidden
+        />
+      ) : (
+        icon
+      )}
       {children}
     </Button>
   );

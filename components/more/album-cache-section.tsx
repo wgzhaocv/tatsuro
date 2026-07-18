@@ -1,5 +1,6 @@
 "use client";
 
+import { CircleNotch } from "@phosphor-icons/react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -37,6 +38,7 @@ export function AlbumCacheSection({
 }) {
   const t = useTranslations("more");
   const intents = useDownloadsStore((s) => s.intents);
+  const [clearingId, setClearingId] = useState<string | null>(null);
 
   // Resolve cached song ids → albums whenever the cached set changes. Keying on
   // the joined string (song ids never contain commas) means the effect only
@@ -102,13 +104,26 @@ export function AlbumCacheSection({
                   <Button
                     variant="ghost"
                     size="sm"
+                    disabled={clearingId !== null}
                     className="shrink-0 text-muted-foreground hover:text-foreground"
                     onClick={async () => {
-                      await clearAlbumCache(a.songIds, a.editionIds);
-                      onCleared();
-                      toast.success(t("clearedToast"));
+                      if (clearingId) return;
+                      setClearingId(a.id);
+                      try {
+                        await clearAlbumCache(a.songIds, a.editionIds);
+                        onCleared();
+                        toast.success(t("clearedToast"));
+                      } finally {
+                        setClearingId(null);
+                      }
                     }}
                   >
+                    {clearingId === a.id && (
+                      <CircleNotch
+                        className="animate-spin motion-reduce:animate-none"
+                        aria-hidden
+                      />
+                    )}
                     {t("clear")}
                   </Button>
                 }

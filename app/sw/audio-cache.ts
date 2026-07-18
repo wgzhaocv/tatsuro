@@ -48,7 +48,36 @@ import {
 import { putEntry, setAccessTime } from "@/lib/offline/lru-db";
 import { buildRangeResponse } from "@/lib/offline/range-response";
 
-const downloadingUrls = new Set<string>();
+// Background full-file downloads run through a single-lane queue. Unbounded
+// concurrency meant skipping through N songs started N parallel full-file
+// fetches — competing with the passthrough stream the listener is playing
+// right now, and stacking N files of fetch buffering in SW memory. One at a
+// time is plenty for an opportunistic cache; the queue survives across
+// requests (though not an SW shutdown — fine, it's best-effort).
+const downloadQueue: string[] = [];
+const queuedUrls = new Set<string>();
+let downloading = false;
+
+function enqueueDownload(url: string) {
+  if (queuedUrls.has(url)) return;
+  queuedUrls.add(url);
+  downloadQueue.push(url);
+  void pumpDownloads();
+}
+
+async function pumpDownloads() {
+  if (downloading) return;
+  const url = downloadQueue.shift();
+  if (!url) return;
+  downloading = true;
+  try {
+    await downloadAndCache(url);
+  } finally {
+    queuedUrls.delete(url);
+    downloading = false;
+    void pumpDownloads();
+  }
+}
 
 export const audioStreamHandler = {
   async handle({ request }: RouteHandlerCallbackOptions): Promise<Response> {
@@ -88,20 +117,21 @@ export const audioStreamHandler = {
     // Unmarked miss: play now from the network, cache the full file in the
     // background (keyed canonically).
     const originalResponse = fetch(request.clone(), { cache: "no-store" });
-
-    if (!downloadingUrls.has(canonical)) {
-      downloadingUrls.add(canonical);
-      downloadAndCache(canonical, autoCache).finally(() => {
-        downloadingUrls.delete(canonical);
-      });
-    }
-
+    enqueueDownload(canonical);
     return originalResponse;
   },
 };
 
-async function downloadAndCache(url: string, cache: Cache) {
+async function downloadAndCache(url: string) {
   try {
+    // The queue outlives the miss that enqueued this URL: the reconciler (or
+    // simply waiting in line) may have landed it in either bucket since — a
+    // cheap match beats re-downloading the whole file.
+    const cache = await caches.open(AUDIO_CACHE_NAME);
+    const dl = await caches.open(DOWNLOAD_CACHE_NAME);
+    if (await dl.match(url, { ignoreVary: true })) return;
+    if (await cache.match(url, { ignoreVary: true })) return;
+
     // Make room first: evict LRU down to the (download-aware) budget.
     await evictAutoLru({ toBudget: await getAutoCacheBudget() });
 

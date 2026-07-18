@@ -166,6 +166,11 @@ async function promote(
  *  fetch the bare canonical URL (no interception, so no duplicate). */
 async function downloadOne(id: string, dl: Cache, auto: Cache) {
   const canonical = songStreamUrl(id);
+  // The SW may have finished auto-caching this song after the reconcile pass
+  // snapshotted the buckets (first play + pin race) — promote that copy
+  // instead of downloading the whole file a second time. False means no auto
+  // body to promote; fall through to the network.
+  if (await promote(id, canonical, dl, auto)) return;
   const reqUrl = new URL(canonical);
   if (navigator.serviceWorker?.controller) {
     reqUrl.searchParams.set(DOWNLOAD_MARKER_PARAM, "1");

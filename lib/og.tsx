@@ -19,11 +19,14 @@ export const OG_CONTENT_TYPE = "image/png";
 
 /** A rendered release card as a base64 PNG. Both the cover fetch AND satori's
  *  render happen inside this cached boundary, and its output is plain bytes — so
- *  the OG route that returns them has no uncached IO of its own and can be
- *  statically prerendered for the whole (fixed) discography. Without this, the
- *  route exposes ImageResponse's internal uncached fetch at the top level, which
- *  Cache Components rejects mid-prerender → the route 500s on every unfurl.
- *  cacheTag keys on the cover so revalidateTag('albums') refreshes cards too. */
+ *  the OG route that returns them has no uncached IO of its own and renders
+ *  statically under Cache Components. (In practice that means static-cached on
+ *  first request, not prerendered at build — metadata routes don't reach the
+ *  prerender manifest today; this cache still spares repeat unfurls the satori
+ *  cost.) Without this, the route exposes ImageResponse's internal uncached
+ *  fetch at the top level, which Cache Components rejects mid-prerender → the
+ *  route 500s on every unfurl. cacheTag keys on the cover so
+ *  revalidateTag('albums') refreshes cards too. */
 export async function albumOgPng(input: {
   coverId: string;
   name: string;

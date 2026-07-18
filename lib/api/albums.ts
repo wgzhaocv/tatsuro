@@ -58,6 +58,9 @@ export type SongReleaseInfo = {
   name: string;
   year?: number;
   editionId: string;
+  /** The edition's year, set only when the release has several editions — the
+   *  same rule the album page uses to label reissues ("Name (1986)"). */
+  editionYear?: number;
 };
 
 /** Reverse index songId → its release + edition, built once over the whole
@@ -76,6 +79,7 @@ export async function songReleaseIndex(): Promise<
   const details = await Promise.all(albums.map((a) => getAlbum(a.id)));
   const index: Record<string, SongReleaseInfo> = {};
   for (const album of details) {
+    const multiEdition = album.editions.length > 1;
     for (const edition of album.editions) {
       for (const disc of edition.discs) {
         for (const track of disc.tracks) {
@@ -84,6 +88,8 @@ export async function songReleaseIndex(): Promise<
             name: album.name,
             year: album.year,
             editionId: edition.id,
+            editionYear:
+              multiEdition && edition.year != null ? edition.year : undefined,
           };
         }
       }

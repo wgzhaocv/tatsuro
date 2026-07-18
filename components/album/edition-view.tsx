@@ -137,7 +137,9 @@ export async function EditionView({
                     contextId={edition.id}
                     kind="album"
                     songs={queueSongs}
-                    label={album.name}
+                    // queueLabel, not the bare album name: a pinned reissue's
+                    // saved-offline row must say which edition it holds.
+                    label={queueLabel}
                   />
                 </div>
               </div>

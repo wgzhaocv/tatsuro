@@ -11,6 +11,7 @@ import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { useShallow } from "zustand/react/shallow";
 import type { Song } from "@/lib/api/types";
+import { createDebouncedLocalStorage } from "@/lib/debounced-local-storage";
 import {
   LIKED_ID,
   type Playlist,
@@ -310,7 +311,9 @@ export const usePlaylistStore = create<PlaylistsState>()(
     {
       name: PLAYLISTS_STORAGE_KEY,
       version: 1,
-      storage: createJSONStorage(() => localStorage),
+      // Debounced: every entry stores a denormalized Song, so a like (two
+      // set()s) would otherwise stringify the whole library twice per click.
+      storage: createJSONStorage(createDebouncedLocalStorage),
       skipHydration: true, // SSR renders empty; the hydration mount rehydrates.
       partialize: (s) => ({ playlists: s.playlists }),
     },

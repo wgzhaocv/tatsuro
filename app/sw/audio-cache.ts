@@ -108,9 +108,13 @@ async function downloadAndCache(url: string, cache: Cache) {
     // Fetch the complete file — explicitly without a Range header.
     const response = await fetch(url, { method: "GET", cache: "no-store" });
     if (response.ok && response.status === 200) {
-      await cache.put(url, response.clone());
+      // Size comes from the Content-Length header, so read it before handing
+      // the body to cache.put — cloning the response would tee the stream and
+      // buffer the entire file in SW memory (the second branch is never read).
+      const bytes = sizeOf(response);
+      await cache.put(url, response);
       await setAccessTime(url, Date.now());
-      await putEntry({ url, bucket: "auto", bytes: sizeOf(response) });
+      await putEntry({ url, bucket: "auto", bytes });
       postCacheEvent(AUDIO_EVENTS_CHANNEL, "cache-added", url);
     }
   } catch {

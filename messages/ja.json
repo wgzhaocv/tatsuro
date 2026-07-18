@@ -210,7 +210,6 @@
     "typeBand": "バンド",
     "typeCollab": "コラボ",
     "storageTitle": "オフライン保存",
-    "usedOnDevice": "この端末で使用中",
     "saved": "オフライン保存済み",
     "playback": "再生キャッシュ",
     "covers": "ジャケット画像",
@@ -235,6 +234,7 @@
     "cachedAlbumsTitle": "キャッシュ済みアルバム",
     "available": "残り {size}",
     "typeComp": "コンピ",
-    "measuring": "更新中"
+    "measuring": "更新中",
+    "cached": "キャッシュ"
   }
 }

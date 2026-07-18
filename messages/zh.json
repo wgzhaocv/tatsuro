@@ -210,7 +210,6 @@
     "typeBand": "乐队",
     "typeCollab": "合作",
     "storageTitle": "离线存储",
-    "usedOnDevice": "已用于本设备",
     "saved": "已离线保存",
     "playback": "播放缓存",
     "covers": "封面图片",
@@ -235,6 +234,7 @@
     "cachedAlbumsTitle": "已缓存的专辑",
     "available": "剩余 {size}",
     "typeComp": "精选",
-    "measuring": "刷新中"
+    "measuring": "刷新中",
+    "cached": "已缓存"
   }
 }

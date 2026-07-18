@@ -52,7 +52,12 @@ export function OfflineManager() {
   const [confirming, setConfirming] = useState(false);
 
   const nSongs = (n: number) => t("nSongs", { n });
-  const ratio = quota > 0 ? Math.min(1, usage / quota) : 0;
+  // Headline = the caches we actually manage here (so it equals the breakdown
+  // below). The whole-origin estimate().usage is larger — it also counts the app
+  // itself, IndexedDB, and the browser's storage padding — which read as a
+  // mismatch against the per-bucket rows, so it isn't shown as the total.
+  const cacheTotal = download.bytes + auto.bytes + cover.bytes;
+  const ratio = quota > 0 ? Math.min(1, cacheTotal / quota) : 0;
   const free = Math.max(0, quota - usage);
 
   async function run(fn: () => Promise<void>) {
@@ -105,14 +110,15 @@ export function OfflineManager() {
         )}
       </div>
 
-      {/* Usage meter — used on this device, and how much room is left. */}
+      {/* Meter — total of the managed caches (equals the breakdown below), plus
+          the real free space left on the device. */}
       <div className="mt-3">
         <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
           <span className="font-display font-semibold text-3xl text-foreground tabular-nums">
-            {formatFileSize(usage)}
+            {formatFileSize(cacheTotal)}
           </span>
           <span className="text-muted-foreground text-sm">
-            {t("usedOnDevice")}
+            {t("cached")}
             {quota > 0 &&
               ` · ${t("available", { size: formatFileSize(free) })}`}
           </span>

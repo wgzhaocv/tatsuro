@@ -210,7 +210,6 @@
     "typeBand": "Band",
     "typeCollab": "Collaboration",
     "storageTitle": "Offline storage",
-    "usedOnDevice": "used on this device",
     "saved": "Saved offline",
     "playback": "Playback cache",
     "covers": "Cover images",
@@ -235,6 +234,7 @@
     "cachedAlbumsTitle": "Cached albums",
     "available": "{size} available",
     "typeComp": "Compilation",
-    "measuring": "Refreshing"
+    "measuring": "Refreshing",
+    "cached": "cached"
   }
 }

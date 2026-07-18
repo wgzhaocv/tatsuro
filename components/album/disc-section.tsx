@@ -61,13 +61,10 @@ export async function DiscSection({
         </>
       )}
       <ol>
+        {/* No track prop: the rows read the provider's enriched queue entries,
+            so the list isn't serialized into the RSC payload a second time. */}
         {disc.tracks.map((track, i) => (
-          <TrackRow
-            key={track.id}
-            track={track}
-            index={i}
-            queueIndex={startIndex + i}
-          />
+          <TrackRow key={track.id} index={i} queueIndex={startIndex + i} />
         ))}
       </ol>
     </section>

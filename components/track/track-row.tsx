@@ -22,17 +22,22 @@ import { TrackActions } from "./track-actions";
  * both album discs and playlist detail (via QueuePlaybackProvider).
  */
 export function TrackRow({
-  track,
   index,
   queueIndex,
+  track,
   onRemove,
   hideLike,
   showAlbumLink,
 }: {
-  track: Song;
   index: number;
   /** Position in the queue (across discs / the whole playlist). */
   queueIndex: number;
+  /** The row's Song, when the caller already holds it client-side (playlist
+   *  detail — same objects as the provider's, so it's free). Server screens
+   *  (album discs) omit it and the row reads the provider's queue entry:
+   *  passing it there would serialize every track into the RSC payload twice
+   *  (once per row, once in the provider) — 20-40KB extra on big live sets. */
+  track?: Song;
   /** When set, the row shows a remove button (playlist detail). */
   onRemove?: (song: Song) => void;
   /** Drop the like heart (the Liked list, where it duplicates remove). */
@@ -42,14 +47,15 @@ export function TrackRow({
 }) {
   const t = useTranslations("album");
   const { songs, label, queueId, href } = useQueuePlayback();
-  // The enriched queue song (cover + album baked in) backs the actions, so a
-  // playlist entry it creates renders without a refetch; fall back to `track`.
-  const song = songs[queueIndex] ?? track;
-  const isCurrent = usePlayerStore((s) => s.current?.id === track.id);
+  // The queue song is enriched (cover + album baked in), so the actions render
+  // without a refetch.
+  const song = track ?? songs[queueIndex];
+  const songId = song?.id;
+  const isCurrent = usePlayerStore((s) => s.current?.id === songId);
   // Fold the play flag into the selector so non-current rows resolve to a
   // stable `false` and skip re-rendering on every play/pause toggle.
   const isPlaying = usePlayerStore(
-    (s) => s.isPlaying && s.current?.id === track.id,
+    (s) => s.isPlaying && s.current?.id === songId,
   );
   const playQueue = usePlayerStore((s) => s.playQueue);
   const toggle = usePlayerStore((s) => s.toggle);
@@ -58,21 +64,26 @@ export function TrackRow({
   const rowRef = useRef<HTMLLIElement>(null);
   useScrollToCurrentOnEnter(rowRef, isCurrent);
 
-  const number = track.trackNumber ?? index + 1;
+  // Can't happen when the provider is fed correctly (queueIndex indexes the
+  // provider's own flatten) — guard so a mismatch degrades to a missing row
+  // rather than a crash. After the hooks, which must run unconditionally.
+  if (!song) return null;
+
+  const number = song.trackNumber ?? index + 1;
 
   return (
     <li ref={rowRef}>
       {/* data-song-id lets a shared-song link (?song=) find + flash this row. */}
       <div
-        data-song-id={track.id}
+        data-song-id={song.id}
         className="group flex min-h-11 items-center gap-2 rounded-xl pr-1 pl-3 ring-primary/50 ring-inset transition-colors duration-500 ease-lazy hover:bg-navy/[0.05] data-[shared=true]:bg-primary/10 data-[shared=true]:ring-1 dark:hover:bg-white/[0.06]"
       >
         <button
           type="button"
           aria-label={
             isPlaying
-              ? t("pauseNamed", { name: track.name })
-              : t("playNamed", { name: track.name })
+              ? t("pauseNamed", { name: song.name })
+              : t("playNamed", { name: song.name })
           }
           aria-current={isCurrent ? "true" : undefined}
           onClick={() => {
@@ -112,17 +123,17 @@ export function TrackRow({
             )}
           </span>
           <span
-            lang={isJapanese(track.name) ? "ja" : undefined}
-            title={track.name}
+            lang={isJapanese(song.name) ? "ja" : undefined}
+            title={song.name}
             className={cn(
               "truncate text-[15px]",
               isCurrent ? "font-medium text-primary" : "text-foreground",
             )}
           >
-            {track.name}
+            {song.name}
           </span>
         </button>
-        <CacheDot songId={track.id} />
+        <CacheDot songId={song.id} />
         <TrackActions
           song={song}
           onRemove={onRemove ? () => onRemove(song) : undefined}

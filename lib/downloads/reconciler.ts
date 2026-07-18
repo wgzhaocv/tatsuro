@@ -394,7 +394,13 @@ export function initDownloadsReconciler() {
       requestReconcile();
   });
   usePlaylistStore.subscribe((s, p) => {
-    if (s.playlists !== p.playlists) requestReconcile();
+    if (s.playlists === p.playlists) return;
+    // Only playlist-kind intents derive their song set from this store — with
+    // none active, a like/edit can't change what's desired offline, so don't
+    // pay a full pass (two bucket enumerations) for every heart click.
+    const { intents } = useDownloadsStore.getState();
+    if (intents.some((i) => i.kind === "playlist" && !i.deletedAt))
+      requestReconcile();
   });
   window.addEventListener("online", requestReconcile);
   document.addEventListener("visibilitychange", onVisibility);

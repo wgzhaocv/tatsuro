@@ -34,6 +34,7 @@ export function AccountBootstrap() {
 
   useEffect(() => {
     let cancelled = false;
+    const aborter = new AbortController();
     const unsubscribe = startAutoSync();
 
     (async () => {
@@ -47,9 +48,9 @@ export function AccountBootstrap() {
       // Wait for the local library (playlists + pins) before the first push, or
       // an empty snapshot would upload and then adopt back over real data.
       await Promise.all([
-        whenHydrated(usePlaylistStore),
-        whenHydrated(usePinStore),
-        whenHydrated(useDownloadsStore),
+        whenHydrated(usePlaylistStore, aborter.signal),
+        whenHydrated(usePinStore, aborter.signal),
+        whenHydrated(useDownloadsStore, aborter.signal),
       ]);
       if (cancelled) return;
       // Profile is persisted; only refresh it from /me once a day (it barely
@@ -63,6 +64,7 @@ export function AccountBootstrap() {
 
     return () => {
       cancelled = true;
+      aborter.abort();
       unsubscribe();
     };
   }, []);
@@ -92,11 +94,16 @@ function captureTokenFromHash(): string | null {
 
 /** Resolve once a skipHydration store has finished its client rehydrate — used
  *  to hold the first cloud push until the local library (playlists + pins) has
- *  loaded, so an empty snapshot can't overwrite the server. */
-function whenHydrated<T extends { hasHydrated: boolean }>(store: {
-  getState: () => T;
-  subscribe: (cb: (s: T) => void) => () => void;
-}): Promise<void> {
+ *  loaded, so an empty snapshot can't overwrite the server. The signal detaches
+ *  the store subscription on unmount — without it, a store that never hydrates
+ *  (a rehydrate that threw) would leak the subscription for the session. */
+function whenHydrated<T extends { hasHydrated: boolean }>(
+  store: {
+    getState: () => T;
+    subscribe: (cb: (s: T) => void) => () => void;
+  },
+  signal: AbortSignal,
+): Promise<void> {
   if (store.getState().hasHydrated) return Promise.resolve();
   return new Promise((resolve) => {
     const unsub = store.subscribe((s) => {
@@ -104,6 +111,10 @@ function whenHydrated<T extends { hasHydrated: boolean }>(store: {
         unsub();
         resolve();
       }
+    });
+    signal.addEventListener("abort", () => {
+      unsub();
+      resolve();
     });
   });
 }

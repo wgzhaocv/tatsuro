@@ -451,7 +451,18 @@ export function AudioEngine() {
         });
         // First real playback is a user gesture: safe to build the Web Audio
         // graph for the spectrum (a no-op on later plays).
-        ensureAnalyser(el);
+        //
+        // NEVER on iOS WebKit: createMediaElementSource permanently reroutes
+        // the element's sound through the AudioContext, whose destination is
+        // the LOCAL hardware — AirPlay/HomePod routing happens at the media
+        // element / audio-session level and does not follow Web Audio, so a
+        // tapped element plays fine on the phone but ghost-loops / drops on a
+        // HomePod. The tap is one-shot and irreversible, and the route can
+        // change mid-session, so there's no safe moment to do it: skip the
+        // spectrum on iOS entirely (the old site had no Web Audio and always
+        // AirPlayed fine). The spectrum degrades quietly when no analyser
+        // exists (see spectrum.tsx).
+        if (!isIOSWebKit) ensureAnalyser(el);
       }}
       onPlaying={() => {
         // Real audio is flowing: the error guard only covers a *consecutive*

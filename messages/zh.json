@@ -133,9 +133,9 @@
     "starterMixes": {
       "trigger": "精选长歌单",
       "title": "精选长歌单",
-      "subtitle": "策展的长歌单。导入后就是普通歌单，随你增删、排序、改名。",
+      "subtitle": "策展的长歌单。导入后即为普通歌单，可自由增删、排序、改名。",
       "import": "导入",
-      "imported": "已把「{name}」加入你的歌单",
+      "imported": "「{name}」已加入歌单",
       "open": "打开",
       "daylightHighway": {
         "name": "白昼高速",

@@ -1,0 +1,693 @@
+// Starter mixes — four curated long playlists the user can import into their own
+// library with one tap. Distilled from the "For the Road" driving mixes + a
+// late-night ballad set in DISCOVER.md; every song id was resolved against the
+// live /music/search-index (studio-first, avoiding Joy-live / Karaoke cuts where
+// a studio recording exists). These are STATIC seed data: import materializes a
+// mix into a normal user playlist (new UUID each time), so the copy is fully
+// editable/deletable and re-importing just makes a fresh copy. Song titles are
+// baked bilingually (ja + en, with a bare fallback) and picked by locale at
+// import time, matching how a song added from an album stores one fixed name.
+
+import type { NameLang, Song } from "@/lib/api/types";
+
+/** One seed track: enough to render a row without a refetch (id + a cover +
+ *  album), plus both title languages so import can pick by locale. */
+type MixSong = {
+  id: string;
+  /** Raw name_ja (may be ""). */
+  ja: string;
+  /** Raw name_en — romaji for JP titles (may be ""). */
+  en: string;
+  /** Bare fallback title, used when ja + en are both empty. */
+  n: string;
+  /** Release display name → Song.albumName. */
+  album: string;
+  /** Disc coverFrontId → Song.coverFrontId (drives the row + playlist artwork). */
+  cover: string;
+};
+
+/** Kebab slugs double as stable message keys (playlists.starterMixes.<slug>). */
+export const STARTER_MIX_SLUGS = [
+  "daylight-highway",
+  "night-cruise",
+  "endless-summer",
+  "quiet-hours",
+] as const;
+
+export type StarterMixSlug = (typeof STARTER_MIX_SLUGS)[number];
+
+const MIXES: Record<StarterMixSlug, MixSong[]> = {
+  "daylight-highway": [
+    {
+      id: "7155508715859968",
+      ja: "SPARKLE",
+      en: "SPARKLE",
+      n: "Sparkle",
+      album: "For You",
+      cover: "7155508842901504",
+    },
+    {
+      id: "7155507758129152",
+      ja: "RIDE ON TIME",
+      en: "RIDE ON TIME",
+      n: "Ride on Time",
+      album: "Ride on Time",
+      cover: "7155508206624768",
+    },
+    {
+      id: "7155504190529536",
+      ja: "BOMBER",
+      en: "BOMBER",
+      n: "Bomber",
+      album: "Go Ahead!",
+      cover: "7155504285495296",
+    },
+    {
+      id: "7155504186007552",
+      ja: "LET'S DANCE BABY",
+      en: "LET'S DANCE BABY",
+      n: "Let's Dance Baby",
+      album: "Go Ahead!",
+      cover: "7155504285495296",
+    },
+    {
+      id: "7155503887626240",
+      ja: "SOLID SLIDER",
+      en: "SOLID SLIDER",
+      n: "Solid Slider",
+      album: "Spacy",
+      cover: "7155503994322944",
+    },
+    {
+      id: "7155506091364352",
+      ja: "FUNKY FLUSHIN'",
+      en: "FUNKY FLUSHIN'",
+      n: "Funky Flushin'",
+      album: "Moonglow",
+      cover: "7155506225463296",
+    },
+    {
+      id: "7155503882104832",
+      ja: "DANCER",
+      en: "DANCER",
+      n: "Dancer",
+      album: "Spacy",
+      cover: "7155503994322944",
+    },
+    {
+      id: "7155503111897088",
+      ja: "MAGIC WAYS",
+      en: "MAGIC WAYS",
+      n: "Magic Ways",
+      album: "Big Wave",
+      cover: "7155503258906624",
+    },
+    {
+      id: "7155509429157888",
+      ja: "高気圧ガール",
+      en: "Koukiatsu Girl",
+      n: "Koukiatsu Girl",
+      album: "Melodies",
+      cover: "7155509533151232",
+    },
+    {
+      id: "7155514228875264",
+      ja: "DOWN TOWN",
+      en: "DOWN TOWN",
+      n: "Down Town",
+      album: "Opus - All Time Best 1975-2012",
+      cover: "7155514482864128",
+    },
+    {
+      id: "7155506092892160",
+      ja: "HOT SHOT",
+      en: "HOT SHOT",
+      n: "Hot Shot",
+      album: "Moonglow",
+      cover: "7155506225463296",
+    },
+    {
+      id: "7155508492763136",
+      ja: "LOVELAND, ISLAND",
+      en: "LOVELAND, ISLAND",
+      n: "Loveland, Island",
+      album: "For You",
+      cover: "7155508842901504",
+    },
+    {
+      id: "7155504193486848",
+      ja: "PAPER DOLL",
+      en: "PAPER DOLL",
+      n: "Paper Doll",
+      album: "Go Ahead!",
+      cover: "7155504285495296",
+    },
+    {
+      id: "7155511321935872",
+      ja: "ゲット・バック・イン・ラブ -Get Back In Love-",
+      en: "Get Back in Love",
+      n: "Get Back in Love",
+      album: "Boku no Naka no Shounen",
+      cover: "7155511425556480",
+    },
+    {
+      id: "7155514588377088",
+      ja: "スプリンクラー",
+      en: "Sprinkler",
+      n: "Sprinkler",
+      album: "Opus - All Time Best 1975-2012",
+      cover: "7155514693472256",
+    },
+    {
+      id: "7155504184741888",
+      ja: "LOVE CELEBRATION",
+      en: "LOVE CELEBRATION",
+      n: "Love Celebration",
+      album: "Go Ahead!",
+      cover: "7155504285495296",
+    },
+    {
+      id: "7155502072483840",
+      ja: "アトムの子",
+      en: "Atom no Ko",
+      n: "Atom no Ko",
+      album: "Artisan",
+      cover: "7155502813417472",
+    },
+    {
+      id: "7155511325446144",
+      ja: "踊ろよ、フィッシュ",
+      en: "Odoro yo, Fish",
+      n: "Odoro yo, Fish",
+      album: "Boku no Naka no Shounen",
+      cover: "7155511425556480",
+    },
+    {
+      id: "7155506097131520",
+      ja: "YELLOW CAB",
+      en: "YELLOW CAB",
+      n: "Yellow Cab",
+      album: "Moonglow",
+      cover: "7155506225463296",
+    },
+    {
+      id: "7155513344024576",
+      ja: "DONUT SONG",
+      en: "DONUT SONG",
+      n: "Donut Song",
+      album: "Cozy",
+      cover: "7155513572052992",
+    },
+    {
+      id: "7155515223085056",
+      ja: "REBORN",
+      en: "REBORN",
+      n: "Reborn",
+      album: "Softly",
+      cover: "7155515330727936",
+    },
+    {
+      id: "7155515208753152",
+      ja: "RECIPE",
+      en: "RECIPE",
+      n: "Recipe",
+      album: "Softly",
+      cover: "7155515330727936",
+    },
+    {
+      id: "7256724114919295",
+      ja: "",
+      en: "",
+      n: "MOVE ON",
+      album: "オノマトペISLAND／MOVE ON",
+      cover: "7344010189824718",
+    },
+  ],
+  "night-cruise": [
+    {
+      id: "7155508500471808",
+      ja: "あまく危険な香り",
+      en: "Amaku Kiken na Kaori",
+      n: "Amaku Kiken na Kaori",
+      album: "For You",
+      cover: "7155508842901504",
+    },
+    {
+      id: "7155510778925056",
+      ja: "MERMAID",
+      en: "MERMAID",
+      n: "Mermaid",
+      album: "Pocket Music",
+      cover: "7155510856667136",
+    },
+    {
+      id: "7155508496093184",
+      ja: "",
+      en: "",
+      n: "Love Talkin' (Honey It's You)",
+      album: "For You",
+      cover: "7155508842901504",
+    },
+    {
+      id: "7155511320686592",
+      ja: "新・東京ラプソディー",
+      en: "Shin Tokyo Rhapsody",
+      n: "Shin Tokyo Rhapsody",
+      album: "Boku no Naka no Shounen",
+      cover: "7155511425556480",
+    },
+    {
+      id: "7155502085566464",
+      ja: "Groovin'",
+      en: "Groovin'",
+      n: "Groovin'",
+      album: "Artisan",
+      cover: "7155502813417472",
+    },
+    {
+      id: "7155511918837760",
+      ja: "恋のブギ・ウギ・トレイン",
+      en: "Koi no Boogie Woogie Train",
+      n: "Koi no Boogie Woogie Train",
+      album: "Joy - Tatsuro Yamashita Live",
+      cover: "7155512001683456",
+    },
+    {
+      id: "7155504471937024",
+      ja: "スペイス・クラッシュ",
+      en: "Space Crush",
+      n: "Space Crush",
+      album: "It's a Poppin' Time",
+      cover: "7155504696610816",
+    },
+    {
+      id: "7155509435654144",
+      ja: "BLUE MIDNIGHT",
+      en: "BLUE MIDNIGHT",
+      n: "Blue Midnight",
+      album: "Melodies",
+      cover: "7155509533151232",
+    },
+    {
+      id: "7155509430452224",
+      ja: "夜翔",
+      en: "Yashou (Night-Fly)",
+      n: "Yashou (Night-Fly)",
+      album: "Melodies",
+      cover: "7155509533151232",
+    },
+    {
+      id: "7155514602893312",
+      ja: "ジャングル・スウィング – Jungle Swing –",
+      en: "Jungle Swing",
+      n: "Jungle Swing",
+      album: "Opus - All Time Best 1975-2012",
+      cover: "7155514693472256",
+    },
+    {
+      id: "7155508499501056",
+      ja: "YOUR EYES",
+      en: "YOUR EYES",
+      n: "Your Eyes",
+      album: "For You",
+      cover: "7155508842901504",
+    },
+    {
+      id: "7155513348337664",
+      ja: "BOOMERANG BABY",
+      en: "BOOMERANG BABY",
+      n: "Boomerang Baby",
+      album: "Cozy",
+      cover: "7155513572052992",
+    },
+    {
+      id: "7155507755204608",
+      ja: "DAYDREAM",
+      en: "DAYDREAM",
+      n: "Daydream",
+      album: "Ride on Time",
+      cover: "7155508206624768",
+    },
+    {
+      id: "7155506086797312",
+      ja: "永遠のFULL MOON",
+      en: "Eien no Full Moon",
+      n: "Eien no Full Moon",
+      album: "Moonglow",
+      cover: "7155506225463296",
+    },
+  ],
+  "endless-summer": [
+    {
+      id: "7155515209871360",
+      ja: "CHEER UP! THE SUMMER",
+      en: "CHEER UP! THE SUMMER",
+      n: "Cheer Up! The Summer",
+      album: "Softly",
+      cover: "7155515330727936",
+    },
+    {
+      id: "7202536221252608",
+      ja: "Sync Of Summer",
+      en: "Sync Of Summer",
+      n: "Sync of Summer",
+      album: "Sync of Summer",
+      cover: "7942139736356328",
+    },
+    {
+      id: "7155507759816704",
+      ja: "夏への扉",
+      en: "Natsu e no Tobira",
+      n: "Natsu e no Tobira",
+      album: "Ride on Time",
+      cover: "7155508206624768",
+    },
+    {
+      id: "7155507761139712",
+      ja: "MY SUGAR BABE",
+      en: "MY SUGAR BABE",
+      n: "My Sugar Babe",
+      album: "Ride on Time",
+      cover: "7155508206624768",
+    },
+    {
+      id: "7155503114842112",
+      ja: "GIRLS ON THE BEACH",
+      en: "GIRLS ON THE BEACH",
+      n: "Girls on the Beach",
+      album: "Big Wave",
+      cover: "7155503258906624",
+    },
+    {
+      id: "7155503108431872",
+      ja: "THE THEME FROM BIG WAVE",
+      en: "THE THEME FROM BIG WAVE",
+      n: "The Theme from Big Wave",
+      album: "Big Wave",
+      cover: "7155503258906624",
+    },
+    {
+      id: "7217402072621056",
+      ja: "僕らの夏の夢",
+      en: "",
+      n: "僕らの夏の夢",
+      album: "Ray Of Hope",
+      cover: "7217401981476864",
+    },
+    {
+      id: "7155508488056832",
+      ja: "MUSIC BOOK",
+      en: "MUSIC BOOK",
+      n: "Music Book",
+      album: "For You",
+      cover: "7155508842901504",
+    },
+    {
+      id: "7155508489785344",
+      ja: "MORNING GLORY",
+      en: "MORNING GLORY",
+      n: "Morning Glory",
+      album: "For You",
+      cover: "7155508842901504",
+    },
+    {
+      id: "7155503879970816",
+      ja: "素敵な午後は",
+      en: "Suteki na Gogo wa",
+      n: "Suteki na Gogo wa",
+      album: "Spacy",
+      cover: "7155503994322944",
+    },
+    {
+      id: "7155510776336384",
+      ja: "土曜日の恋人",
+      en: "Doyoubi no Koibito",
+      n: "Doyoubi no Koibito",
+      album: "Pocket Music",
+      cover: "7155510856667136",
+    },
+    {
+      id: "7155514792861696",
+      ja: "ドリーミング・ガール – DREAMING GIRL –",
+      en: "Dreaming Girl",
+      n: "Dreaming Girl",
+      album: "Opus - All Time Best 1975-2012",
+      cover: "7155514843168768",
+    },
+    {
+      id: "7155503881146368",
+      ja: "CANDY",
+      en: "CANDY",
+      n: "Candy",
+      album: "Spacy",
+      cover: "7155503994322944",
+    },
+    {
+      id: "7155504189173760",
+      ja: "ついておいで",
+      en: "Tsuite Oide (Follow Me Along)",
+      n: "Tsuite Oide (Follow Me Along)",
+      album: "Go Ahead!",
+      cover: "7155504285495296",
+    },
+    {
+      id: "7155515206254592",
+      ja: "LOVE'S ON FIRE",
+      en: "LOVE'S ON FIRE",
+      n: "Love's on Fire",
+      album: "Softly",
+      cover: "7155515330727936",
+    },
+    {
+      id: "7155513354514432",
+      ja: "SOUTHBOUND #9",
+      en: "SOUTHBOUND #9",
+      n: "Southbound #9",
+      album: "Cozy",
+      cover: "7155513572052992",
+    },
+    {
+      id: "7155508502982656",
+      ja: "",
+      en: "",
+      n: "Every Night",
+      album: "For You",
+      cover: "7155508842901504",
+    },
+  ],
+  "quiet-hours": [
+    {
+      id: "7155504476065792",
+      ja: "時よ",
+      en: "Tokiyo",
+      n: "Tokiyo",
+      album: "It's a Poppin' Time",
+      cover: "7155504696610816",
+    },
+    {
+      id: "7155513342431232",
+      ja: "FRAGILE",
+      en: "FRAGILE",
+      n: "Fragile",
+      album: "Cozy",
+      cover: "7155513572052992",
+    },
+    {
+      id: "7155504192212992",
+      ja: "潮騒",
+      en: "Shiosai (The Whispering Sea)",
+      n: "Shiosai (The Whispering Sea)",
+      album: "Go Ahead!",
+      cover: "7155504285495296",
+    },
+    {
+      id: "7155502074826752",
+      ja: "さよなら夏の日",
+      en: "Sayonara Natsu no Hi",
+      n: "Sayonara Natsu no Hi",
+      album: "Artisan",
+      cover: "7155502813417472",
+    },
+    {
+      id: "7155511329640448",
+      ja: "蒼氓",
+      en: "Soubou",
+      n: "Soubou",
+      album: "Boku no Naka no Shounen",
+      cover: "7155511425556480",
+    },
+    {
+      id: "7217402077896704",
+      ja: "希望という名の光",
+      en: "",
+      n: "希望という名の光",
+      album: "Ray Of Hope",
+      cover: "7217401981476864",
+    },
+    {
+      id: "7185747014042330",
+      ja: "FOREVER MINE",
+      en: "FOREVER MINE",
+      n: "Forever Mine",
+      album: "Sonorite",
+      cover: "7199249464399321",
+    },
+    {
+      id: "7217402069815296",
+      ja: "ずっと一緒さ",
+      en: "",
+      n: "ずっと一緒さ",
+      album: "Ray Of Hope",
+      cover: "7217401981476864",
+    },
+    {
+      id: "7155509428060160",
+      ja: "悲しみのJODY",
+      en: "Kanashimi no Jody (She Was Crying)",
+      n: "Kanashimi no Jody (She Was Crying)",
+      album: "Melodies",
+      cover: "7155509533151232",
+    },
+    {
+      id: "7155510787473408",
+      ja: "風の回廊",
+      en: "Kaze no Corridor",
+      n: "Kaze no Corridor",
+      album: "Pocket Music",
+      cover: "7155510856667136",
+    },
+    {
+      id: "7155507765698560",
+      ja: "おやすみ",
+      en: "Oyasumi",
+      n: "Oyasumi",
+      album: "Ride on Time",
+      cover: "7155508206624768",
+    },
+    {
+      id: "7155510786269184",
+      ja: "LADY BLUE",
+      en: "LADY BLUE",
+      n: "Lady Blue",
+      album: "Pocket Music",
+      cover: "7155510856667136",
+    },
+    {
+      id: "7155509433831424",
+      ja: "メリー・ゴー・ラウンド",
+      en: "Merry-Go-Round",
+      n: "Merry-Go-Round",
+      album: "Melodies",
+      cover: "7155509533151232",
+    },
+    {
+      id: "7155509438500864",
+      ja: "クリスマス・イブ",
+      en: "Christmas Eve",
+      n: "Christmas Eve",
+      album: "Melodies",
+      cover: "7155509533151232",
+    },
+    {
+      id: "7155515434975232",
+      ja: "パレード",
+      en: "Parade",
+      n: "Parade",
+      album: "Softly",
+      cover: "7155515472363520",
+    },
+    {
+      id: "7155515221995520",
+      ja: "光と君へのレクイエム",
+      en: "Hikari to Kimi e no Requiem",
+      n: "Hikari to Kimi e no Requiem",
+      album: "Softly",
+      cover: "7155515330727936",
+    },
+    {
+      id: "7155503118422016",
+      ja: "THIS COULD BE THE NIGHT",
+      en: "THIS COULD BE THE NIGHT",
+      n: "This Could Be the Night",
+      album: "Big Wave",
+      cover: "7155503258906624",
+    },
+    {
+      id: "7155503110774784",
+      ja: "ONLY WITH YOU",
+      en: "ONLY WITH YOU",
+      n: "Only with You",
+      album: "Big Wave",
+      cover: "7155503258906624",
+    },
+    {
+      id: "7155513345290240",
+      ja: "月の光",
+      en: "Tsuki no Hikari",
+      n: "Tsuki no Hikari",
+      album: "Cozy",
+      cover: "7155513572052992",
+    },
+    {
+      id: "7155513341161472",
+      ja: "ヘロン",
+      en: "Heron",
+      n: "Heron",
+      album: "Cozy",
+      cover: "7155513572052992",
+    },
+    {
+      id: "7155515207532544",
+      ja: "ミライのテーマ",
+      en: "Mirai no Theme",
+      n: "Mirai no Theme",
+      album: "Softly",
+      cover: "7155515330727936",
+    },
+    {
+      id: "7155504195670016",
+      ja: "2000トンの雨 (2000t of Rain)",
+      en: "2000 Ton no Ame (2000t of Rain)",
+      n: "2000 Ton no Ame (2000t of Rain)",
+      album: "Go Ahead!",
+      cover: "7155504285495296",
+    },
+    {
+      id: "7217402064867328",
+      ja: "MY MORNING PRAYER",
+      en: "MY MORNING PRAYER",
+      n: "MY_MORNING_PRAYER",
+      album: "Ray Of Hope",
+      cover: "7217401981476864",
+    },
+  ],
+};
+
+/** Title in the UI language (ja→ja, else en), falling back across the two
+ *  languages and finally the bare name — the same rule as search's songTitle. */
+function pickName(s: MixSong, lang: NameLang): string {
+  const primary = lang === "ja" ? s.ja : s.en;
+  const secondary = lang === "ja" ? s.en : s.ja;
+  return primary.trim() || secondary.trim() || s.n;
+}
+
+/** How many tracks a mix holds — for the "N songs" line without materializing. */
+export function mixSize(slug: StarterMixSlug): number {
+  return MIXES[slug].length;
+}
+
+/** The coverFrontId to show as the mix's artwork (its first track's cover). */
+export function mixCover(slug: StarterMixSlug): string {
+  return MIXES[slug][0].cover;
+}
+
+/** Materialize a mix into queue-ready Songs for the current locale — the shape
+ *  createPlaylistWithSongs stores. Pure; no network. */
+export function mixSongs(slug: StarterMixSlug, lang: NameLang): Song[] {
+  return MIXES[slug].map((s) => ({
+    id: s.id,
+    name: pickName(s, lang),
+    albumName: s.album,
+    coverFrontId: s.cover,
+  }));
+}

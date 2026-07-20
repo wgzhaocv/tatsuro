@@ -129,7 +129,31 @@
     "emptyListBody": "プレイリストを作るか、曲をお気に入りに登録するとここに表示されます。",
     "emptyDetail": "まだ曲がありません。",
     "emptyDetailBody": "アルバムやプレーヤーから曲を追加できます。",
-    "emptyLikedBody": "曲のハートをタップするとここに保存されます。"
+    "emptyLikedBody": "曲のハートをタップするとここに保存されます。",
+    "starterMixes": {
+      "trigger": "おすすめミックス",
+      "title": "おすすめミックス",
+      "subtitle": "厳選のロングミックス。取り込むと普通のプレイリストになり、自由に編集・並べ替え・削除できます。",
+      "import": "取り込む",
+      "imported": "「{name}」をプレイリストに追加しました",
+      "open": "開く",
+      "daylightHighway": {
+        "name": "白昼のハイウェイ",
+        "blurb": "陽の下を走る、ノンストップ・ファンク"
+      },
+      "nightCruise": {
+        "name": "ナイトクルーズ",
+        "blurb": "夜の街を流す、洗練グルーヴ"
+      },
+      "endlessSummer": {
+        "name": "エンドレス・サマー",
+        "blurb": "海辺を駆ける、真夏のうた"
+      },
+      "quietHours": {
+        "name": "静かな夜に",
+        "blurb": "夜更けのバラード集"
+      }
+    }
   },
   "gate": {
     "password": "パスワード",

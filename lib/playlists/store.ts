@@ -31,6 +31,10 @@ type PlaylistsState = {
   // writes (all bump updatedAt) ─────────────────────────────────────────────
   createPlaylist(name: string): string;
   createPlaylistFromAlbum(name: string, coverId: string, songs: Song[]): string;
+  /** Create a user playlist pre-seeded with songs, no explicit cover (the cover
+   *  derives from the first entry). Backs "import a starter mix" — see
+   *  ./starter-mixes. Each call is a fresh UUID, so re-importing makes a copy. */
+  createPlaylistWithSongs(name: string, songs: Song[]): string;
   renamePlaylist(id: string, name: string): void;
   deletePlaylist(id: string): void;
   addSong(playlistId: string, song: Song): void;
@@ -142,6 +146,25 @@ export const usePlaylistStore = create<PlaylistsState>()(
               kind: "user",
               name: name.trim(),
               coverId,
+              entries: songs.map((song) => ({ song, addedAt: t })),
+              createdAt: t,
+              updatedAt: t,
+            },
+          ],
+        }));
+        return id;
+      },
+
+      createPlaylistWithSongs(name, songs) {
+        const id = newId();
+        const t = now();
+        set((s) => ({
+          playlists: [
+            ...s.playlists,
+            {
+              id,
+              kind: "user",
+              name: name.trim(),
               entries: songs.map((song) => ({ song, addedAt: t })),
               createdAt: t,
               updatedAt: t,

@@ -129,7 +129,31 @@
     "emptyListBody": "Create a playlist or like a few songs — they'll live here.",
     "emptyDetail": "No songs here yet.",
     "emptyDetailBody": "Add songs from an album or the player.",
-    "emptyLikedBody": "Tap the heart on any song to save it here."
+    "emptyLikedBody": "Tap the heart on any song to save it here.",
+    "starterMixes": {
+      "trigger": "Starter mixes",
+      "title": "Starter mixes",
+      "subtitle": "Curated long mixes. Import one and it's a normal playlist — edit, reorder, or delete it however you like.",
+      "import": "Import",
+      "imported": "Added “{name}” to your playlists",
+      "open": "Open",
+      "daylightHighway": {
+        "name": "Daylight Highway",
+        "blurb": "Top-down funk for the open road"
+      },
+      "nightCruise": {
+        "name": "Night Cruise",
+        "blurb": "Sleek city grooves after dark"
+      },
+      "endlessSummer": {
+        "name": "Endless Summer",
+        "blurb": "Bright beach-drive singalongs"
+      },
+      "quietHours": {
+        "name": "Quiet Hours",
+        "blurb": "Ballads for the small hours"
+      }
+    }
   },
   "gate": {
     "password": "Password",

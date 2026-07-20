@@ -129,7 +129,31 @@
     "emptyListBody": "创建歌单,或给喜欢的歌点心,都会出现在这里。",
     "emptyDetail": "这里还没有歌曲。",
     "emptyDetailBody": "从专辑或播放器添加歌曲。",
-    "emptyLikedBody": "点任意歌曲的心形即可收藏到这里。"
+    "emptyLikedBody": "点任意歌曲的心形即可收藏到这里。",
+    "starterMixes": {
+      "trigger": "精选长歌单",
+      "title": "精选长歌单",
+      "subtitle": "策展的长歌单。导入后就是普通歌单，随你增删、排序、改名。",
+      "import": "导入",
+      "imported": "已把「{name}」加入你的歌单",
+      "open": "打开",
+      "daylightHighway": {
+        "name": "白昼高速",
+        "blurb": "顶棚放下，一路放克"
+      },
+      "nightCruise": {
+        "name": "夜巡",
+        "blurb": "入夜后的都会律动"
+      },
+      "endlessSummer": {
+        "name": "无尽夏",
+        "blurb": "海边兜风的明亮夏日"
+      },
+      "quietHours": {
+        "name": "深夜抒情",
+        "blurb": "夜深时的慢歌"
+      }
+    }
   },
   "gate": {
     "password": "密码",

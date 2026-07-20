@@ -7,6 +7,7 @@ import { HomeNav } from "@/components/home/home-nav";
 import { useHasHydrated, useVisiblePlaylists } from "@/lib/playlists/store";
 import { CreatePlaylistButton } from "./create-playlist-button";
 import { PlaylistCard } from "./playlist-card";
+import { StarterMixesButton } from "./starter-mixes-dialog";
 
 /**
  * Playlists foreground: the browse chrome over the fixed hero photo, and the
@@ -35,10 +36,16 @@ export function PlaylistsBrowser() {
             </p>
           )}
         </div>
-        <CreatePlaylistButton
-          variant="glass"
-          className="h-11 rounded-full px-4"
-        />
+        <div className="flex shrink-0 items-center gap-2">
+          <StarterMixesButton
+            variant="glass"
+            className="h-11 rounded-full px-4"
+          />
+          <CreatePlaylistButton
+            variant="glass"
+            className="h-11 rounded-full px-4"
+          />
+        </div>
       </div>
 
       <BrowseGrid

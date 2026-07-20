@@ -136,7 +136,9 @@ export function LyricEditor({
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [rate, setRate] = useState(1);
-  const [offsetMs, setOffsetMs] = useState(0);
+  // Default tap latency compensation: you hear a line, then react, so the
+  // press lands ~0.3s late — stamp that much earlier. Adjustable.
+  const [offsetMs, setOffsetMs] = useState(300);
 
   const [state, setState] = useState<LyricsState>(song.state);
   const [saving, setSaving] = useState(false);
@@ -698,7 +700,8 @@ export function LyricEditor({
                       +
                     </RowBtn>
                     <RowBtn
-                      tip="Stamp this line at the playhead"
+                      tip="Stamp this line at the playhead (on press)"
+                      down
                       onClick={() => stampHere(i)}
                     >
                       <Crosshair className="size-3.5" />
@@ -818,27 +821,41 @@ function Kbd({ children }: { children: React.ReactNode }) {
   );
 }
 
-/** Small icon control on a lyric row, with a tooltip. Blurs on click so the
- *  tap shortcuts keep working afterwards. */
+/** Small icon control on a lyric row, with a tooltip. Blurs on activation so
+ *  the tap shortcuts keep working afterwards. `down` fires on pointer-press
+ *  instead of click — for the stamp control, so the captured time is the
+ *  moment of the press, not the (later) release. */
 function RowBtn({
   tip,
   onClick,
+  down,
   children,
 }: {
   tip: string;
   onClick: () => void;
+  down?: boolean;
   children: React.ReactNode;
 }) {
+  const act = (e: React.SyntheticEvent<HTMLElement>) => {
+    e.currentTarget.blur();
+    onClick();
+  };
   return (
     <TipButton
       tip={tip}
       variant="ghost"
       size="icon-sm"
-      onClick={(e) => {
-        e.currentTarget.blur();
-        onClick();
-      }}
       className="text-muted-foreground"
+      {...(down
+        ? {
+            // preventDefault stops the focus + the trailing click, so the
+            // action fires exactly once, at press time.
+            onPointerDown: (e) => {
+              e.preventDefault();
+              act(e);
+            },
+          }
+        : { onClick: act })}
     >
       {children}
     </TipButton>

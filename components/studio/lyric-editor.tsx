@@ -773,7 +773,10 @@ export function LyricEditor({
         <Button
           variant="cta"
           size="lg"
-          disabled={saving || !password}
+          // Only blocked while a save is in flight — a missing password stays
+          // clickable and explains itself (handleSave toasts), rather than
+          // sitting dead with no hint.
+          disabled={saving}
           onClick={press(handleSave)}
         >
           <FloppyDisk weight="fill" className="size-4" />

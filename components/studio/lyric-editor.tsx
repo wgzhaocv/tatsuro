@@ -8,13 +8,20 @@ import {
   FloppyDisk,
   Pause,
   Play,
+  Plus,
   Rewind,
+  Trash,
 } from "@phosphor-icons/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { create } from "zustand";
 import { Scrubber } from "@/components/player/scrubber";
 import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { fetchLyrics } from "@/lib/api/lyrics";
 import {
   LYRICS_STATES,
@@ -27,6 +34,7 @@ import { songStreamUrl } from "@/lib/api/urls";
 import { formatDuration, formatTimecode } from "@/lib/format";
 import { isJapanese } from "@/lib/text";
 import { cn } from "@/lib/utils";
+import { TipButton } from "./tip-button";
 
 // A line while it's being timed. startTime null = not yet stamped (serialized
 // as 0). Ids are internal, for stable React keys through text edits.
@@ -37,6 +45,14 @@ type EditLine = {
   en: string;
   startTime: number | null;
 };
+
+const emptyLine = (id: number): EditLine => ({
+  id,
+  origin: "",
+  ja: "",
+  en: "",
+  startTime: null,
+});
 
 // Playback position lives in its own store so ~4Hz timeupdate ticks re-render
 // only the leaf readouts that subscribe (the clock + seek bar), not the whole
@@ -109,11 +125,14 @@ export function LyricEditor({
 }) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const rowRefs = useRef<(HTMLLIElement | null)[]>([]);
+  const inputRefs = useRef(new Map<number, HTMLInputElement>());
 
   const [lines, setLines] = useState<EditLine[]>([]);
   const [cursor, setCursor] = useState(0);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
+  // A line id to focus once rendered (a freshly inserted row).
+  const [focusId, setFocusId] = useState<number | null>(null);
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [rate, setRate] = useState(1);
@@ -123,6 +142,11 @@ export function LyricEditor({
   const [saving, setSaving] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [showText, setShowText] = useState(false);
+
+  // Monotonic id source for new lines (reset per song — the editor remounts on
+  // key={song.id}).
+  const idRef = useRef(0);
+  const newId = useCallback(() => idRef.current++, []);
 
   // Live refs for the keydown handler (attached once, must not go stale).
   const cursorRef = useRef(cursor);
@@ -147,12 +171,11 @@ export function LyricEditor({
     setLoading(true);
     setLoadError(false);
     useStudioTime.getState().set(0, 0);
-    let nextId = 0;
     fetchLyrics(song.id)
       .then((fetched) => {
         if (cancelled) return;
         const mapped: EditLine[] = fetched.map((l) => ({
-          id: nextId++,
+          id: newId(),
           origin: l.origin,
           ja: l.ja ?? "",
           en: l.en ?? "",
@@ -167,7 +190,7 @@ export function LyricEditor({
     return () => {
       cancelled = true;
     };
-  }, [song.id]);
+  }, [song.id, newId]);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -244,6 +267,16 @@ export function LyricEditor({
     [markDirty],
   );
 
+  const setLineOrigin = useCallback(
+    (index: number, value: string) => {
+      setLines((prev) =>
+        prev.map((l, i) => (i === index ? { ...l, origin: value } : l)),
+      );
+      markDirty();
+    },
+    [markDirty],
+  );
+
   const nudge = useCallback(
     (index: number, delta: number) => {
       setLines((prev) =>
@@ -268,6 +301,31 @@ export function LyricEditor({
         ),
       ),
     [setLineTime],
+  );
+
+  // Insert an empty line after `index` (−1 to prepend), select it, and focus
+  // its text field for immediate typing.
+  const insertLineBelow = useCallback(
+    (index: number) => {
+      const id = newId();
+      setLines((prev) => {
+        const at = index + 1;
+        return [...prev.slice(0, at), emptyLine(id), ...prev.slice(at)];
+      });
+      setCursor(index + 1);
+      setFocusId(id);
+      markDirty();
+    },
+    [markDirty, newId],
+  );
+
+  const deleteLine = useCallback(
+    (index: number) => {
+      setLines((prev) => prev.filter((_, i) => i !== index));
+      setCursor((c) => Math.min(c, Math.max(linesRef.current.length - 2, 0)));
+      markDirty();
+    },
+    [markDirty],
   );
 
   const selectAndSeek = useCallback(
@@ -319,6 +377,13 @@ export function LyricEditor({
   useEffect(() => {
     rowRefs.current[cursor]?.scrollIntoView({ block: "center" });
   }, [cursor]);
+
+  // Focus a freshly inserted line's text field, once it has rendered.
+  useEffect(() => {
+    if (focusId == null) return;
+    inputRefs.current.get(focusId)?.focus();
+    setFocusId(null);
+  }, [focusId]);
 
   const timedCount = lines.filter((l) => l.startTime != null).length;
 
@@ -383,21 +448,21 @@ export function LyricEditor({
       // Drop a single trailing blank line (textarea artifact) but keep
       // intentional internal blanks (verse breaks).
       if (o.length > 1 && o[o.length - 1].trim() === "") o.pop();
-      setLines((prev) =>
-        o.map((line, i) => ({
-          id: prev[i]?.id ?? 1000 + i,
-          origin: line,
-          ja: (j[i] ?? "").trim(),
-          en: (e[i] ?? "").trim(),
-          // Preserve any timing already tapped at this row index.
-          startTime: prev[i]?.startTime ?? null,
-        })),
-      );
+      const prev = linesRef.current;
+      // Preserve id + timing by row position so fixing a typo doesn't re-time.
+      const next: EditLine[] = o.map((line, i) => ({
+        id: prev[i]?.id ?? newId(),
+        origin: line,
+        ja: (j[i] ?? "").trim(),
+        en: (e[i] ?? "").trim(),
+        startTime: prev[i]?.startTime ?? null,
+      }));
+      setLines(next);
       setCursor(0);
       setShowText(false);
       markDirty();
     },
-    [markDirty],
+    [markDirty, newId],
   );
 
   return (
@@ -422,34 +487,34 @@ export function LyricEditor({
 
       {/* ── transport bar ── */}
       <div className="flex flex-wrap items-center gap-3 border-border/60 border-b px-4 py-3 sm:px-6">
-        <Button
+        <TipButton
+          tip={isPlaying ? "Pause (Space)" : "Play (Space)"}
           variant="action"
           size="icon-lg"
           onClick={press(togglePlay)}
-          aria-label={isPlaying ? "Pause" : "Play"}
         >
           {isPlaying ? (
             <Pause weight="fill" className="size-5" />
           ) : (
             <Play weight="fill" className="size-5" />
           )}
-        </Button>
-        <Button
+        </TipButton>
+        <TipButton
+          tip="Back 3s (←)"
           variant="ghost"
           size="icon"
           onClick={press(() => seek((audioRef.current?.currentTime ?? 0) - 3))}
-          aria-label="Back 3 seconds"
         >
           <Rewind className="size-4" />
-        </Button>
-        <Button
+        </TipButton>
+        <TipButton
+          tip="Forward 3s (→)"
           variant="ghost"
           size="icon"
           onClick={press(() => seek((audioRef.current?.currentTime ?? 0) + 3))}
-          aria-label="Forward 3 seconds"
         >
           <FastForward className="size-4" />
-        </Button>
+        </TipButton>
 
         <Clock />
         <SeekBar onSeek={seek} />
@@ -523,9 +588,12 @@ export function LyricEditor({
         ) : lines.length === 0 ? (
           <div className="flex flex-col items-start gap-3 p-6">
             <p className="text-muted-foreground text-sm">
-              No lyrics on file. Open “Edit text” below to paste them in, then
-              tap the timing.
+              No lyrics on file. Add lines one at a time, or paste the whole
+              lyric in “Edit text” below.
             </p>
+            <Button variant="action" onClick={() => insertLineBelow(-1)}>
+              <Plus className="size-4" /> Add a line
+            </Button>
           </div>
         ) : (
           <ol>
@@ -539,7 +607,7 @@ export function LyricEditor({
                     rowRefs.current[i] = el;
                   }}
                   className={cn(
-                    "group flex items-start gap-2 rounded-xl px-2 py-1.5 transition-colors",
+                    "group flex items-center gap-2 rounded-xl px-2 py-1 transition-colors",
                     isCursor && "bg-ocean-deep/[0.08] dark:bg-turquoise/[0.1]",
                     !isCursor &&
                       isActive &&
@@ -547,45 +615,59 @@ export function LyricEditor({
                   )}
                 >
                   {/* timestamp — click seeks, double-click types a value */}
-                  <button
-                    type="button"
-                    onClick={press(() => selectAndSeek(i))}
-                    onDoubleClick={() => {
-                      const entered = window.prompt(
-                        "Timestamp (m:ss.cc or seconds), blank to clear:",
-                        line.startTime != null ? tc(line.startTime) : "",
-                      );
-                      if (entered != null) setLineTime(i, parseTime(entered));
-                    }}
-                    title="Click to seek · double-click to type a value"
-                    className={cn(
-                      "mt-0.5 w-16 shrink-0 rounded-md px-1 py-0.5 text-right font-mono text-xs tabular-nums transition-colors",
-                      line.startTime == null
-                        ? "text-muted-foreground/50"
-                        : isCursor
-                          ? "text-ocean-deep dark:text-turquoise"
-                          : "text-muted-foreground hover:text-foreground",
-                    )}
-                  >
-                    {tc(line.startTime)}
-                  </button>
+                  <Tooltip>
+                    <TooltipTrigger
+                      render={
+                        <button
+                          type="button"
+                          onClick={press(() => selectAndSeek(i))}
+                          onDoubleClick={() => {
+                            const entered = window.prompt(
+                              "Timestamp (m:ss.cc or seconds), blank to clear:",
+                              line.startTime != null ? tc(line.startTime) : "",
+                            );
+                            if (entered != null)
+                              setLineTime(i, parseTime(entered));
+                          }}
+                          className={cn(
+                            "w-16 shrink-0 rounded-md px-1 py-0.5 text-right font-mono text-xs tabular-nums transition-colors",
+                            line.startTime == null
+                              ? "text-muted-foreground/50"
+                              : isCursor
+                                ? "text-ocean-deep dark:text-turquoise"
+                                : "text-muted-foreground hover:text-foreground",
+                          )}
+                        >
+                          {tc(line.startTime)}
+                        </button>
+                      }
+                    />
+                    <TooltipContent>
+                      Click to seek · double-click to type
+                    </TooltipContent>
+                  </Tooltip>
 
-                  {/* line text */}
-                  <div className="min-w-0 flex-1">
-                    <p
+                  {/* line text — inline editable */}
+                  <div className="flex min-w-0 flex-1 flex-col">
+                    <input
+                      ref={(el) => {
+                        if (el) inputRefs.current.set(line.id, el);
+                        else inputRefs.current.delete(line.id);
+                      }}
+                      value={line.origin}
+                      onChange={(e) => setLineOrigin(i, e.target.value)}
+                      onFocus={() => setCursor(i)}
                       lang={isJapanese(line.origin) ? "ja" : undefined}
+                      placeholder="(empty line)"
                       className={cn(
-                        "text-[15px] leading-snug",
+                        "w-full rounded-md bg-transparent px-1 py-0.5 text-[15px] leading-snug outline-none placeholder:text-muted-foreground/40 focus:bg-foreground/[0.04] dark:focus:bg-white/[0.06]",
                         isActive
                           ? "text-coral-ink dark:text-coral"
                           : "text-foreground/90",
-                        line.origin.trim() === "" && "h-4",
                       )}
-                    >
-                      {line.origin || " "}
-                    </p>
+                    />
                     {(line.ja || line.en) && (
-                      <p className="text-muted-foreground text-xs">
+                      <p className="px-1 text-muted-foreground text-xs">
                         {line.ja && (
                           <span lang="ja" className="mr-2">
                             {line.ja}
@@ -599,33 +681,45 @@ export function LyricEditor({
                   {/* per-line controls (hover / cursor) */}
                   <div
                     className={cn(
-                      "flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100",
+                      "flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100",
                       isCursor && "opacity-100",
                     )}
                   >
                     <RowBtn
-                      label="Nudge earlier 0.1s"
+                      tip="Nudge earlier 0.1s"
                       onClick={() => nudge(i, -0.1)}
                     >
                       −
                     </RowBtn>
                     <RowBtn
-                      label="Nudge later 0.1s"
+                      tip="Nudge later 0.1s"
                       onClick={() => nudge(i, 0.1)}
                     >
                       +
                     </RowBtn>
                     <RowBtn
-                      label="Stamp this line at the playhead"
+                      tip="Stamp this line at the playhead"
                       onClick={() => stampHere(i)}
                     >
                       <Crosshair className="size-3.5" />
                     </RowBtn>
                     <RowBtn
-                      label="Clear this line's time"
+                      tip="Clear this line's time"
                       onClick={() => setLineTime(i, null)}
                     >
                       <Eraser className="size-3.5" />
+                    </RowBtn>
+                    <RowBtn
+                      tip="Insert a line below"
+                      onClick={() => insertLineBelow(i)}
+                    >
+                      <Plus className="size-3.5" />
+                    </RowBtn>
+                    <RowBtn
+                      tip="Delete this line"
+                      onClick={() => deleteLine(i)}
+                    >
+                      <Trash className="size-3.5" />
                     </RowBtn>
                   </div>
                 </li>
@@ -724,21 +818,22 @@ function Kbd({ children }: { children: React.ReactNode }) {
   );
 }
 
+/** Small icon control on a lyric row, with a tooltip. Blurs on click so the
+ *  tap shortcuts keep working afterwards. */
 function RowBtn({
-  label,
+  tip,
   onClick,
   children,
 }: {
-  label: string;
+  tip: string;
   onClick: () => void;
   children: React.ReactNode;
 }) {
   return (
-    <Button
+    <TipButton
+      tip={tip}
       variant="ghost"
       size="icon-sm"
-      aria-label={label}
-      title={label}
       onClick={(e) => {
         e.currentTarget.blur();
         onClick();
@@ -746,7 +841,7 @@ function RowBtn({
       className="text-muted-foreground"
     >
       {children}
-    </Button>
+    </TipButton>
   );
 }
 

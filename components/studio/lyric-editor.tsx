@@ -217,6 +217,17 @@ export function LyricEditor({
     if (audio) audio.playbackRate = rate;
   }, [rate]);
 
+  // Switching songs remounts this editor (key={song.id}). A detached <audio>
+  // keeps playing until GC, so the previous song would play on as a ghost
+  // while the new editor's button controls a different, silent element —
+  // making play/pause look broken. Pausing on unmount stops it. (Only pause —
+  // clearing src here would be stripped by StrictMode's mount/cleanup/mount
+  // and, since src is a static prop, never restored.)
+  useEffect(() => {
+    const audio = audioRef.current;
+    return () => audio?.pause();
+  }, []);
+
   // ── transport ──
   const togglePlay = useCallback(() => {
     const audio = audioRef.current;

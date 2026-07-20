@@ -285,12 +285,13 @@ export const usePlaylistStore = create<PlaylistsState>()(
         // Build a lookup of every Song we already hold, so adopted playlists
         // reuse rich local data (cover/name/duration) instead of stubs. Common
         // case (this device's own playlists round-tripping) resolves fully.
+        const local = get().playlists;
         const known = new Map<string, Song>();
-        for (const p of get().playlists)
+        for (const p of local)
           for (const e of p.entries) known.set(e.song.id, e.song);
 
         const stubbed: string[] = [];
-        const playlists: Playlist[] = remote.map((r) => ({
+        const adopted: Playlist[] = remote.map((r) => ({
           id: r.id,
           kind: r.kind,
           name: r.name,
@@ -310,7 +311,17 @@ export const usePlaylistStore = create<PlaylistsState>()(
             }),
         }));
 
-        set({ playlists });
+        // Keep local playlists the server snapshot doesn't include — these are
+        // created/imported locally between this sync's push snapshot and its
+        // response, and haven't uploaded yet. The server never hard-deletes (a
+        // removed playlist stays as a deletedAt tombstone in the snapshot), so an
+        // id absent from `remote` is always a pending local-only one. A blind
+        // replace here dropped them — that's how a just-imported playlist got
+        // wiped before it could sync. They upload on the next sync cycle.
+        const remoteIds = new Set(remote.map((r) => r.id));
+        const localOnly = local.filter((p) => !remoteIds.has(p.id));
+
+        set({ playlists: [...adopted, ...localOnly] });
         return stubbed;
       },
 

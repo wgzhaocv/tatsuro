@@ -83,17 +83,21 @@ export const useDownloadsStore = create<DownloadsState>()(
           // them. A row this device hasn't seen (from a peer) has no label and
           // falls back to a generic name in the More page, which is expected.
           const localLabel = new Map(s.intents.map((i) => [i.id, i.label]));
-          return {
-            intents: remote.map((r) => ({
-              id: r.id,
-              kind: r.kind,
-              songIds: r.songIds ?? undefined,
-              label: localLabel.get(r.id),
-              enabledAt: r.enabledAt,
-              updatedAt: r.updatedAt,
-              deletedAt: r.deletedAt ?? undefined,
-            })),
-          };
+          const adopted = remote.map((r) => ({
+            id: r.id,
+            kind: r.kind,
+            songIds: r.songIds ?? undefined,
+            label: localLabel.get(r.id),
+            enabledAt: r.enabledAt,
+            updatedAt: r.updatedAt,
+            deletedAt: r.deletedAt ?? undefined,
+          }));
+          // Keep intents the server snapshot lacks — enabled locally mid-sync,
+          // not uploaded yet. A blind replace would drop them (same data-loss
+          // race as playlists); they upload on the next sync.
+          const remoteIds = new Set(remote.map((r) => r.id));
+          const localOnly = s.intents.filter((i) => !remoteIds.has(i.id));
+          return { intents: [...adopted, ...localOnly] };
         });
       },
     }),

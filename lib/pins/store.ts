@@ -70,13 +70,19 @@ export const usePinStore = create<PinsState>()(
       },
 
       adoptRemote(remote) {
-        set({
-          pins: remote.map((r) => ({
+        set((s) => {
+          const adopted = remote.map((r) => ({
             albumId: r.albumId,
             pinnedAt: r.pinnedAt,
             updatedAt: r.updatedAt,
             deletedAt: r.deletedAt ?? undefined,
-          })),
+          }));
+          // Keep pins the server snapshot lacks — pinned locally mid-sync, not
+          // uploaded yet. A blind replace would drop them (same data-loss race
+          // as playlists); they upload on the next sync.
+          const remoteIds = new Set(remote.map((r) => r.albumId));
+          const localOnly = s.pins.filter((p) => !remoteIds.has(p.albumId));
+          return { pins: [...adopted, ...localOnly] };
         });
       },
     }),

@@ -86,6 +86,12 @@ export async function syncNow(): Promise<void> {
       // for this field is a later addition; an older server ignores it.
       downloads: useDownloadsStore.getState().intents.map(toIntentRow),
     };
+    // Edit signature at push time. If it advances while this sync is in flight
+    // (the user imported/edited a playlist), the push body is already stale and
+    // adopt would otherwise drop the new work — we re-sync below to upload it.
+    const pushedStamp = playlistEditStamp(
+      usePlaylistStore.getState().playlists,
+    );
     const res = await fetch(`${API}/me/sync`, {
       method: "POST",
       headers: {
@@ -115,6 +121,14 @@ export async function syncNow(): Promise<void> {
     });
     useAccountStore.getState().setStatus("idle");
     if (stubbed.length) void hydrateStubbed(stubbed);
+    // A local edit landed mid-sync (its stamp is newer than what we pushed).
+    // adoptRemote preserved it locally; schedule a follow-up push so the server
+    // gets it too. Guards the import-during-sync data-loss race.
+    if (
+      playlistEditStamp(usePlaylistStore.getState().playlists) > pushedStamp
+    ) {
+      scheduleSync();
+    }
   } catch {
     useAccountStore.getState().setStatus("error");
   } finally {

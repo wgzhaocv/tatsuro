@@ -9,13 +9,10 @@
 
 let context: AudioContext | null = null;
 let analyser: AnalyserNode | null = null;
-let attachedTo: HTMLMediaElement | null = null;
+let attachedTo: HTMLAudioElement | null = null;
 
-/** Create (once) or resume the analyser graph. Call from a user gesture.
- *  Accepts any media element — the engine taps a hidden <video> (audio-only
- *  content) because iOS AirPlay routes <video> to HomePod correctly where a
- *  bare <audio> ghost-loops the opening fragment. */
-export function ensureAnalyser(el: HTMLMediaElement): AnalyserNode | null {
+/** Create (once) or resume the analyser graph. Call from a user gesture. */
+export function ensureAnalyser(el: HTMLAudioElement): AnalyserNode | null {
   try {
     if (attachedTo && attachedTo !== el) return null;
     if (!context) {

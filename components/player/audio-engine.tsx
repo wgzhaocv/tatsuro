@@ -7,9 +7,8 @@ import { ensureAnalyser } from "@/lib/player/analyser";
 import { usePlayerStore, useProgressStore } from "@/lib/player/store";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// The one place state becomes sound. Renders the hidden media element (a 0×0
-// <video> carrying audio-only content — see the render for the AirPlay reason)
-// and keeps it in lockstep with the player store: src follows the current song,
+// The one place state becomes sound. Renders the hidden <audio> element and
+// keeps it in lockstep with the player store: src follows the current song,
 // play/pause follows isPlaying, seek requests are consumed by nonce, and
 // timeupdate/ended flow back into the stores. Also owns MediaSession, media
 // keys, and cross-tab exclusivity.
@@ -37,11 +36,18 @@ const isIOSWebKit =
     (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1));
 
 export function AudioEngine() {
-  const audioRef = useRef<HTMLVideoElement>(null);
+  const audioRef = useRef<HTMLAudioElement>(null);
   const loadedSongId = useRef<string | null>(null);
   const consumedSeekNonce = useRef<number>(0);
   // Consecutive-failure count; stops error-skipping from looping forever.
   const errorStreak = useRef(0);
+  // True while the element is playing to a wireless target (AirPlay / HomePod).
+  // The whole iOS auto-pause fight below exists to keep *local* background
+  // playback alive; on a wireless route iOS owns background playback natively,
+  // and the element's paused/currentTime state is unreliable — so the recovery
+  // (load() + seek-to-start + play()) would fire in a loop and the remote
+  // target replays the opening fragment forever ("ghost movie"). Gate it off.
+  const isWirelessRef = useRef(false);
 
   // Persisted state is skipped during SSR/hydration; restore it once mounted.
   useEffect(() => {
@@ -94,6 +100,33 @@ export function AudioEngine() {
     return () => document.removeEventListener("visibilitychange", onVisibility);
   }, []);
 
+  // Track whether audio is currently routed to a wireless target. iOS fires
+  // `webkitcurrentplaybacktargetiswirelesschanged` on the element and exposes
+  // the current state via `webkitCurrentPlaybackTargetIsWireless` (a WebKit
+  // extension, absent elsewhere — hence the loose cast and the harmless no-op
+  // on other platforms).
+  useEffect(() => {
+    const audio = audioRef.current as
+      | (HTMLAudioElement & { webkitCurrentPlaybackTargetIsWireless?: boolean })
+      | null;
+    if (!audio) return;
+    const sync = () => {
+      isWirelessRef.current = Boolean(
+        audio.webkitCurrentPlaybackTargetIsWireless,
+      );
+    };
+    sync();
+    audio.addEventListener(
+      "webkitcurrentplaybacktargetiswirelesschanged",
+      sync,
+    );
+    return () =>
+      audio.removeEventListener(
+        "webkitcurrentplaybacktargetiswirelesschanged",
+        sync,
+      );
+  }, []);
+
   useEffect(
     () => () => {
       if (yieldTimerRef.current) clearTimeout(yieldTimerRef.current);
@@ -111,7 +144,7 @@ export function AudioEngine() {
 
   // play() failed (stream connection gone stale after a long suspend):
   // reload the source and restore the position before giving up.
-  const attemptRecovery = useCallback((el: HTMLVideoElement) => {
+  const attemptRecovery = useCallback((el: HTMLAudioElement) => {
     const resumeAt = el.currentTime;
     el.play().catch(() => {
       el.load();
@@ -123,9 +156,12 @@ export function AudioEngine() {
   // External (not app-initiated) pauses, from onTimeUpdate and onPause. The
   // spec fires a timeupdate before pause, so entering from timeupdate wins
   // the race against a re-render resuming playback mid-verdict.
-  const handleExternalPause = (el: HTMLVideoElement) => {
+  const handleExternalPause = (el: HTMLAudioElement) => {
     if (!usePlayerStore.getState().isPlaying) return;
     if (suspendedRef.current) return;
+    // Wireless target (AirPlay/HomePod): don't fight, don't yield — the remote
+    // owns playback and the local pause/timeupdate signals are noise here.
+    if (isWirelessRef.current) return;
     // Natural track end belongs to onEnded; Safari may fire pause before
     // `ended` is set, so "close to the end" also counts (protects autoplay).
     if (el.ended) return;
@@ -214,6 +250,7 @@ export function AudioEngine() {
     if (!el) return;
     const timer = setTimeout(() => {
       if (suspendedRef.current) return;
+      if (isWirelessRef.current) return;
       if (!el.paused || el.ended) return;
       attemptRecovery(el);
     }, 300);
@@ -357,20 +394,10 @@ export function AudioEngine() {
   }, []);
 
   return (
-    // A hidden <video>, not <audio>: the content is audio-only, but iOS routes
-    // AirPlay to HomePod correctly for a <video> element, whereas a bare
-    // <audio> ghost-loops the opening fragment on the remote target (the old
-    // site's ReactPlayer landed on <video> for the same URL and played fine).
-    // 0×0 + display:none keeps it invisible; playsInline stops iOS from ever
-    // trying to take it fullscreen.
     // biome-ignore lint/a11y/useMediaCaption: music streams have no captions
-    <video
+    <audio
       ref={audioRef}
       preload="metadata"
-      playsInline
-      width={0}
-      height={0}
-      style={{ display: "none" }}
       // CORS-clean media so the spectrum's AnalyserNode hears it (the stream
       // API sends ACAO: *); without this Web Audio reads pure silence.
       crossOrigin="anonymous"

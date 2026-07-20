@@ -3,14 +3,17 @@
 import {
   ArrowUUpLeft,
   Crosshair,
+  DownloadSimple,
   Eraser,
   FastForward,
   FloppyDisk,
+  MusicNote,
   Pause,
   Play,
   Plus,
   Rewind,
   Trash,
+  UploadSimple,
 } from "@phosphor-icons/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -104,6 +107,20 @@ function activeLineIndex(lines: EditLine[], time: number): number {
 
 const RATES = [0.5, 0.75, 1, 1.25, 1.5];
 
+// The content of an interlude/instrumental-break line — a bare note emoji.
+const INTERLUDE = "🎵";
+
+// A row in an imported lyrics file — either this editor's export shape
+// ({startTime, origin, ja, en}) or the raw API wire shape ({startTime,
+// lyrics:{...}}). Fields are unknown until coerced.
+type ImportRow = {
+  startTime?: unknown;
+  origin?: unknown;
+  ja?: unknown;
+  en?: unknown;
+  lyrics?: { origin?: unknown; ja?: unknown; en?: unknown };
+};
+
 const isEditableTarget = (t: EventTarget | null) =>
   t instanceof HTMLElement &&
   (t.tagName === "INPUT" ||
@@ -126,6 +143,7 @@ export function LyricEditor({
   const audioRef = useRef<HTMLAudioElement>(null);
   const rowRefs = useRef<(HTMLLIElement | null)[]>([]);
   const inputRefs = useRef(new Map<number, HTMLInputElement>());
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [lines, setLines] = useState<EditLine[]>([]);
   const [cursor, setCursor] = useState(0);
@@ -305,20 +323,30 @@ export function LyricEditor({
     [setLineTime],
   );
 
-  // Insert an empty line after `index` (−1 to prepend), select it, and focus
-  // its text field for immediate typing.
+  // Insert a line after `index` (−1 to prepend) and select it. A blank line
+  // focuses its field for immediate typing; a pre-filled one (interlude) just
+  // waits to be timed.
   const insertLineBelow = useCallback(
-    (index: number) => {
+    (index: number, content = "") => {
       const id = newId();
-      setLines((prev) => {
-        const at = index + 1;
-        return [...prev.slice(0, at), emptyLine(id), ...prev.slice(at)];
-      });
-      setCursor(index + 1);
-      setFocusId(id);
+      const at = index + 1;
+      setLines((prev) => [
+        ...prev.slice(0, at),
+        { ...emptyLine(id), origin: content },
+        ...prev.slice(at),
+      ]);
+      // Clamp into the grown list (at can exceed the last index when the list
+      // was empty or `index` pointed at the end).
+      setCursor(Math.min(at, linesRef.current.length));
+      if (!content) setFocusId(id);
       markDirty();
     },
     [markDirty, newId],
+  );
+
+  const insertInterlude = useCallback(
+    () => insertLineBelow(cursorRef.current, INTERLUDE),
+    [insertLineBelow],
   );
 
   const deleteLine = useCallback(
@@ -441,12 +469,76 @@ export function LyricEditor({
     }
   }, [password, song.id, lines, state, onSaved, onDirtyChange]);
 
+  // ── export / import a full timed lyric file (copy timing between same-named
+  // songs — live versions, reissues — instead of re-timing each by hand) ──
+  const exportLyrics = useCallback(() => {
+    const data = lines.map((l) => ({
+      startTime: l.startTime ?? 0,
+      origin: l.origin,
+      ...(l.ja ? { ja: l.ja } : {}),
+      ...(l.en ? { en: l.en } : {}),
+    }));
+    const blob = new Blob([JSON.stringify(data, null, 2)], {
+      type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    const safe = song.name.replace(/[\\/:*?"<>|]+/g, "_").trim();
+    a.download = `${safe || song.id}.lyrics.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [lines, song]);
+
+  const importFile = useCallback(
+    (file: File) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const parsed = JSON.parse(String(reader.result));
+          const arr: ImportRow[] = Array.isArray(parsed)
+            ? parsed
+            : Array.isArray(parsed?.lyrics)
+              ? parsed.lyrics
+              : [];
+          if (arr.length === 0) throw new Error("empty");
+          const next: EditLine[] = arr.map((row) => {
+            const origin = row.origin ?? row.lyrics?.origin ?? "";
+            const ja = row.ja ?? row.lyrics?.ja ?? "";
+            const en = row.en ?? row.lyrics?.en ?? "";
+            const st =
+              typeof row.startTime === "number" && row.startTime > 0
+                ? row.startTime
+                : null;
+            return {
+              id: newId(),
+              origin: String(origin),
+              ja: ja ? String(ja) : "",
+              en: en ? String(en) : "",
+              startTime: st,
+            };
+          });
+          setLines(next);
+          setCursor(0);
+          markDirty();
+          toast.success(`Imported ${next.length} lines — review and save.`);
+        } catch {
+          toast.error(
+            "Couldn't read that file — expected exported lyrics JSON.",
+          );
+        }
+      };
+      reader.readAsText(file);
+    },
+    [markDirty, newId],
+  );
+
   // ── bulk text import / edit ──
   const applyText = useCallback(
     (origin: string, ja: string, en: string) => {
-      const o = origin.split("\n");
-      const j = ja.split("\n");
-      const e = en.split("\n");
+      const o = origin.split(/\r?\n/);
+      const j = ja.split(/\r?\n/);
+      const e = en.split(/\r?\n/);
       // Drop a single trailing blank line (textarea artifact) but keep
       // intentional internal blanks (verse breaks).
       if (o.length > 1 && o[o.length - 1].trim() === "") o.pop();
@@ -573,11 +665,22 @@ export function LyricEditor({
           {timedCount}/{lines.length} timed
         </span>
       </div>
-      <p className="px-4 pt-1 pb-3 text-muted-foreground text-xs sm:px-6">
+      <p className="px-4 pt-1 pb-2 text-muted-foreground text-xs sm:px-6">
         <Kbd>Space</Kbd> play · <Kbd>Enter</Kbd> stamp line & advance ·{" "}
         <Kbd>⌫</Kbd> undo · <Kbd>↑↓</Kbd> move cursor · <Kbd>←→</Kbd> seek 3s ·{" "}
         <Kbd>[ ]</Kbd> speed
       </p>
+
+      <div className="flex flex-wrap items-center gap-2 px-4 pb-3 sm:px-6">
+        <TipButton
+          tip="Insert an interlude line (🎵) below the cursor"
+          variant="outline"
+          size="sm"
+          onClick={press(insertInterlude)}
+        >
+          <MusicNote className="size-4" /> Interlude
+        </TipButton>
+      </div>
 
       {/* ── the lines ── */}
       <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-40 sm:px-4">
@@ -765,6 +868,35 @@ export function LyricEditor({
           className="text-muted-foreground"
         >
           <ArrowUUpLeft className="size-4" /> Undo stamp
+        </Button>
+
+        {/* Hidden picker for Import; reset value so the same file re-fires. */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="application/json,.json"
+          className="hidden"
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            if (f) importFile(f);
+            e.currentTarget.value = "";
+          }}
+        />
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-muted-foreground"
+          onClick={() => fileInputRef.current?.click()}
+        >
+          <UploadSimple className="size-4" /> Import
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-muted-foreground"
+          onClick={exportLyrics}
+        >
+          <DownloadSimple className="size-4" /> Export
         </Button>
 
         <span className="ml-auto text-muted-foreground text-xs">

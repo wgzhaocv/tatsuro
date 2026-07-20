@@ -122,7 +122,9 @@ export function WorkQueue({
         {GROUPS.map((g) => {
           const list = filtered.get(g.state) ?? [];
           if (list.length === 0) return null;
-          const isOpen = !collapsed.has(g.state);
+          // A live query forces every group open, so matches in a collapsed
+          // group (e.g. Verified) still surface when searching.
+          const isOpen = query.trim() !== "" || !collapsed.has(g.state);
           return (
             <section key={g.state}>
               <button

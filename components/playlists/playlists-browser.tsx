@@ -25,7 +25,7 @@ export function PlaylistsBrowser() {
     <div className="relative z-10 flex min-h-dvh flex-col">
       <HomeNav current="playlists" search={<CommandSearch />} />
 
-      <div className="flex items-end justify-between gap-4 px-5 pb-5 pt-6 sm:px-8 sm:pt-10">
+      <div className="flex flex-col gap-4 px-5 pb-5 pt-6 sm:flex-row sm:items-end sm:justify-between sm:px-8 sm:pt-10">
         <div>
           <h1 className="font-display text-5xl font-semibold leading-none text-white [text-shadow:0_4px_24px_rgba(11,58,83,0.5)] sm:text-6xl">
             {t("heading")}

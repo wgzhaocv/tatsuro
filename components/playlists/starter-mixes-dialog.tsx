@@ -54,7 +54,11 @@ export function StarterMixesButton({
         {t("starterMixes.trigger")}
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="gap-4">
+        {/* [&>*]:min-w-0 — the content grid's single auto column otherwise sizes
+            to the description's max-content and blows the rows out past the card
+            (Import pill clipped off-screen on phones). min-width:0 lets the grid
+            children shrink to the capped width so text wraps/truncates. */}
+        <DialogContent className="gap-4 [&>*]:min-w-0">
           <DialogHeader>
             <DialogTitle>{t("starterMixes.title")}</DialogTitle>
             <DialogDescription>{t("starterMixes.subtitle")}</DialogDescription>

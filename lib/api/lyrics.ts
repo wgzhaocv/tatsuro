@@ -13,12 +13,27 @@ export type LyricLine = {
   en?: string;
 };
 
-type ApiLyricsResponse = {
-  lyrics?: {
-    startTime: number;
-    lyrics: { origin: string; ja?: string | null; en?: string | null };
-  }[];
+/** The stored/wire shape of one line, both directions of the mapping. GET
+ *  /lyrics/:id returns these; the studio's POST sends them back (see toWire). */
+export type WireLyricLine = {
+  startTime: number;
+  lyrics: { origin: string; ja?: string | null; en?: string | null };
 };
+
+type ApiLyricsResponse = { lyrics?: WireLyricLine[] };
+
+/** Domain LyricLine → wire (the inverse of fetchLyrics' read mapping). An
+ *  unstamped line serializes to startTime 0; blank translations to null. */
+export function toWire(line: LyricLine): WireLyricLine {
+  return {
+    startTime: line.startTime > 0 ? line.startTime : 0,
+    lyrics: {
+      origin: line.origin,
+      ja: line.ja?.trim() ? line.ja : null,
+      en: line.en?.trim() ? line.en : null,
+    },
+  };
+}
 
 /** A song's lyric lines, in order. Empty array = no lyrics. */
 export async function fetchLyrics(songId: string): Promise<LyricLine[]> {

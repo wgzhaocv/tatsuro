@@ -11,6 +11,9 @@ import { AUTH_COOKIE_NAME, REDIRECT_URL_COOKIE } from "@/lib/constants";
 const intlMiddleware = createMiddleware(routing);
 const { locales, defaultLocale } = routing;
 
+// Paths served outside the [locale] tree (own layout, English chrome).
+const UNLOCALIZED_PREFIXES = ["/demo", "/studio"];
+
 const AUTH_COOKIE_OPTIONS = {
   httpOnly: true,
   sameSite: "lax" as const,
@@ -53,16 +56,19 @@ export async function proxy(request: NextRequest) {
   const url = request.nextUrl.clone();
   const { pathname } = url;
 
-  // /demo is dev-only: gated like everything else, but never localized.
-  const isDemo = pathname === "/demo" || pathname.startsWith("/demo/");
+  // Gated like everything else, but never localized — single-surface tools,
+  // not product: /demo (design reference), /studio (lyrics admin).
+  const isUnlocalized = UNLOCALIZED_PREFIXES.some(
+    (p) => pathname === p || pathname.startsWith(`${p}/`),
+  );
   const locale = pathLocale(pathname);
-  // Pass a request through to the app: locale-rewrite it unless it's /demo.
+  // Pass a request through to the app: locale-rewrite it unless it's unlocalized.
   const passThrough = () =>
-    isDemo ? NextResponse.next() : intlMiddleware(request);
+    isUnlocalized ? NextResponse.next() : intlMiddleware(request);
 
   // Unprefixed localizable path → let next-intl attach a locale prefix
   // (NEXT_LOCALE cookie > Accept-Language). Auth runs on the prefixed hop.
-  if (!locale && !isDemo) {
+  if (!locale && !isUnlocalized) {
     return intlMiddleware(request);
   }
 

@@ -10,6 +10,17 @@ export function formatDuration(seconds: number): string {
   return `${minutes}:${rest.toString().padStart(2, "0")}`;
 }
 
+/** Seconds → "m:ss.cc" with centiseconds, for the lyrics studio's timestamps
+ *  (m:ss isn't precise enough to align a lyric line). Rounds to the nearest
+ *  centisecond (via integer math, so no float-floor drift or 100-carry bug). */
+export function formatTimecode(seconds: number): string {
+  const totalCs = Math.round(Math.max(0, seconds) * 100);
+  const cs = totalCs % 100;
+  return `${formatDuration(Math.floor(totalCs / 100))}.${cs
+    .toString()
+    .padStart(2, "0")}`;
+}
+
 /** Bytes → "84.5 MB" / "1.2 GB" for download sizes. */
 export function formatFileSize(bytes: number): string {
   const mb = bytes / 1024 ** 2;

@@ -133,7 +133,7 @@
     "starterMixes": {
       "trigger": "精选长歌单",
       "title": "精选长歌单",
-      "subtitle": "精心编排的主题长歌单。导入后即为普通歌单，可自由增删、排序、改名。",
+      "subtitle": "AI 整理的长歌单。导入后即为普通歌单，可自由增删、排序、改名。",
       "import": "导入",
       "imported": "「{name}」已加入歌单",
       "open": "打开",
@@ -148,6 +148,10 @@
       "endlessSummer": {
         "name": "无尽夏",
         "blurb": "海边兜风的明亮夏日"
+      },
+      "seaAndSummer": {
+        "name": "海与夏天",
+        "blurb": "海风、阳光和浪声"
       },
       "quietHours": {
         "name": "深夜抒情",

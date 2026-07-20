@@ -133,7 +133,7 @@
     "starterMixes": {
       "trigger": "Starter mixes",
       "title": "Starter mixes",
-      "subtitle": "Curated long mixes. Import one and it's a normal playlist — edit, reorder, or delete it however you like.",
+      "subtitle": "Long mixes put together by AI. Import one and it's a normal playlist — edit, reorder, or delete it however you like.",
       "import": "Import",
       "imported": "Added “{name}” to your playlists",
       "open": "Open",
@@ -148,6 +148,10 @@
       "endlessSummer": {
         "name": "Endless Summer",
         "blurb": "Bright beach-drive singalongs"
+      },
+      "seaAndSummer": {
+        "name": "Sea & Summer",
+        "blurb": "Salt air, sun, and the sound of waves"
       },
       "quietHours": {
         "name": "Quiet Hours",

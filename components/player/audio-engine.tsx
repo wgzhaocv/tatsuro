@@ -7,8 +7,9 @@ import { ensureAnalyser } from "@/lib/player/analyser";
 import { usePlayerStore, useProgressStore } from "@/lib/player/store";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// The one place state becomes sound. Renders the hidden <audio> element and
-// keeps it in lockstep with the player store: src follows the current song,
+// The one place state becomes sound. Renders the hidden media element (a 0×0
+// <video> carrying audio-only content — see the render for the AirPlay reason)
+// and keeps it in lockstep with the player store: src follows the current song,
 // play/pause follows isPlaying, seek requests are consumed by nonce, and
 // timeupdate/ended flow back into the stores. Also owns MediaSession, media
 // keys, and cross-tab exclusivity.
@@ -36,7 +37,7 @@ const isIOSWebKit =
     (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1));
 
 export function AudioEngine() {
-  const audioRef = useRef<HTMLAudioElement>(null);
+  const audioRef = useRef<HTMLVideoElement>(null);
   const loadedSongId = useRef<string | null>(null);
   const consumedSeekNonce = useRef<number>(0);
   // Consecutive-failure count; stops error-skipping from looping forever.
@@ -110,7 +111,7 @@ export function AudioEngine() {
 
   // play() failed (stream connection gone stale after a long suspend):
   // reload the source and restore the position before giving up.
-  const attemptRecovery = useCallback((el: HTMLAudioElement) => {
+  const attemptRecovery = useCallback((el: HTMLVideoElement) => {
     const resumeAt = el.currentTime;
     el.play().catch(() => {
       el.load();
@@ -122,7 +123,7 @@ export function AudioEngine() {
   // External (not app-initiated) pauses, from onTimeUpdate and onPause. The
   // spec fires a timeupdate before pause, so entering from timeupdate wins
   // the race against a re-render resuming playback mid-verdict.
-  const handleExternalPause = (el: HTMLAudioElement) => {
+  const handleExternalPause = (el: HTMLVideoElement) => {
     if (!usePlayerStore.getState().isPlaying) return;
     if (suspendedRef.current) return;
     // Natural track end belongs to onEnded; Safari may fire pause before
@@ -356,10 +357,20 @@ export function AudioEngine() {
   }, []);
 
   return (
+    // A hidden <video>, not <audio>: the content is audio-only, but iOS routes
+    // AirPlay to HomePod correctly for a <video> element, whereas a bare
+    // <audio> ghost-loops the opening fragment on the remote target (the old
+    // site's ReactPlayer landed on <video> for the same URL and played fine).
+    // 0×0 + display:none keeps it invisible; playsInline stops iOS from ever
+    // trying to take it fullscreen.
     // biome-ignore lint/a11y/useMediaCaption: music streams have no captions
-    <audio
+    <video
       ref={audioRef}
       preload="metadata"
+      playsInline
+      width={0}
+      height={0}
+      style={{ display: "none" }}
       // CORS-clean media so the spectrum's AnalyserNode hears it (the stream
       // API sends ACAO: *); without this Web Audio reads pure silence.
       crossOrigin="anonymous"

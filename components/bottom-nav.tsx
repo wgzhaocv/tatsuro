@@ -85,6 +85,17 @@ export function BottomNavShell({ activePath }: { activePath: string | null }) {
   const videoStage = usePlayerStore((s) => s.videoStage);
   if (videoStage) return null;
 
+  // Tapping the tab you're already on scrolls the page to the top — the
+  // standard mobile tab-bar gesture. PageScroll owns the window offset, so we
+  // drive window here too; honour the reduced-motion switch (a JS smooth-scroll
+  // isn't caught by the global CSS kill-switch).
+  const scrollToTop = () => {
+    const reduce = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+    window.scrollTo({ top: 0, behavior: reduce ? "auto" : "smooth" });
+  };
+
   return (
     <>
       {/* Flow spacer: reserves the bar height (bar + safe-area) so page content
@@ -157,6 +168,16 @@ export function BottomNavShell({ activePath }: { activePath: string | null }) {
                 <Link
                   href={s.href}
                   aria-current={active ? "page" : undefined}
+                  onClick={(e) => {
+                    // Exactly at this section's root → the tab becomes a
+                    // scroll-to-top button (no navigation). A sub-page that only
+                    // matches (e.g. /album/[id] under Albums) still navigates
+                    // back to the root via the Link's default behaviour.
+                    if (activePath === s.href) {
+                      e.preventDefault();
+                      scrollToTop();
+                    }
+                  }}
                   // Active = full-strength foreground + filled glyph (AA in both
                   // themes); inactive = muted, warming on hover. No light-water
                   // colour on text — deep-water law.

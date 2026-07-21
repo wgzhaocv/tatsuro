@@ -33,6 +33,7 @@ export const TrackRow = memo(function TrackRow({
   onRemove,
   hideLike,
   showAlbumLink,
+  sequential,
 }: {
   index: number;
   /** Position in the queue (across discs / the whole playlist). */

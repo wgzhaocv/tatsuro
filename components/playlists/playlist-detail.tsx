@@ -107,7 +107,7 @@ export function PlaylistDetail({ id }: { id: string }) {
       {ambientCoverId && <AlbumAmbient cover={coverUrl(ambientCoverId)} />}
       {/* Flash the track a "go to source" jump (from the player) points at. */}
       <SharedSongHighlight />
-      <header className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-5 py-4 sm:px-8 sm:py-5">
+      <header className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-5 pb-4 pt-[max(1rem,env(safe-area-inset-top))] sm:px-8 sm:pb-5 sm:pt-[max(1.25rem,env(safe-area-inset-top))]">
         <Link
           href="/playlists"
           className={cn(
@@ -229,7 +229,7 @@ export function PlaylistDetail({ id }: { id: string }) {
 export function PlaylistDetailSkeleton() {
   return (
     <div className="relative z-10 flex min-h-dvh flex-col">
-      <header className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-5 py-4 sm:px-8 sm:py-5">
+      <header className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-5 pb-4 pt-[max(1rem,env(safe-area-inset-top))] sm:px-8 sm:pb-5 sm:pt-[max(1.25rem,env(safe-area-inset-top))]">
         <div className="h-11 w-32 animate-pulse rounded-full bg-white/20" />
         <div className="size-11 animate-pulse rounded-full bg-white/20" />
       </header>

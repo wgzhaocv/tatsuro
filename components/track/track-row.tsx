@@ -9,7 +9,7 @@ import { useScrollToCurrentOnEnter } from "@/lib/player/use-scroll-to-current";
 import { isJapanese } from "@/lib/text";
 import { cn } from "@/lib/utils";
 import { CacheDot } from "./cache-dot";
-import { useQueuePlayback } from "./playback-context";
+import { useIsThisQueue, useQueuePlayback } from "./playback-context";
 import { TrackActions } from "./track-actions";
 
 /**
@@ -58,12 +58,19 @@ export const TrackRow = memo(function TrackRow({
   // without a refetch.
   const song = track ?? songs[queueIndex];
   const songId = song?.id;
-  const isCurrent = usePlayerStore((s) => s.current?.id === songId);
-  // Fold the play flag into the selector so non-current rows resolve to a
-  // stable `false` and skip re-rendering on every play/pause toggle.
-  const isPlaying = usePlayerStore(
-    (s) => s.isPlaying && s.current?.id === songId,
-  );
+  // "Current" means this song *in this queue*, not just this song id: the same
+  // track can sit in many lists, and playing it from album A must not light up
+  // (or pause) its row in playlist B. Clicking that row should switch the queue
+  // to B and restart from here — so the queue-scoped flag is what drives both
+  // the glyph and the click below. Song-id selectors stay folded (non-current
+  // rows resolve to a stable `false` and skip play/pause re-renders); we AND in
+  // the queue check, which is itself a stable per-queue selector.
+  const isThisQueue = useIsThisQueue(queueId);
+  const isCurrent =
+    usePlayerStore((s) => s.current?.id === songId) && isThisQueue;
+  const isPlaying =
+    usePlayerStore((s) => s.isPlaying && s.current?.id === songId) &&
+    isThisQueue;
   const playQueue = usePlayerStore((s) => s.playQueue);
   const toggle = usePlayerStore((s) => s.toggle);
 

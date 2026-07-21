@@ -23,7 +23,7 @@ export function PlaylistCard({ playlist }: { playlist: Playlist }) {
     <HoverPrefetchLink
       href={`/playlists/${playlist.id}`}
       aria-label={name}
-      className="group flex items-center gap-3 rounded-xl p-2 outline-none transition-colors duration-300 ease-lazy max-sm:hover:bg-navy/[0.05] dark:max-sm:hover:bg-white/[0.06] sm:block sm:rounded-2xl sm:p-0"
+      className="group flex items-center gap-3 rounded-xl p-2 outline-none transition duration-300 ease-lazy active:scale-[0.98] max-sm:hover:bg-navy/[0.05] max-sm:active:bg-navy/[0.09] dark:max-sm:hover:bg-white/[0.06] dark:max-sm:active:bg-white/[0.10] sm:block sm:rounded-2xl sm:p-0"
     >
       <PlaylistCover
         playlist={playlist}

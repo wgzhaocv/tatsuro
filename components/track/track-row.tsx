@@ -51,6 +51,11 @@ export const TrackRow = memo(function TrackRow({
   hideLike?: boolean;
   /** Offer "view album" in the overflow menu (playlist / Liked rows). */
   showAlbumLink?: boolean;
+  /** Number by list position (index+1) instead of the song's album track
+   *  number. Playlists mix songs from many albums, so each song's own
+   *  trackNumber would read as a jumbled sequence — the playlist wants a clean
+   *  1..n running order. Albums leave this off and keep the real track number. */
+  sequential?: boolean;
 }) {
   const t = useTranslations("album");
   const { songs, label, queueId, href } = useQueuePlayback();
@@ -83,7 +88,7 @@ export const TrackRow = memo(function TrackRow({
   // rather than a crash. After the hooks, which must run unconditionally.
   if (!song) return null;
 
-  const number = song.trackNumber ?? index + 1;
+  const number = sequential ? index + 1 : (song.trackNumber ?? index + 1);
 
   return (
     <li ref={rowRef}>

@@ -202,6 +202,7 @@ export function PlaylistDetail({ id }: { id: string }) {
                     queueIndex={i}
                     hideLike={isLiked}
                     showAlbumLink
+                    sequential
                     onRemove={handleRemove}
                   />
                 ))}

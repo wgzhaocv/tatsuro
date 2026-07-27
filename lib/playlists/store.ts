@@ -60,11 +60,19 @@ type PlaylistsState = {
 
   // cloud sync (see lib/account/sync.ts) ──────────────────────────────────────
   /** Replace the library with the server's authoritative snapshot after a sync.
-   *  The server merged with LWW already, so this adopts it wholesale. Entries are
-   *  rebuilt from the thin rows, reusing any Song we already know by id (so this
-   *  device's own playlists keep their rich cover/name/duration) and thin-stubbing
-   *  the rest. Returns the song ids that had to be stubbed, for the caller to
-   *  hydrate via the song cache. Does NOT bump updatedAt (not a user edit). */
+   *  The server merged with LWW already, so this adopts it wholesale — the local
+   *  copy gets no say. Entries are rebuilt from the thin rows, reusing any Song
+   *  we already know by id (so this device's own playlists keep their rich
+   *  cover/name/duration) and thin-stubbing the rest; rows carrying a deletedAt
+   *  are split off into `removed` so they don't render as songs. Returns the song
+   *  ids that had to be stubbed, for the caller to hydrate via the song cache.
+   *  Does NOT bump updatedAt (not a user edit).
+   *
+   *  Accepted trade-off: an edit made while the sync request was in flight isn't
+   *  in the snapshot yet, so adopting overwrites it. Deliberate — the deletion
+   *  bug this file used to have came from the client second-guessing the server,
+   *  and one authority beats two implementations of one merge rule. The window is
+   *  the request itself (~300ms) against a 3s edit debounce. */
   adoptRemote(remote: WirePlaylist[]): string[];
   /** Fill richer Song data into any entry matching by id (post-adopt hydration
    *  of stubbed songs). Pure metadata refresh — leaves updatedAt untouched so it
@@ -320,97 +328,44 @@ export const usePlaylistStore = create<PlaylistsState>()(
         // reuse rich local data (cover/name/duration) instead of stubs. Common
         // case (this device's own playlists round-tripping) resolves fully.
         const local = get().playlists;
-        const localById = new Map(local.map((p) => [p.id, p]));
         const known = new Map<string, Song>();
         for (const p of local)
           for (const e of p.entries) known.set(e.song.id, e.song);
 
         const stubbed: string[] = [];
         const adopted: Playlist[] = remote.map((r) => {
-          const mine = localById.get(r.id);
-
-          // Membership merges per song on last-write-wins over
-          // max(addedAt, deletedAt) — the same rule the server applies, so both
-          // sides converge. The snapshot is authoritative for everything it has
-          // already merged, but an edit made while this sync was in flight
-          // isn't in it yet; merging rather than replacing is what stops adopt
-          // from silently undoing that edit (a removal, most visibly).
-          type Row = { addedAt: number; deletedAt?: number; position: number };
-          const stamp = (row: Row) => Math.max(row.addedAt, row.deletedAt ?? 0);
-          const rows = new Map<string, Row>();
-          for (const s of r.songs) {
-            rows.set(s.songId, {
-              addedAt: s.addedAt,
-              ...(s.deletedAt != null && { deletedAt: s.deletedAt }),
-              position: s.position,
-            });
-          }
-          // Equal clocks: the tombstone wins. Two writes stamped the same
-          // millisecond can't be ordered, and of the two possible mistakes,
-          // resurrecting a song the user deleted is the one they'd notice.
-          // Re-adding it is always still possible; it just needs a newer stamp
-          // (which is why restoreSong re-dates the entry it puts back).
-          const beats = (row: Row, prev: Row) =>
-            stamp(row) !== stamp(prev)
-              ? stamp(row) > stamp(prev)
-              : row.deletedAt != null && prev.deletedAt == null;
-          const claim = (songId: string, row: Row) => {
-            const prev = rows.get(songId);
-            if (!prev || beats(row, prev)) rows.set(songId, row);
-          };
-          // Local rows the snapshot hasn't seen sort after everything it has.
-          let tail = r.songs.length;
-          for (const e of mine?.entries ?? []) {
-            claim(e.song.id, {
-              addedAt: e.addedAt,
-              position: rows.get(e.song.id)?.position ?? tail++,
-            });
-          }
-          for (const t of mine?.removed ?? []) {
-            // addedAt 0: a tombstone's clock is its deletedAt, and the original
-            // add time is of no further use once the row is dead.
-            claim(t.songId, {
-              addedAt: 0,
-              deletedAt: t.deletedAt,
-              position: 0,
-            });
-          }
-
-          const live: { entry: PlaylistEntry; position: number }[] = [];
+          // Tombstoned rows ride in `songs` too — that's how a removal reaches
+          // this device at all — so split them back out and keep `entries` to
+          // the songs actually in the list. The tombstones are carried along
+          // rather than dropped: they still have to be re-uploaded, or the next
+          // push would look like this device has no opinion on those songs.
+          const live: WirePlaylist["songs"] = [];
           const removed: PlaylistRemoval[] = [];
-          for (const [songId, row] of rows) {
-            if (row.deletedAt != null) {
-              removed.push({ songId, deletedAt: row.deletedAt });
-              continue;
-            }
-            const song = known.get(songId);
-            if (!song) stubbed.push(songId);
-            live.push({
-              entry: {
-                song: song ?? { id: songId, name: "" },
-                addedAt: row.addedAt,
-              },
-              position: row.position,
-            });
+          for (const s of r.songs) {
+            if (s.deletedAt != null)
+              removed.push({ songId: s.songId, deletedAt: s.deletedAt });
+            else live.push(s);
           }
 
-          // Metadata is whole-row LWW, again matching the server. Holding the
-          // local side when it is newer preserves a rename/delete made mid-sync
-          // — and preserves the newer updatedAt, which is the signal sync.ts
-          // reads to schedule the follow-up push that carries it to the server.
-          const meta = mine && mine.updatedAt > r.updatedAt ? mine : r;
           return {
             id: r.id,
-            kind: meta.kind,
-            name: meta.name,
-            coverId: meta.coverId ?? undefined,
+            kind: r.kind,
+            name: r.name,
+            coverId: r.coverId ?? undefined,
             createdAt: r.createdAt,
-            updatedAt: meta.updatedAt,
-            ...(meta.deletedAt != null && { deletedAt: meta.deletedAt }),
+            updatedAt: r.updatedAt,
+            ...(r.deletedAt != null && { deletedAt: r.deletedAt }),
             ...(removed.length > 0 && { removed }),
             entries: live
               .sort((a, b) => a.position - b.position)
-              .map((x) => x.entry),
+              .map((s) => {
+                const song = known.get(s.songId);
+                if (!song) stubbed.push(s.songId);
+                return {
+                  song: song ?? { id: s.songId, name: "" },
+                  addedAt: s.addedAt,
+                };
+              }),
           };
         });
 

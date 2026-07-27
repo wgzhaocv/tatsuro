@@ -47,3 +47,4 @@ next-env.d.ts
 
 # codex local hook config (machine-specific absolute paths)
 .codex/
+cf-api-token-Analytics

@@ -72,8 +72,17 @@ type PlaylistsState = {
    *  in the snapshot yet, so adopting overwrites it. Deliberate — the deletion
    *  bug this file used to have came from the client second-guessing the server,
    *  and one authority beats two implementations of one merge rule. The window is
-   *  the request itself (~300ms) against a 3s edit debounce. */
-  adoptRemote(remote: WirePlaylist[]): string[];
+   *  the request itself (~300ms) against a 3s edit debounce.
+   *
+   *  `discardLocalOnly` drops playlists the snapshot doesn't mention instead of
+   *  keeping them. Only the login pull passes it: connecting to an account that
+   *  already has a library means that library wins outright, including over
+   *  playlists this device made before logging in. Left off, they're treated as
+   *  pending uploads and kept. */
+  adoptRemote(
+    remote: WirePlaylist[],
+    opts?: { discardLocalOnly?: boolean },
+  ): string[];
   /** Fill richer Song data into any entry matching by id (post-adopt hydration
    *  of stubbed songs). Pure metadata refresh — leaves updatedAt untouched so it
    *  never triggers a re-sync. */
@@ -323,7 +332,7 @@ export const usePlaylistStore = create<PlaylistsState>()(
         });
       },
 
-      adoptRemote(remote) {
+      adoptRemote(remote, opts) {
         // Build a lookup of every Song we already hold, so adopted playlists
         // reuse rich local data (cover/name/duration) instead of stubs. Common
         // case (this device's own playlists round-tripping) resolves fully.
@@ -376,8 +385,11 @@ export const usePlaylistStore = create<PlaylistsState>()(
         // id absent from `remote` is always a pending local-only one. A blind
         // replace here dropped them — that's how a just-imported playlist got
         // wiped before it could sync. They upload on the next sync cycle.
+        // The login pull is the one caller that does want them gone.
         const remoteIds = new Set(remote.map((r) => r.id));
-        const localOnly = local.filter((p) => !remoteIds.has(p.id));
+        const localOnly = opts?.discardLocalOnly
+          ? []
+          : local.filter((p) => !remoteIds.has(p.id));
 
         set({ playlists: [...adopted, ...localOnly] });
         return stubbed;

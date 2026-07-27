@@ -25,8 +25,10 @@ type PinsState = {
   setHasHydrated(v: boolean): void;
   /** Replace pins with the server's authoritative post-merge set (LWW already
    *  applied server-side). Rebuilt from the thin wire rows; does NOT bump
-   *  updatedAt — it's not a user edit, so it must not trigger a re-sync. */
-  adoptRemote(remote: PinRow[]): void;
+   *  updatedAt — it's not a user edit, so it must not trigger a re-sync.
+   *  `discardLocalOnly` drops pins the snapshot lacks rather than keeping them as
+   *  pending uploads — only the login pull wants that (see lib/account/sync). */
+  adoptRemote(remote: PinRow[], opts?: { discardLocalOnly?: boolean }): void;
 };
 
 function now(): number {
@@ -69,7 +71,7 @@ export const usePinStore = create<PinsState>()(
         set({ hasHydrated: v });
       },
 
-      adoptRemote(remote) {
+      adoptRemote(remote, opts) {
         set((s) => {
           const adopted = remote.map((r) => ({
             albumId: r.albumId,
@@ -81,7 +83,9 @@ export const usePinStore = create<PinsState>()(
           // uploaded yet. A blind replace would drop them (same data-loss race
           // as playlists); they upload on the next sync.
           const remoteIds = new Set(remote.map((r) => r.albumId));
-          const localOnly = s.pins.filter((p) => !remoteIds.has(p.albumId));
+          const localOnly = opts?.discardLocalOnly
+            ? []
+            : s.pins.filter((p) => !remoteIds.has(p.albumId));
           return { pins: [...adopted, ...localOnly] };
         });
       },

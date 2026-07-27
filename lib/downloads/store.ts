@@ -34,8 +34,13 @@ type DownloadsState = {
   clearIntent(id: string): void;
   setHasHydrated(v: boolean): void;
   /** Replace intents with the server's authoritative post-merge set. Rebuilt
-   *  from wire rows; does NOT bump updatedAt (not a user edit → no re-sync). */
-  adoptRemote(remote: OfflineIntentRow[]): void;
+   *  from wire rows; does NOT bump updatedAt (not a user edit → no re-sync).
+   *  `discardLocalOnly` drops intents the snapshot lacks rather than keeping them
+   *  as pending uploads — only the login pull wants that (see lib/account/sync). */
+  adoptRemote(
+    remote: OfflineIntentRow[],
+    opts?: { discardLocalOnly?: boolean },
+  ): void;
 };
 
 function now(): number {
@@ -75,7 +80,7 @@ export const useDownloadsStore = create<DownloadsState>()(
         set({ hasHydrated: v });
       },
 
-      adoptRemote(remote) {
+      adoptRemote(remote, opts) {
         set((s) => {
           // `label` is local-only (never on the wire), so carry over the label
           // this device already has for each id — otherwise adopting the merged
@@ -96,7 +101,9 @@ export const useDownloadsStore = create<DownloadsState>()(
           // not uploaded yet. A blind replace would drop them (same data-loss
           // race as playlists); they upload on the next sync.
           const remoteIds = new Set(remote.map((r) => r.id));
-          const localOnly = s.intents.filter((i) => !remoteIds.has(i.id));
+          const localOnly = opts?.discardLocalOnly
+            ? []
+            : s.intents.filter((i) => !remoteIds.has(i.id));
           return { intents: [...adopted, ...localOnly] };
         });
       },

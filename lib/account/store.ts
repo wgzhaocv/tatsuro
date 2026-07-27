@@ -29,12 +29,20 @@ type AccountState = {
   /** epoch ms of the last successful /me fetch — profile is otherwise served
    *  from localStorage, so this gates re-fetching to once a day (see sync.ts). */
   userFetchedAt: number | null;
+  /** epoch ms this device completed its login pull for the connected account —
+   *  null means it hasn't yet, and the next sync pulls before it pushes (the
+   *  account's shape wins; see sync.ts). Persisted, or every app open would
+   *  re-pull and discard whatever hadn't uploaded yet. Reset by clear(), so
+   *  connecting a different account pulls again. */
+  pulledAt: number | null;
   /** Live sync state, for the dialog. Not persisted. */
   status: SyncStatus;
 
   setSession(token: string): void;
   setUser(user: AccountUser): void;
   setStatus(status: SyncStatus): void;
+  /** Record that the login pull is done, so later syncs push normally. */
+  markPulled(): void;
   /** Disconnect: drop the token + profile. Local playlists are a separate store
    *  and are deliberately left intact. */
   clear(): void;
@@ -46,6 +54,7 @@ export const useAccountStore = create<AccountState>()(
       token: null,
       user: null,
       userFetchedAt: null,
+      pulledAt: null,
       status: "idle",
 
       setSession(token) {
@@ -57,13 +66,22 @@ export const useAccountStore = create<AccountState>()(
       setStatus(status) {
         set({ status });
       },
+      markPulled() {
+        set({ pulledAt: Date.now() });
+      },
       clear() {
-        set({ token: null, user: null, userFetchedAt: null, status: "idle" });
+        set({
+          token: null,
+          user: null,
+          userFetchedAt: null,
+          pulledAt: null,
+          status: "idle",
+        });
       },
     }),
     {
       name: ACCOUNT_STORAGE_KEY,
-      version: 1,
+      version: 2,
       storage: createJSONStorage(() => localStorage),
       skipHydration: true, // SSR renders empty; the bootstrap mount rehydrates.
       // Only the token + profile persist; status is per-session.
@@ -71,7 +89,17 @@ export const useAccountStore = create<AccountState>()(
         token: s.token,
         user: s.user,
         userFetchedAt: s.userFetchedAt,
+        pulledAt: s.pulledAt,
       }),
+      // v1 → v2 added pulledAt. A device already connected under v1 has been
+      // two-way syncing for a while, so its library IS the account's — treat the
+      // pull as long done. Defaulting it to null instead would make the next app
+      // open perform a login pull and discard anything that had not uploaded.
+      migrate: (persisted, version) => {
+        const s = persisted as Partial<AccountState> | undefined;
+        if (version < 2 && s?.token) return { ...s, pulledAt: 1 };
+        return s as AccountState;
+      },
     },
   ),
 );

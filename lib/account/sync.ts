@@ -54,7 +54,8 @@ export async function fetchMe(): Promise<void> {
   }
 }
 
-/** Push the local snapshot, adopt the server's merged result, hydrate stubs. */
+/** Push the local snapshot, adopt the server's merged result, hydrate stubs.
+ *  The first sync after connecting an account pulls instead — see loginPull. */
 export async function syncNow(): Promise<void> {
   const token = useAccountStore.getState().token;
   if (!token) return;
@@ -65,6 +66,15 @@ export async function syncNow(): Promise<void> {
   syncing = true;
   useAccountStore.getState().setStatus("syncing");
   try {
+    if (useAccountStore.getState().pulledAt == null) {
+      const seeded = await loginPull(token);
+      // The account already had a library, so it has been adopted and this
+      // device's own is gone: there is nothing left to push.
+      if (!seeded) {
+        useAccountStore.getState().setStatus("idle");
+        return;
+      }
+    }
     const body = {
       playlists: usePlaylistStore.getState().playlists.map((p) => {
         const { playlist, songs } = toWireRows(p);
@@ -143,6 +153,72 @@ export async function syncNow(): Promise<void> {
       void syncNow();
     }
   }
+}
+
+/**
+ * The first sync after connecting an account: read the account WITHOUT uploading,
+ * and let its shape win. Whichever device connects first defines the account;
+ * every later one takes what's there, so there is exactly one authority and no
+ * question of whose library is right.
+ *
+ * A POST carrying an empty `playlists` array merges nothing, and omitting
+ * `pins`/`downloads` leaves those untouched — so this is a pure read on the
+ * existing endpoint, no second route needed.
+ *
+ * Returns true when the account is empty and this device should seed it (the
+ * caller falls through to a normal push), false when a library was adopted —
+ * which discards whatever this device held, including playlists made before
+ * logging in. That's the intent, and it's why it can't be undone.
+ */
+async function loginPull(token: string): Promise<boolean> {
+  const res = await fetch(`${API}/me/sync`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ playlists: [] }),
+  });
+  if (res.status === 401) {
+    useAccountStore.getState().clear();
+    return false;
+  }
+  if (!res.ok) throw new Error(`login pull failed: ${res.status}`);
+  const data = (await res.json()) as {
+    playlists: WirePlaylist[];
+    pins?: PinRow[];
+    downloads?: OfflineIntentRow[];
+  };
+
+  // Empty account — this device seeds it. All three collections are checked, so
+  // a half-populated account (pins but no playlists) still counts as existing
+  // and gets adopted rather than overwritten.
+  if (!data.playlists.length && !data.pins?.length && !data.downloads?.length) {
+    useAccountStore.getState().markPulled();
+    return true;
+  }
+
+  const stubbed = withRemoteApplied(() => {
+    if (Array.isArray(data.pins)) {
+      usePinStore.getState().adoptRemote(data.pins, { discardLocalOnly: true });
+    }
+    if (Array.isArray(data.downloads)) {
+      useDownloadsStore
+        .getState()
+        .adoptRemote(data.downloads, { discardLocalOnly: true });
+    }
+    const ids = usePlaylistStore
+      .getState()
+      .adoptRemote(data.playlists, { discardLocalOnly: true });
+    // Discarding the local set can take the reserved Liked list with it if the
+    // account somehow has none (a peer that only ever pinned albums). Put it
+    // back so the UI never loses the row.
+    usePlaylistStore.getState().ensureLiked();
+    return ids;
+  });
+  useAccountStore.getState().markPulled();
+  if (stubbed.length) void hydrateStubbed(stubbed);
+  return false;
 }
 
 /** Debounced push — the trigger for user edits (add/remove/rename/reorder). */

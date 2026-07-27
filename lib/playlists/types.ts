@@ -27,6 +27,13 @@ export const LIKED_ID = "liked";
  *  next load by PlaylistsHydration (components/playlists/hydration). */
 export type PlaylistEntry = { song: Song; addedAt: number };
 
+/** A removed membership, kept as a tombstone so the removal survives a cloud
+ *  sync. Without it the server's merge (which never hard-deletes a song row)
+ *  would hand the song straight back on the next snapshot and the delete would
+ *  look like it silently failed. Held apart from `entries` so every read site
+ *  still sees only songs actually in the list. */
+export type PlaylistRemoval = { songId: string; deletedAt: number };
+
 export type Playlist = {
   /** LIKED_ID for the reserved list; crypto.randomUUID() for user playlists —
    *  never a sequential id, so merging several devices into one account can't
@@ -36,6 +43,10 @@ export type Playlist = {
   /** User playlists: the typed name. Liked: a fallback only — the UI localizes. */
   name: string;
   entries: PlaylistEntry[];
+  /** Tombstones for songs removed from this list — uploaded alongside `entries`
+   *  so the removal propagates. Re-adding a song drops its tombstone. Absent on
+   *  lists nothing was ever removed from (and on pre-tombstone persisted data). */
+  removed?: PlaylistRemoval[];
   /** Explicit cover (album-created playlists carry the album cover id); when
    *  absent the cover is derived from the first entries' song covers. */
   coverId?: string;
@@ -56,9 +67,11 @@ export type Playlist = {
 // Wire projection — the thin rows the future sync uploads to D1. Documented as
 // types now (no backend yet) so the local shape stays sync-ready by design:
 //   playlists(id, user_id, kind, name, cover_id, created_at, updated_at, deleted_at)
-//   playlist_songs(playlist_id, song_id, position, added_at, PK(playlist_id, song_id))
+//   playlist_songs(playlist_id, song_id, position, added_at, deleted_at, PK(playlist_id, song_id))
 // Sync walks `entries` → { song.id, index → position, addedAt } and drops the
-// denormalized fields (re-derivable from the catalog).
+// denormalized fields (re-derivable from the catalog), then appends one row per
+// `removed` tombstone. The server merges membership per row on last-write-wins
+// over max(addedAt, deletedAt), so a removal only sticks if it carries a stamp.
 // ─────────────────────────────────────────────────────────────────────────────
 
 export type PlaylistRow = {
@@ -76,13 +89,20 @@ export type PlaylistSongRow = {
   songId: string;
   position: number;
   addedAt: number;
+  /** epoch ms tombstone — set on rows projected from `removed`. */
+  deletedAt: number | null;
 };
 
 /** The shape POST /me/sync exchanges in both directions (backend API.md §8): a
  *  PlaylistRow with its membership inlined. Isomorphic to toWireRows() output;
  *  the response omits playlistId from each song (it's implied by the parent). */
 export type WirePlaylist = PlaylistRow & {
-  songs: { songId: string; position: number; addedAt: number }[];
+  songs: {
+    songId: string;
+    position: number;
+    addedAt: number;
+    deletedAt: number | null;
+  }[];
 };
 
 /** Flatten a playlist into the thin rows a future sync would upload. Pure — no
@@ -101,11 +121,24 @@ export function toWireRows(p: Playlist): {
       updatedAt: p.updatedAt,
       deletedAt: p.deletedAt ?? null,
     },
-    songs: p.entries.map((e, i) => ({
-      playlistId: p.id,
-      songId: e.song.id,
-      position: i,
-      addedAt: e.addedAt,
-    })),
+    songs: [
+      ...p.entries.map((e, i) => ({
+        playlistId: p.id,
+        songId: e.song.id,
+        position: i,
+        addedAt: e.addedAt,
+        deletedAt: null,
+      })),
+      // Tombstones ride the same array. addedAt mirrors deletedAt so the row
+      // clock the server compares — max(addedAt, deletedAt) — reads as the
+      // moment of removal; position is meaningless on a row nothing renders.
+      ...(p.removed ?? []).map((r) => ({
+        playlistId: p.id,
+        songId: r.songId,
+        position: 0,
+        addedAt: r.deletedAt,
+        deletedAt: r.deletedAt,
+      })),
+    ],
   };
 }

@@ -70,10 +70,15 @@ export async function syncNow(): Promise<void> {
         const { playlist, songs } = toWireRows(p);
         return {
           ...playlist,
+          // Tombstoned rows (deletedAt set) are in here too — that's how a
+          // removal reaches the server at all; membership merges per row on
+          // last-write-wins, so a song merely absent from this array reads as
+          // "no news" and the server hands it back in the snapshot.
           songs: songs.map((s) => ({
             songId: s.songId,
             position: s.position,
             addedAt: s.addedAt,
+            deletedAt: s.deletedAt,
           })),
         };
       }),

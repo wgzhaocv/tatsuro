@@ -1,8 +1,8 @@
 "use client";
 
 import {
-  ArrowLineDown,
   CircleNotch,
+  FloppyDisk,
   Images,
   Trash,
   Waveform,
@@ -83,7 +83,7 @@ export function OfflineManager() {
   const buckets = [
     {
       key: "saved",
-      icon: <ArrowLineDown weight="bold" aria-hidden />,
+      icon: <FloppyDisk weight="bold" aria-hidden />,
       stats: download,
       clear: clearDownloads,
       count: (n: number) => nSongs(n),

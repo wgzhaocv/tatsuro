@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLineDown } from "@phosphor-icons/react";
+import { FloppyDisk } from "@phosphor-icons/react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
@@ -19,6 +19,12 @@ import { cn } from "@/lib/utils";
  * the same footprint as the neighbouring share/pin buttons; the meaning rides
  * on the icon + aria/title. Frosted glass-ink to match those buttons over the
  * bright cover wash. Shown on both album and playlist headers.
+ *
+ * A floppy ("keep this") rather than a down-arrow on purpose: the album header
+ * sits this switch in the same row as the zip download, and two downward arrows
+ * there read as two flavours of the same act. Arrows belong to the download,
+ * which really does hand you a file; this only keeps bytes in the app. Same
+ * glyph marks the saved bucket in the storage manager.
  */
 export function OfflineSwitch({
   contextId,
@@ -63,7 +69,7 @@ export function OfflineSwitch({
         className,
       )}
     >
-      <ArrowLineDown size={16} weight="bold" aria-hidden />
+      <FloppyDisk size={16} weight="bold" aria-hidden />
       <Switch
         size="sm"
         checked={enabled}

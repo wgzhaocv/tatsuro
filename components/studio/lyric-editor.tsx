@@ -431,30 +431,38 @@ export function LyricEditor({
     [commitLines, newId],
   );
 
-  const insertInterlude = useCallback(
-    () => insertLineBelow(cursorRef.current, INTERLUDE),
-    [insertLineBelow],
+  // Both interlude buttons drop the 🎵 into the cursor's slot: the run is
+  // "Enter at the top of a line, I when that line ends", and Enter has already
+  // moved the cursor on, so the cursor's slot is exactly the gap after the
+  // line that just finished. The cursor rides down with the insertion and
+  // keeps pointing at the same lyric — the next one to stamp.
+  const insertInterludeAt = useCallback(
+    (startTime: number | null) => {
+      const at = cursorRef.current;
+      commitLines([
+        ...linesRef.current.slice(0, at),
+        { ...emptyLine(newId()), origin: INTERLUDE, startTime },
+        ...linesRef.current.slice(at),
+      ]);
+      setCursor(at + 1);
+    },
+    [commitLines, newId],
   );
 
-  // The interlude button you can hit without looking away from the music: it
-  // drops a 🎵 straight after the line that's sounding right now, already
-  // stamped at the playhead. The cursor stays on the lyric line it was on, so
-  // a timing run isn't interrupted — it just slides down with the insertion.
+  const insertInterlude = useCallback(
+    () => insertInterludeAt(null),
+    [insertInterludeAt],
+  );
+
+  // The one you can hit without looking away from the music — already stamped
+  // at the playhead, on the same offset-corrected clock Enter uses.
   const insertInterludeNow = useCallback(() => {
     const audio = audioRef.current;
     if (!audio) return;
-    const t = round(Math.max(0, audio.currentTime - offsetRef.current / 1000));
-    const prev = linesRef.current;
-    // Anchored on the offset-corrected time — the same clock the stamp uses —
-    // so the new line can never land before the line above it.
-    const at = activeLineIndex(prev, t) + 1;
-    commitLines([
-      ...prev.slice(0, at),
-      { ...emptyLine(newId()), origin: INTERLUDE, startTime: t },
-      ...prev.slice(at),
-    ]);
-    if (at <= cursorRef.current) setCursor((c) => c + 1);
-  }, [commitLines, newId]);
+    insertInterludeAt(
+      round(Math.max(0, audio.currentTime - offsetRef.current / 1000)),
+    );
+  }, [insertInterludeAt]);
 
   const deleteLine = useCallback(
     (index: number) => {
@@ -796,7 +804,7 @@ export function LyricEditor({
 
       <div className="flex flex-wrap items-center gap-2 px-4 pb-3 sm:px-6">
         <TipButton
-          tip="Drop a 🎵 line at the playhead, right after the line now sounding (I)"
+          tip="Drop a 🎵 into the cursor's slot, stamped at the playhead (I)"
           variant="action"
           size="sm"
           onClick={press(insertInterludeNow)}
@@ -804,12 +812,12 @@ export function LyricEditor({
           <MusicNote weight="fill" className="size-4" /> Interlude here
         </TipButton>
         <TipButton
-          tip="Insert an untimed 🎵 line below the cursor"
+          tip="Same slot, but leave it untimed"
           variant="outline"
           size="sm"
           onClick={press(insertInterlude)}
         >
-          <MusicNote className="size-4" /> At cursor
+          <MusicNote className="size-4" /> Untimed
         </TipButton>
 
         <div className="ml-auto flex items-center gap-1">

@@ -130,6 +130,10 @@ export function LyricEditor({
   const rowRefs = useRef<(HTMLLIElement | null)[]>([]);
   const inputRefs = useRef(new Map<number, HTMLInputElement>());
   const fileInputRef = useRef<HTMLInputElement>(null);
+  // Where the last silent reload happened, or null while a retry is still
+  // available — see the <audio> onError handler.
+  const retriedAtRef = useRef<number | null>(null);
+  const resumeRef = useRef<{ at: number; wasPlaying: boolean } | null>(null);
 
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
@@ -536,17 +540,44 @@ export function LyricEditor({
         ref={audioRef}
         src={songStreamUrl(song.id)}
         preload="metadata"
-        onLoadedMetadata={(e) =>
-          store.getState().setProgress(0, e.currentTarget.duration || 0)
-        }
-        onTimeUpdate={(e) =>
-          store
-            .getState()
-            .setProgress(
-              e.currentTarget.currentTime,
-              e.currentTarget.duration || 0,
-            )
-        }
+        // Without this the element requests the stream no-cors, and the
+        // service worker can only hand back an opaque response on a cache
+        // miss — unusable for ranged playback, so every song the worker
+        // hasn't cached yet dies on arrival with MEDIA_ERR_NETWORK. The
+        // site player has always set it (components/player/audio-engine).
+        crossOrigin="anonymous"
+        onLoadedMetadata={(e) => {
+          const audio = e.currentTarget;
+          // Landing after a retry: put the playhead back where the drop
+          // interrupted it, and carry on if it was playing.
+          const resume = resumeRef.current;
+          resumeRef.current = null;
+          if (resume) {
+            if (resume.at > 0) {
+              audio.currentTime = Math.min(
+                resume.at,
+                audio.duration || resume.at,
+              );
+            }
+            store
+              .getState()
+              .setProgress(audio.currentTime, audio.duration || 0);
+            if (resume.wasPlaying) audio.play().catch(() => {});
+            return;
+          }
+          store.getState().setProgress(0, audio.duration || 0);
+        }}
+        onTimeUpdate={(e) => {
+          const audio = e.currentTarget;
+          // Three clean seconds past the last silent reload means it worked;
+          // a later drop earns its own. Anything shorter and we'd be handing
+          // out fresh retries to a stream that keeps dying on arrival.
+          const retriedAt = retriedAtRef.current;
+          if (retriedAt != null && audio.currentTime > retriedAt + 3) {
+            retriedAtRef.current = null;
+          }
+          store.getState().setProgress(audio.currentTime, audio.duration || 0);
+        }}
         onPlay={() => store.getState().setPlaying(true)}
         onPause={() => {
           store.getState().setPlaying(false);
@@ -562,12 +593,34 @@ export function LyricEditor({
         // true forever: the button reads Pause, every press silently retries,
         // and nothing on screen says why. Reset it and name the reason.
         onError={(e) => {
+          const audio = e.currentTarget;
+          const code = audio.error?.code;
+          // The load was deliberately abandoned — our own teardown, or a
+          // seek that outran it. Never worth a word.
+          if (code === MediaError.MEDIA_ERR_ABORTED) return;
+          // A dropped connection is the routine failure here: an uncached
+          // song streams straight from the origin while the service worker
+          // pulls the same file down in the background, so either can lose
+          // the race on a flaky link. Reload once, quietly, before crying
+          // wolf — the operator only needs to hear about it if it sticks.
+          if (
+            code === MediaError.MEDIA_ERR_NETWORK &&
+            retriedAtRef.current == null &&
+            audio.isConnected
+          ) {
+            const { time, isPlaying: was } = store.getState();
+            retriedAtRef.current = time;
+            resumeRef.current = { at: time, wasPlaying: was };
+            store.getState().setStalled(true);
+            audio.load();
+            return;
+          }
+          retriedAtRef.current = null;
+          resumeRef.current = null;
           store.getState().setPlaying(false);
           store.getState().setStalled(false);
           store.getState().resetProgress();
-          toast.error(
-            `Stream failed — ${mediaErrorText(e.currentTarget.error)}.`,
-          );
+          toast.error(`Stream failed — ${mediaErrorText(audio.error)}.`);
         }}
       />
 

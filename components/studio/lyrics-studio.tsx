@@ -88,8 +88,11 @@ export function LyricsStudio() {
   const selected = songs?.find((s) => s.id === selectedId) ?? null;
 
   return (
-    <div className="flex min-h-[100dvh] flex-col bg-background text-foreground">
-      <header className="sticky top-0 z-20 flex flex-wrap items-center gap-x-4 gap-y-3 border-border/60 border-b bg-background/90 px-4 py-3 backdrop-blur-xs sm:px-6">
+    // On a wide screen this is an app shell, not a page: nothing scrolls but
+    // the two panes, so the queue and the transport bar are always reachable.
+    // Narrow screens keep the stacked, page-scrolling layout.
+    <div className="flex min-h-[100dvh] flex-col bg-background text-foreground lg:h-[100dvh] lg:min-h-0 lg:overflow-hidden">
+      <header className="z-20 flex shrink-0 flex-wrap items-center gap-x-4 gap-y-3 border-border/60 border-b bg-background/90 px-4 py-3 backdrop-blur-xs sm:px-6">
         <div className="flex items-center gap-2">
           <MusicNotesSimple
             weight="fill"
@@ -115,8 +118,8 @@ export function LyricsStudio() {
         </label>
       </header>
 
-      <div className="grid flex-1 grid-cols-1 lg:grid-cols-[22rem_1fr]">
-        <aside className="border-border/60 border-b lg:border-r lg:border-b-0">
+      <div className="grid flex-1 grid-cols-1 lg:min-h-0 lg:grid-cols-[22rem_1fr] lg:grid-rows-[minmax(0,1fr)]">
+        <aside className="border-border/60 border-b lg:min-h-0 lg:overflow-hidden lg:border-r lg:border-b-0">
           {loading ? (
             <p className="p-6 text-muted-foreground text-sm">Loading songs…</p>
           ) : error ? (
@@ -143,7 +146,7 @@ export function LyricsStudio() {
           ) : null}
         </aside>
 
-        <main className="min-w-0">
+        <main className="min-w-0 lg:min-h-0 lg:overflow-hidden">
           {selected ? (
             <LyricEditor
               key={selected.id}

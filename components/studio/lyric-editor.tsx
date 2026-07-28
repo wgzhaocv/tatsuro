@@ -107,6 +107,13 @@ function activeLineIndex(lines: EditLine[], time: number): number {
 
 const RATES = [0.5, 0.75, 1, 1.25, 1.5];
 
+// Whole-track timing corrections, in seconds: a coarse pass and a fine one.
+const SHIFTS = [-1, -0.1, 0.1, 1];
+
+// Stamps are compared and displayed to 2 decimals; rounding on every write
+// keeps repeated 0.1s shifts from drifting into 12.300000000000004.
+const round = (t: number) => Math.round(t * 1000) / 1000;
+
 // The content of an interlude/instrumental-break line — a bare note emoji.
 const INTERLUDE = "🎵";
 
@@ -175,6 +182,12 @@ export function LyricEditor({
   linesRef.current = lines;
   const offsetRef = useRef(offsetMs);
   offsetRef.current = offsetMs;
+  const stateRef = useRef(state);
+  stateRef.current = state;
+
+  // Set right before a cursor move that the operator didn't make with a click
+  // — see the scroll-into-view effect.
+  const scrollCursorRef = useRef(false);
 
   // Only when activeIndex crosses a boundary does the editor re-render — ticks
   // in between move the clock/seek-bar leaves, not this component.
@@ -203,6 +216,7 @@ export function LyricEditor({
         }));
         setLines(mapped);
         const firstUnstamped = mapped.findIndex((l) => l.startTime == null);
+        scrollCursorRef.current = true;
         setCursor(firstUnstamped >= 0 ? firstUnstamped : 0);
       })
       .catch(() => !cancelled && setLoadError(true))
@@ -260,18 +274,51 @@ export function LyricEditor({
     [],
   );
 
-  // ── stamping ──
+  // ── editing ──
+  // Every change to the line list goes through here: it keeps linesRef in sync
+  // (the keydown handler and the callbacks below read it as the base for the
+  // next edit) and flags the editor dirty.
+  const commitLines = useCallback(
+    (next: EditLine[]) => {
+      linesRef.current = next;
+      setLines(next);
+      markDirty();
+    },
+    [markDirty],
+  );
+
+  // A commit that came from stamping. Once every line carries a time there's
+  // nothing left to hand-time, so the state promotes itself — no need to
+  // remember the dropdown after tapping in the last line.
+  const commitStamped = useCallback(
+    (next: EditLine[]) => {
+      commitLines(next);
+      if (
+        next.length > 0 &&
+        next.every((l) => l.startTime != null) &&
+        stateRef.current !== "verified"
+      ) {
+        setState("verified");
+        toast.success("Every line is timed — state set to verified.");
+      }
+    },
+    [commitLines],
+  );
+
   const stampCursor = useCallback(() => {
     const audio = audioRef.current;
     if (!audio) return;
     const i = cursorRef.current;
-    const t = Math.max(0, audio.currentTime - offsetRef.current / 1000);
-    setLines((prev) =>
-      prev.map((l, idx) => (idx === i ? { ...l, startTime: t } : l)),
+    if (!linesRef.current[i]) return;
+    const t = round(Math.max(0, audio.currentTime - offsetRef.current / 1000));
+    commitStamped(
+      linesRef.current.map((l, idx) =>
+        idx === i ? { ...l, startTime: t } : l,
+      ),
     );
+    scrollCursorRef.current = true;
     setCursor((c) => Math.min(c + 1, Math.max(linesRef.current.length - 1, 0)));
-    markDirty();
-  }, [markDirty]);
+  }, [commitStamped]);
 
   const undoStamp = useCallback(() => {
     // Undo removes the *last* stamp, which always sits at cursor-1 (stamping
@@ -281,45 +328,76 @@ export function LyricEditor({
     const back = cursorRef.current - 1;
     const prevStamp = linesRef.current[back - 1]?.startTime ?? null;
     seek(prevStamp ?? 0);
+    scrollCursorRef.current = true;
     setCursor(back);
-    setLines((prev) =>
-      prev.map((l, i) => (i === back ? { ...l, startTime: null } : l)),
+    commitLines(
+      linesRef.current.map((l, i) =>
+        i === back ? { ...l, startTime: null } : l,
+      ),
     );
-    markDirty();
-  }, [markDirty, seek]);
+  }, [commitLines, seek]);
 
   const setLineTime = useCallback(
     (index: number, value: number | null) => {
-      setLines((prev) =>
-        prev.map((l, i) => (i === index ? { ...l, startTime: value } : l)),
+      const next = linesRef.current.map((l, i) =>
+        i === index
+          ? { ...l, startTime: value == null ? null : round(value) }
+          : l,
       );
-      markDirty();
+      if (value == null) commitLines(next);
+      else commitStamped(next);
     },
-    [markDirty],
+    [commitLines, commitStamped],
   );
 
   const setLineOrigin = useCallback(
     (index: number, value: string) => {
-      setLines((prev) =>
-        prev.map((l, i) => (i === index ? { ...l, origin: value } : l)),
+      commitLines(
+        linesRef.current.map((l, i) =>
+          i === index ? { ...l, origin: value } : l,
+        ),
       );
-      markDirty();
     },
-    [markDirty],
+    [commitLines],
   );
 
   const nudge = useCallback(
     (index: number, delta: number) => {
-      setLines((prev) =>
-        prev.map((l, i) =>
+      commitLines(
+        linesRef.current.map((l, i) =>
           i === index
-            ? { ...l, startTime: Math.max(0, (l.startTime ?? 0) + delta) }
+            ? {
+                ...l,
+                startTime: round(Math.max(0, (l.startTime ?? 0) + delta)),
+              }
             : l,
         ),
       );
-      markDirty();
     },
-    [markDirty],
+    [commitLines],
+  );
+
+  // Slide the whole track. A negative shift is capped at the earliest stamp so
+  // the lines move as one block — clamping each line at 0 individually would
+  // quietly crush the spacing at the head of the song.
+  const shiftAll = useCallback(
+    (delta: number) => {
+      const stamps = linesRef.current
+        .map((l) => l.startTime)
+        .filter((t): t is number => t != null);
+      if (stamps.length === 0) return;
+      const d = delta < 0 ? Math.max(delta, -Math.min(...stamps)) : delta;
+      if (d === 0) {
+        toast("The first stamp is already at 0:00 — can't shift earlier.");
+        return;
+      }
+      commitLines(
+        linesRef.current.map((l) =>
+          l.startTime == null ? l : { ...l, startTime: round(l.startTime + d) },
+        ),
+      );
+    },
+    [commitLines],
   );
 
   const stampHere = useCallback(
@@ -340,19 +418,17 @@ export function LyricEditor({
   const insertLineBelow = useCallback(
     (index: number, content = "") => {
       const id = newId();
-      const at = index + 1;
-      setLines((prev) => [
-        ...prev.slice(0, at),
+      // Clamp into the list (index can point past the end, or at -1 to prepend).
+      const at = Math.max(0, Math.min(index + 1, linesRef.current.length));
+      commitLines([
+        ...linesRef.current.slice(0, at),
         { ...emptyLine(id), origin: content },
-        ...prev.slice(at),
+        ...linesRef.current.slice(at),
       ]);
-      // Clamp into the grown list (at can exceed the last index when the list
-      // was empty or `index` pointed at the end).
-      setCursor(Math.min(at, linesRef.current.length));
+      setCursor(at);
       if (!content) setFocusId(id);
-      markDirty();
     },
-    [markDirty, newId],
+    [commitLines, newId],
   );
 
   const insertInterlude = useCallback(
@@ -360,13 +436,32 @@ export function LyricEditor({
     [insertLineBelow],
   );
 
+  // The interlude button you can hit without looking away from the music: it
+  // drops a 🎵 straight after the line that's sounding right now, already
+  // stamped at the playhead. The cursor stays on the lyric line it was on, so
+  // a timing run isn't interrupted — it just slides down with the insertion.
+  const insertInterludeNow = useCallback(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    const t = round(Math.max(0, audio.currentTime - offsetRef.current / 1000));
+    const prev = linesRef.current;
+    // Anchored on the offset-corrected time — the same clock the stamp uses —
+    // so the new line can never land before the line above it.
+    const at = activeLineIndex(prev, t) + 1;
+    commitLines([
+      ...prev.slice(0, at),
+      { ...emptyLine(newId()), origin: INTERLUDE, startTime: t },
+      ...prev.slice(at),
+    ]);
+    if (at <= cursorRef.current) setCursor((c) => c + 1);
+  }, [commitLines, newId]);
+
   const deleteLine = useCallback(
     (index: number) => {
-      setLines((prev) => prev.filter((_, i) => i !== index));
-      setCursor((c) => Math.min(c, Math.max(linesRef.current.length - 2, 0)));
-      markDirty();
+      commitLines(linesRef.current.filter((_, i) => i !== index));
+      setCursor((c) => Math.min(c, Math.max(linesRef.current.length - 1, 0)));
     },
-    [markDirty],
+    [commitLines],
   );
 
   const selectAndSeek = useCallback(
@@ -379,6 +474,7 @@ export function LyricEditor({
   );
 
   const moveCursor = useCallback((delta: number) => {
+    scrollCursorRef.current = true;
     setCursor((c) =>
       Math.min(
         Math.max(0, c + delta),
@@ -400,6 +496,8 @@ export function LyricEditor({
       ArrowRight: () => seek((audioRef.current?.currentTime ?? 0) + 3),
       "[": () => bumpRate(-1),
       "]": () => bumpRate(1),
+      i: insertInterludeNow,
+      I: insertInterludeNow,
     };
     const handler = (e: KeyboardEvent) => {
       if (isEditableTarget(e.target)) return;
@@ -412,10 +510,23 @@ export function LyricEditor({
     };
     window.addEventListener("keydown", handler, true);
     return () => window.removeEventListener("keydown", handler, true);
-  }, [togglePlay, stampCursor, undoStamp, moveCursor, seek, bumpRate]);
+  }, [
+    togglePlay,
+    stampCursor,
+    undoStamp,
+    moveCursor,
+    seek,
+    bumpRate,
+    insertInterludeNow,
+  ]);
 
-  // Keep the cursor line in view as it advances.
+  // Keep the cursor line in view as it advances — but only when the cursor
+  // moved on its own (a stamp, an arrow key, loading a song). Clicking into a
+  // line also sets the cursor, and yanking that row to the middle out from
+  // under the pointer makes the list impossible to edit.
   useEffect(() => {
+    if (!scrollCursorRef.current) return;
+    scrollCursorRef.current = false;
     rowRefs.current[cursor]?.scrollIntoView({ block: "center" });
   }, [cursor]);
 
@@ -590,8 +701,9 @@ export function LyricEditor({
         onEnded={() => setIsPlaying(false)}
       />
 
-      {/* ── transport bar ── */}
-      <div className="flex flex-wrap items-center gap-3 border-border/60 border-b px-4 py-3 sm:px-6">
+      {/* ── transport bar — pinned, so the playhead stays readable however far
+          down the lyric list you are ── */}
+      <div className="sticky top-0 z-10 flex flex-wrap items-center gap-3 border-border/60 border-b bg-background/95 px-4 py-3 backdrop-blur-xs sm:px-6">
         <TipButton
           tip={isPlaying ? "Pause (Space)" : "Play (Space)"}
           variant="action"
@@ -679,18 +791,47 @@ export function LyricEditor({
       <p className="px-4 pt-1 pb-2 text-muted-foreground text-xs sm:px-6">
         <Kbd>Space</Kbd> play · <Kbd>Enter</Kbd> stamp line & advance ·{" "}
         <Kbd>⌫</Kbd> undo · <Kbd>↑↓</Kbd> move cursor · <Kbd>←→</Kbd> seek 3s ·{" "}
-        <Kbd>[ ]</Kbd> speed
+        <Kbd>[ ]</Kbd> speed · <Kbd>I</Kbd> interlude at the playhead
       </p>
 
       <div className="flex flex-wrap items-center gap-2 px-4 pb-3 sm:px-6">
         <TipButton
-          tip="Insert an interlude line (🎵) below the cursor"
+          tip="Drop a 🎵 line at the playhead, right after the line now sounding (I)"
+          variant="action"
+          size="sm"
+          onClick={press(insertInterludeNow)}
+        >
+          <MusicNote weight="fill" className="size-4" /> Interlude here
+        </TipButton>
+        <TipButton
+          tip="Insert an untimed 🎵 line below the cursor"
           variant="outline"
           size="sm"
           onClick={press(insertInterlude)}
         >
-          <MusicNote className="size-4" /> Interlude
+          <MusicNote className="size-4" /> At cursor
         </TipButton>
+
+        <div className="ml-auto flex items-center gap-1">
+          <span className="mr-1 text-muted-foreground text-xs">
+            Shift every stamp
+          </span>
+          {SHIFTS.map((d) => (
+            <TipButton
+              key={d}
+              tip={`Move every timestamp ${
+                d < 0 ? "earlier" : "later"
+              } by ${Math.abs(d)}s`}
+              variant="outline"
+              size="xs"
+              className="tabular-nums"
+              disabled={timedCount === 0}
+              onClick={press(() => shiftAll(d))}
+            >
+              {d > 0 ? `+${d}` : d}s
+            </TipButton>
+          ))}
+        </div>
       </div>
 
       {/* ── the lines ── */}

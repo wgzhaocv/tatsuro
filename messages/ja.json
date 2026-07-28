@@ -195,14 +195,15 @@
     "loginBody": "共有リンクは同期されたプレイリストから配信されるため、アカウントが必要です。",
     "likedSongsTitle": "{name}のお気に入り",
     "unknownOwner": "あるリスナー",
-    "sharedBy": "{name}がシェア",
     "saveCopy": "自分のプレイリストに保存",
     "savedCopy": "プレイリストに保存しました",
     "open": "開く",
     "unavailableTitle": "このリンクは利用できません。",
     "unavailableBody": "共有が停止されたか、プレイリストが削除されています。送った人に新しいリンクをもらってください。",
     "goHome": "ホーム",
-    "stopFailed": "共有を停止できませんでした"
+    "stopFailed": "共有を停止できませんでした",
+    "arrivalTitle": "{name}さんがこのプレイリストをシェアしました",
+    "arrivalBody": "そのまま再生できます。保存すると自分のコピーになり、自由に編集でき、相手があとで変更しても影響を受けません。"
   },
   "pins": {
     "pin": "{name}をピン留め",

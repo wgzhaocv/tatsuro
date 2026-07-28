@@ -124,6 +124,39 @@ export function SharedPlaylistView({
         <ThemeToggle />
       </header>
 
+      {/* A shared link walks its recipient straight past the gate, so they may
+          not know whose list this is, that it isn't theirs, or that they can
+          keep it. This says all three in the page itself. Deliberately not a
+          modal over the tracklist: the first question anyone has about a music
+          link is what it sounds like, and gating that behind a decision would
+          only ask them to commit to something they haven't heard. */}
+      <div className="mx-auto w-full max-w-6xl px-5 sm:px-8">
+        <GlassPanel className="rounded-[22px] px-5 py-5 shadow-postcard sm:px-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+            <div className="min-w-0">
+              <p className="font-display text-base font-medium text-foreground sm:text-lg">
+                {t("arrivalTitle", { name: owner })}
+              </p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {t("arrivalBody")}
+              </p>
+            </div>
+            <Button
+              type="button"
+              variant="cta"
+              // The store rehydrates after mount; copying before that would
+              // write into an empty library and lose it on rehydrate.
+              disabled={!hydrated || songs.length === 0}
+              className="h-11 shrink-0 rounded-full pr-5 pl-4"
+              onClick={saveCopy}
+            >
+              <BookmarkSimple weight="bold" aria-hidden />
+              {t("saveCopy")}
+            </Button>
+          </div>
+        </GlassPanel>
+      </div>
+
       <QueuePlaybackProvider
         songs={songs}
         label={title}
@@ -163,25 +196,15 @@ export function SharedPlaylistView({
                     : "text-white/90 [text-shadow:0_2px_10px_rgba(11,58,83,0.5)]",
                 )}
               >
-                {t("sharedBy", { name: owner })} · {meta}
+                {meta}
               </p>
+              {/* Attribution and Save live in the arrival panel above, so this
+                  rail is the owner's own screen minus its edit affordances. */}
               <div className="mt-5 flex flex-col items-start gap-2.5 sm:mt-6 sm:flex-row sm:flex-wrap sm:items-center">
                 <PlayQueueButton
                   playText={tp("playAll")}
                   pauseText={tRoot("album.pause")}
                 />
-                <Button
-                  type="button"
-                  variant="glass-ink"
-                  // The store rehydrates after mount; copying before that would
-                  // write into an empty library and lose it on rehydrate.
-                  disabled={!hydrated || songs.length === 0}
-                  className="h-11 rounded-full pr-5 pl-4"
-                  onClick={saveCopy}
-                >
-                  <BookmarkSimple weight="bold" aria-hidden />
-                  {t("saveCopy")}
-                </Button>
               </div>
             </div>
           </aside>

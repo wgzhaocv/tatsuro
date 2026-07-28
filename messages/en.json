@@ -195,14 +195,15 @@
     "loginBody": "A share link is served from your synced copy of the playlist, so sharing needs an account.",
     "likedSongsTitle": "{name}'s Liked Songs",
     "unknownOwner": "A listener",
-    "sharedBy": "Shared by {name}",
     "saveCopy": "Save to my playlists",
     "savedCopy": "Saved to your playlists",
     "open": "Open",
     "unavailableTitle": "This link isn't available.",
     "unavailableBody": "The playlist was unshared or deleted. Ask whoever sent it for a new link.",
     "goHome": "Home",
-    "stopFailed": "Couldn't stop sharing"
+    "stopFailed": "Couldn't stop sharing",
+    "arrivalTitle": "{name} shared this playlist with you",
+    "arrivalBody": "Listen to it here, or save it to keep your own copy — yours to edit, and unaffected by later changes to theirs."
   },
   "pins": {
     "pin": "Pin {name}",

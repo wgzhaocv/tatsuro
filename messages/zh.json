@@ -193,16 +193,17 @@
     "stopped": "已停止分享，链接失效",
     "loginTitle": "分享需要登录",
     "loginBody": "分享链接由云端同步的歌单提供，所以需要账户。",
-    "likedSongsTitle": "{name}喜欢的歌曲",
+    "likedSongsTitle": "{name} 喜欢的歌曲",
     "unknownOwner": "某位听众",
-    "sharedBy": "{name}分享的歌单",
     "saveCopy": "保存到我的歌单",
     "savedCopy": "已保存到你的歌单",
     "open": "打开",
     "unavailableTitle": "这个链接已失效。",
     "unavailableBody": "歌单已停止分享或被删除。可以找分享给你的人要个新链接。",
     "goHome": "首页",
-    "stopFailed": "无法停止分享"
+    "stopFailed": "无法停止分享",
+    "arrivalTitle": "{name} 给你分享了这份歌单",
+    "arrivalBody": "可以直接播放；保存后会成为你自己的一份，随意增删，对方之后怎么改都不影响它。"
   },
   "pins": {
     "pin": "置顶 {name}",

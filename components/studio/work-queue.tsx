@@ -162,7 +162,14 @@ export function WorkQueue({
                         <Button
                           variant="row"
                           size="row"
-                          onClick={() => onSelect(s.id)}
+                          // Hand focus back to the body. Left focused, this
+                          // row swallows every Space the operator meant for
+                          // the transport (the editor's keydown handler bails
+                          // on buttons) and re-selects itself instead.
+                          onClick={(e) => {
+                            e.currentTarget.blur();
+                            onSelect(s.id);
+                          }}
                           aria-current={active ? "true" : undefined}
                           className={cn(
                             "w-full flex-col items-start gap-0.5 rounded-none px-4 pl-11",

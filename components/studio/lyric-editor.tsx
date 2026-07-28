@@ -117,6 +117,23 @@ const round = (t: number) => Math.round(t * 1000) / 1000;
 // The content of an interlude/instrumental-break line — a bare note emoji.
 const INTERLUDE = "🎵";
 
+/** MediaError codes in words. The operator needs to tell "the API is down"
+ *  apart from "this song has no file on R2" without opening devtools. */
+function mediaErrorText(err: MediaError | null): string {
+  switch (err?.code) {
+    case MediaError.MEDIA_ERR_ABORTED:
+      return "load aborted";
+    case MediaError.MEDIA_ERR_NETWORK:
+      return "network dropped";
+    case MediaError.MEDIA_ERR_DECODE:
+      return "the audio is corrupt";
+    case MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED:
+      return "no playable file at that URL";
+    default:
+      return "unknown cause";
+  }
+}
+
 // A row in an imported lyrics file — either this editor's export shape
 // ({startTime, origin, ja, en}) or the raw API wire shape ({startTime,
 // lyrics:{...}}). Fields are unknown until coerced.
@@ -160,6 +177,9 @@ export function LyricEditor({
   const [focusId, setFocusId] = useState<number | null>(null);
 
   const [isPlaying, setIsPlaying] = useState(false);
+  // The stream is buffering mid-play. Without this the transport looks
+  // identical to a broken one: button on Pause, playhead frozen, no reason.
+  const [stalled, setStalled] = useState(false);
   const [rate, setRate] = useState(1);
   // Default tap latency compensation: you hear a line, then react, so the
   // press lands ~0.3s late — stamp that much earlier. Adjustable.
@@ -246,8 +266,25 @@ export function LyricEditor({
   const togglePlay = useCallback(() => {
     const audio = audioRef.current;
     if (!audio) return;
-    if (audio.paused) audio.play().catch(() => {});
-    else audio.pause();
+    if (!audio.paused) {
+      audio.pause();
+      return;
+    }
+    setStalled(false);
+    audio.play().catch((err: DOMException) => {
+      // Switching songs pauses the outgoing element mid-play(), which rejects
+      // the promise — expected teardown, not a failure worth reporting.
+      if (err.name === "AbortError") return;
+      // Anything else means the stream never started. play() fires `play`
+      // before it fails, so isPlaying is already true and the button is
+      // showing Pause on a track that isn't moving — put it back.
+      setIsPlaying(false);
+      setStalled(false);
+      // A broken stream rejects here *and* fires `error`; that handler names
+      // the actual cause, so stay quiet and let it do the talking. This
+      // message is for the rejections it can't explain — autoplay blocks.
+      if (!audio.error) toast.error(`Couldn't play this track — ${err.name}.`);
+    });
   }, []);
 
   const seek = useCallback((t: number) => {
@@ -705,8 +742,27 @@ export function LyricEditor({
             .set(e.currentTarget.currentTime, e.currentTarget.duration || 0)
         }
         onPlay={() => setIsPlaying(true)}
-        onPause={() => setIsPlaying(false)}
-        onEnded={() => setIsPlaying(false)}
+        onPause={() => {
+          setIsPlaying(false);
+          setStalled(false);
+        }}
+        onEnded={() => {
+          setIsPlaying(false);
+          setStalled(false);
+        }}
+        onWaiting={() => setStalled(true)}
+        onPlaying={() => setStalled(false)}
+        // A failed load fires `error`, never `pause`, so isPlaying would sit
+        // true forever: the button reads Pause, every press silently retries,
+        // and nothing on screen says why. Reset it and name the reason.
+        onError={(e) => {
+          setIsPlaying(false);
+          setStalled(false);
+          useStudioTime.getState().set(0, 0);
+          toast.error(
+            `Stream failed — ${mediaErrorText(e.currentTarget.error)}.`,
+          );
+        }}
       />
 
       {/* ── transport bar — pinned, so the playhead stays readable however far
@@ -742,6 +798,11 @@ export function LyricEditor({
         </TipButton>
 
         <Clock />
+        {stalled && (
+          <output className="shrink-0 text-muted-foreground text-xs">
+            buffering…
+          </output>
+        )}
         <SeekBar onSeek={seek} />
 
         <div className="flex items-center gap-1">

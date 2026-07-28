@@ -726,7 +726,7 @@ export function LyricEditor({
 
       <div className="flex flex-wrap items-center gap-2 px-4 pb-3 sm:px-6">
         <TipButton
-          tip="Drop a 🎵 below the selected line, stamped at the playhead (I)"
+          tip="Drop a 🎵 after the line you just timed, stamped at the playhead (I)"
           variant="action"
           size="sm"
           onClick={press(insertInterludeNow)}

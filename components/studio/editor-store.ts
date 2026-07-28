@@ -262,16 +262,23 @@ export function createEditorStore(lyricsState: LyricsState) {
         return lines[back - 1]?.startTime ?? 0;
       },
 
-      // The 🎵 lands directly below the selected row, and the cursor stays
-      // put — the insertion is under it, so its index doesn't move.
+      // The 🎵 takes the cursor's own slot, so it appears just above the
+      // selected row. The run is "Enter at the top of a line, I when that
+      // line ends", and Enter has already moved the cursor on — so that slot
+      // is exactly the gap after the line that just finished, which is also
+      // the only placement that keeps the stamps ascending. The cursor rides
+      // down with the insertion and still points at the next lyric to time.
       insertInterlude: (startTime) => {
         const { lines, cursor } = get();
-        const at = Math.min(cursor + 1, lines.length);
-        commit([
-          ...lines.slice(0, at),
-          { ...emptyLine(nextId++), origin: INTERLUDE, startTime },
-          ...lines.slice(at),
-        ]);
+        const at = Math.min(cursor, lines.length);
+        commit(
+          [
+            ...lines.slice(0, at),
+            { ...emptyLine(nextId++), origin: INTERLUDE, startTime },
+            ...lines.slice(at),
+          ],
+          { cursor: at + 1 },
+        );
       },
 
       // Insert after `index` (−1 to prepend) and select it. A blank line asks

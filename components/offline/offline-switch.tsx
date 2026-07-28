@@ -4,6 +4,11 @@ import { FloppyDisk } from "@phosphor-icons/react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import type { Song } from "@/lib/api/types";
 import { useDownloadsStore, useIsOfflineEnabled } from "@/lib/downloads/store";
 import { cn } from "@/lib/utils";
@@ -62,20 +67,31 @@ export function OfflineSwitch({
   };
 
   return (
-    <div
-      title={t("keepOffline")}
-      className={cn(
-        "inline-flex h-9 items-center gap-2 rounded-full border border-white/70 bg-white/55 px-3 text-navy backdrop-blur-xs dark:border-white/20 dark:bg-dusk-navy/50 dark:text-foreground",
-        className,
-      )}
-    >
-      <FloppyDisk size={16} weight="bold" aria-hidden />
-      <Switch
-        size="sm"
-        checked={enabled}
-        onCheckedChange={toggle}
-        aria-label={t("keepOffline")}
+    // The whole pill is the tooltip trigger, not just the switch: the floppy is
+    // half the target and the part that needs explaining. The switch keeps the
+    // accessible name, so a screen reader gets it from the control itself.
+    <Tooltip>
+      <TooltipTrigger
+        render={
+          <div
+            className={cn(
+              "inline-flex h-9 items-center gap-2 rounded-full border border-white/70 bg-white/55 px-3 text-navy backdrop-blur-xs dark:border-white/20 dark:bg-dusk-navy/50 dark:text-foreground",
+              className,
+            )}
+          >
+            <FloppyDisk size={16} weight="bold" aria-hidden />
+            <Switch
+              size="sm"
+              checked={enabled}
+              onCheckedChange={toggle}
+              aria-label={t("keepOffline")}
+            />
+          </div>
+        }
       />
-    </div>
+      <TooltipContent>
+        {enabled ? t("keepOfflineOn") : t("keepOffline")}
+      </TooltipContent>
+    </Tooltip>
   );
 }

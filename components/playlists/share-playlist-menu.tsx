@@ -17,6 +17,11 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Menu, MenuContent, MenuItem, MenuTrigger } from "@/components/ui/menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useIsConnected } from "@/lib/account/store";
 import {
   createPlaylistShareLink,
@@ -61,7 +66,6 @@ function shareTriggerProps(label: string) {
     size: "icon",
     className: "size-11 rounded-full",
     "aria-label": label,
-    title: label,
   } as const;
 }
 
@@ -98,9 +102,18 @@ function ShareMenu({
 
   return (
     <Menu open={open} onOpenChange={setOpen}>
-      <MenuTrigger render={<Button {...shareTriggerProps(t("playlist"))} />}>
-        <ShareNetwork weight="bold" aria-hidden />
-      </MenuTrigger>
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <MenuTrigger
+              render={<Button {...shareTriggerProps(t("playlist"))} />}
+            >
+              <ShareNetwork weight="bold" aria-hidden />
+            </MenuTrigger>
+          }
+        />
+        <TooltipContent>{t("playlist")}</TooltipContent>
+      </Tooltip>
       <MenuContent>
         {/* Each action disables the other while it runs. Both stay clickable
             otherwise, but overlapping them inverts the outcome: a Stop pressed
@@ -151,9 +164,18 @@ function ShareLoginButton() {
 
   return (
     <Dialog>
-      <DialogTrigger render={<Button {...shareTriggerProps(t("playlist"))} />}>
-        <ShareNetwork weight="bold" aria-hidden />
-      </DialogTrigger>
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <DialogTrigger
+              render={<Button {...shareTriggerProps(t("playlist"))} />}
+            >
+              <ShareNetwork weight="bold" aria-hidden />
+            </DialogTrigger>
+          }
+        />
+        <TooltipContent>{t("playlist")}</TooltipContent>
+      </Tooltip>
       <DialogContent className="gap-5">
         <DialogHeader>
           <DialogTitle>{t("loginTitle")}</DialogTitle>

@@ -13,6 +13,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useRouter } from "@/i18n/navigation";
 import { usePlaylistStore } from "@/lib/playlists/store";
 import type { Playlist } from "@/lib/playlists/types";
@@ -34,28 +39,40 @@ export function PlaylistHeaderActions({ playlist }: { playlist: Playlist }) {
 
   return (
     <>
-      <Button
-        type="button"
-        variant="glass-ink"
-        size="icon"
-        className="size-11 rounded-full"
-        aria-label={t("rename")}
-        title={t("rename")}
-        onClick={() => setRenaming(true)}
-      >
-        <PencilSimple weight="bold" aria-hidden />
-      </Button>
-      <Button
-        type="button"
-        variant="glass-ink"
-        size="icon"
-        className="size-11 rounded-full"
-        aria-label={t("delete")}
-        title={t("delete")}
-        onClick={() => setDeleting(true)}
-      >
-        <Trash weight="bold" aria-hidden />
-      </Button>
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <Button
+              type="button"
+              variant="glass-ink"
+              size="icon"
+              className="size-11 rounded-full"
+              aria-label={t("rename")}
+              onClick={() => setRenaming(true)}
+            >
+              <PencilSimple weight="bold" aria-hidden />
+            </Button>
+          }
+        />
+        <TooltipContent>{t("rename")}</TooltipContent>
+      </Tooltip>
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <Button
+              type="button"
+              variant="glass-ink"
+              size="icon"
+              className="size-11 rounded-full"
+              aria-label={t("delete")}
+              onClick={() => setDeleting(true)}
+            >
+              <Trash weight="bold" aria-hidden />
+            </Button>
+          }
+        />
+        <TooltipContent>{t("delete")}</TooltipContent>
+      </Tooltip>
 
       <PlaylistNameDialog
         open={renaming}

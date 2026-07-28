@@ -4,6 +4,11 @@ import { PushPinIcon } from "@phosphor-icons/react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useIsPinned, usePinStore } from "@/lib/pins/store";
 
 /**
@@ -28,17 +33,30 @@ export function PinButton({
     toast.success(pinned ? t("unpinned", { name }) : t("pinned", { name }));
   };
 
+  const label = pinned ? t("unpin", { name }) : t("pin", { name });
+
   return (
-    <Button
-      type="button"
-      variant="glass-ink"
-      size="icon"
-      aria-pressed={pinned}
-      aria-label={pinned ? t("unpin", { name }) : t("pin", { name })}
-      onClick={toggle}
-      className="rounded-full"
-    >
-      <PushPinIcon size={16} weight={pinned ? "fill" : "regular"} aria-hidden />
-    </Button>
+    <Tooltip>
+      <TooltipTrigger
+        render={
+          <Button
+            type="button"
+            variant="glass-ink"
+            size="icon"
+            aria-pressed={pinned}
+            aria-label={label}
+            onClick={toggle}
+            className="rounded-full"
+          >
+            <PushPinIcon
+              size={16}
+              weight={pinned ? "fill" : "regular"}
+              aria-hidden
+            />
+          </Button>
+        }
+      />
+      <TooltipContent>{label}</TooltipContent>
+    </Tooltip>
   );
 }

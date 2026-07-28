@@ -197,13 +197,12 @@
     "unknownOwner": "A listener",
     "saveCopy": "Save to my playlists",
     "savedCopy": "Saved to your playlists",
-    "open": "Open",
     "unavailableTitle": "This link isn't available.",
     "unavailableBody": "The playlist was unshared or deleted. Ask whoever sent it for a new link.",
     "goHome": "Home",
     "stopFailed": "Couldn't stop sharing",
     "arrivalTitle": "{name} shared this playlist with you",
-    "arrivalBody": "Listen to it here, or save it to keep your own copy — yours to edit, and unaffected by later changes to theirs."
+    "arrivalBody": "Save it to your playlists to listen — your copy is yours to edit, and later changes to theirs leave it alone."
   },
   "pins": {
     "pin": "Pin {name}",

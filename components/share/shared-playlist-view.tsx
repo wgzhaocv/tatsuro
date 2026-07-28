@@ -7,11 +7,6 @@ import { AlbumAmbient } from "@/components/album/album-ambient";
 import { GlassPanel } from "@/components/glass-panel";
 import { PlaylistCover } from "@/components/playlists/playlist-cover";
 import { ThemeToggle } from "@/components/theme-toggle";
-import {
-  PlayQueueButton,
-  QueuePlaybackProvider,
-} from "@/components/track/playback-context";
-import { TrackRow } from "@/components/track/track-row";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Link } from "@/components/ui/link";
 import { useRouter } from "@/i18n/navigation";
@@ -24,15 +19,20 @@ import { isJapanese } from "@/lib/text";
 import { cn } from "@/lib/utils";
 
 /**
- * Someone else's playlist, read-only: the same identity rail + frosted tracklist
- * as the owner's screen, minus everything that edits it. A lean sibling of
- * PlaylistDetail rather than a variant of it — that component is welded to the
- * local store (missing-id redirect, add/remove, rename, offline switch are all
- * owner-only), and threading a "not mine" flag through all of it would leave two
- * screens tangled in one file.
+ * Someone else's playlist, as a decision rather than a place to listen: cover,
+ * name, who sent it, and the tracks it holds — with saving a copy as the only
+ * action. No playback, no likes, no per-row menu; a visitor who wants to hear it
+ * saves it first and listens on their own copy, which is why saving navigates
+ * there. (This is a product decision, not a restriction it could enforce: the
+ * songs are in the page payload either way.)
  *
- * Playing and saving a copy both work without an account, and a track's heart is
- * the visitor's own local like — which is why no row passes `hideLike`.
+ * Saving needs no account — playlists are local-first — and a connected
+ * visitor's store subscription uploads the copy on its own.
+ *
+ * A lean sibling of PlaylistDetail rather than a variant of it: that component
+ * is welded to the local store and to the queue (missing-id redirect,
+ * add/remove, rename, offline switch, TrackRow-as-play-control), so the two
+ * screens now overlap in layout only.
  */
 export function SharedPlaylistView({
   slug,
@@ -93,14 +93,14 @@ export function SharedPlaylistView({
   // list's songs, editable like any other. A connected visitor's store
   // subscription uploads it on its own. Copying twice makes two copies —
   // the same semantics as importing a starter mix.
+  //
+  // Then go straight to the copy rather than offering it in the toast: this page
+  // can't play anything, so the visitor's next move is always to open the list
+  // they just made. The toast follows them there as confirmation.
   const saveCopy = () => {
     const id = createPlaylistWithSongs(title, songs);
-    toast.success(t("savedCopy"), {
-      action: {
-        label: t("open"),
-        onClick: () => router.push(`/playlists/${id}`),
-      },
-    });
+    router.push(`/playlists/${id}`);
+    toast.success(t("savedCopy"));
   };
 
   return (
@@ -126,10 +126,9 @@ export function SharedPlaylistView({
 
       {/* A shared link walks its recipient straight past the gate, so they may
           not know whose list this is, that it isn't theirs, or that they can
-          keep it. This says all three in the page itself. Deliberately not a
-          modal over the tracklist: the first question anyone has about a music
-          link is what it sounds like, and gating that behind a decision would
-          only ask them to commit to something they haven't heard. */}
+          keep it. This says all three, and — since the page itself doesn't
+          play — where listening happens: save it, and you land on your own
+          copy. */}
       <div className="mx-auto w-full max-w-6xl px-5 sm:px-8">
         <GlassPanel className="rounded-[22px] px-5 py-5 shadow-postcard sm:px-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
@@ -157,89 +156,93 @@ export function SharedPlaylistView({
         </GlassPanel>
       </div>
 
-      <QueuePlaybackProvider
-        songs={songs}
-        label={title}
-        // Prefixed so a shared queue can never collide with a local playlist id.
-        queueId={`share:${slug}`}
-        href={`/share/${slug}`}
-      >
-        <div className="mx-auto w-full max-w-6xl px-5 pt-2 pb-20 sm:px-8 lg:grid lg:grid-cols-[18.5rem_1fr] lg:items-start lg:gap-12 lg:pt-6">
-          <aside className="grid grid-cols-[8rem_1fr] items-center gap-x-5 sm:grid-cols-[14rem_1fr] sm:gap-x-7 lg:sticky lg:top-8 lg:flex lg:flex-col lg:items-start">
-            <PlaylistCover
-              playlist={asPlaylist}
-              sizes="(max-width: 640px) 128px, (max-width: 1024px) 224px, 296px"
-              className="aspect-square w-full rounded-[14px] shadow-postcard sm:rounded-[20px]"
-            />
+      <div className="mx-auto w-full max-w-6xl px-5 pt-2 pb-20 sm:px-8 lg:grid lg:grid-cols-[18.5rem_1fr] lg:items-start lg:gap-12 lg:pt-6">
+        <aside className="grid grid-cols-[8rem_1fr] items-center gap-x-5 sm:grid-cols-[14rem_1fr] sm:gap-x-7 lg:sticky lg:top-8 lg:flex lg:flex-col lg:items-start">
+          <PlaylistCover
+            playlist={asPlaylist}
+            sizes="(max-width: 640px) 128px, (max-width: 1024px) 224px, 296px"
+            className="aspect-square w-full rounded-[14px] shadow-postcard sm:rounded-[20px]"
+          />
 
-            <div className="flex min-w-0 flex-col items-start">
-              <h1
-                // A Liked title is dictionary chrome, not content: it carries the
-                // owner's name in the visitor's language, so a Japanese name (or
-                // any CJK, which is all isJapanese can tell) would otherwise put
-                // the whole zh/en heading on the Japanese font stack.
-                lang={kind === "user" && isJapanese(title) ? "ja" : undefined}
-                className={cn(
-                  "font-display text-2xl font-semibold leading-[1.15] sm:text-[2.375rem] sm:leading-[1.12] lg:mt-6",
-                  ambientCoverId
-                    ? "text-foreground"
-                    : "text-white [text-shadow:0_4px_24px_rgba(11,58,83,0.5)]",
-                )}
-              >
-                {title}
-              </h1>
-              <p
-                className={cn(
-                  "mt-2 text-sm",
-                  ambientCoverId
-                    ? "text-foreground/85"
-                    : "text-white/90 [text-shadow:0_2px_10px_rgba(11,58,83,0.5)]",
-                )}
-              >
-                {meta}
-              </p>
-              {/* Attribution and Save live in the arrival panel above, so this
-                  rail is the owner's own screen minus its edit affordances. */}
-              <div className="mt-5 flex flex-col items-start gap-2.5 sm:mt-6 sm:flex-row sm:flex-wrap sm:items-center">
-                <PlayQueueButton
-                  playText={tp("playAll")}
-                  pauseText={tRoot("album.pause")}
-                />
-              </div>
-            </div>
-          </aside>
-
-          {songs.length === 0 ? (
-            <GlassPanel className="mt-10 rounded-[28px] px-6 py-16 text-center shadow-postcard lg:mt-0">
-              <p className="font-display text-lg font-medium text-foreground">
-                {tp("emptyDetail")}
-              </p>
-            </GlassPanel>
-          ) : (
-            <GlassPanel
-              as="main"
-              className="mt-10 rounded-[28px] px-3 py-6 shadow-postcard sm:px-6 lg:mt-0"
+          <div className="flex min-w-0 flex-col items-start">
+            <h1
+              // A Liked title is dictionary chrome, not content: it carries the
+              // owner's name in the visitor's language, so a Japanese name (or
+              // any CJK, which is all isJapanese can tell) would otherwise put
+              // the whole zh/en heading on the Japanese font stack.
+              lang={kind === "user" && isJapanese(title) ? "ja" : undefined}
+              className={cn(
+                "font-display text-2xl font-semibold leading-[1.15] sm:text-[2.375rem] sm:leading-[1.12] lg:mt-6",
+                ambientCoverId
+                  ? "text-foreground"
+                  : "text-white [text-shadow:0_4px_24px_rgba(11,58,83,0.5)]",
+              )}
             >
-              <ol>
-                {songs.map((song, i) => (
-                  <TrackRow
-                    key={song.id}
-                    track={song}
-                    index={i}
-                    queueIndex={i}
-                    showAlbumLink
-                    sequential
-                  />
-                ))}
-              </ol>
+              {title}
+            </h1>
+            <p
+              className={cn(
+                "mt-2 text-sm",
+                ambientCoverId
+                  ? "text-foreground/85"
+                  : "text-white/90 [text-shadow:0_2px_10px_rgba(11,58,83,0.5)]",
+              )}
+            >
+              {meta}
+            </p>
+            {/* No actions here: attribution and the one thing to do (save)
+                  both live in the arrival panel above. */}
+          </div>
+        </aside>
 
-              <p className="mt-8 border-t border-border/70 px-3 pt-5 text-[13px] text-muted-foreground">
-                {meta}
-              </p>
-            </GlassPanel>
-          )}
-        </div>
-      </QueuePlaybackProvider>
+        {songs.length === 0 ? (
+          <GlassPanel className="mt-10 rounded-[28px] px-6 py-16 text-center shadow-postcard lg:mt-0">
+            <p className="font-display text-lg font-medium text-foreground">
+              {tp("emptyDetail")}
+            </p>
+          </GlassPanel>
+        ) : (
+          <GlassPanel
+            as="main"
+            className="mt-10 rounded-[28px] px-3 py-6 shadow-postcard sm:px-6 lg:mt-0"
+          >
+            <ol>
+              {songs.map((song, i) => (
+                <TrackLine key={song.id} song={song} number={i + 1} />
+              ))}
+            </ol>
+
+            <p className="mt-8 border-t border-border/70 px-3 pt-5 text-[13px] text-muted-foreground">
+              {meta}
+            </p>
+          </GlassPanel>
+        )}
+      </div>
     </div>
+  );
+}
+
+/**
+ * One line of the shared tracklist: number · title, and nothing to press.
+ * Deliberately not TrackRow — that row *is* a play control (it reads the queue
+ * context and the player store, and carries the like/add/remove cluster), so a
+ * read-only variant would mean threading an inert flag through a component two
+ * other screens depend on. Here the list is a list: the only action on this
+ * page is saving.
+ */
+function TrackLine({ song, number }: { song: Song; number: number }) {
+  return (
+    <li className="flex min-h-11 items-center gap-4 py-2 pr-1 pl-3">
+      <span className="w-6 shrink-0 text-[13px] text-muted-foreground tabular-nums">
+        {number}
+      </span>
+      <span
+        lang={isJapanese(song.name) ? "ja" : undefined}
+        title={song.name}
+        className="truncate text-[15px] text-foreground"
+      >
+        {song.name}
+      </span>
+    </li>
   );
 }

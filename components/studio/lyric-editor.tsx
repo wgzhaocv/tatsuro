@@ -673,7 +673,7 @@ export function LyricEditor({
 
       <div className="flex flex-wrap items-center gap-2 px-4 pb-3 sm:px-6">
         <TipButton
-          tip="Drop a 🎵 into the cursor's slot, stamped at the playhead (I)"
+          tip="Drop a 🎵 below the selected line, stamped at the playhead (I)"
           variant="action"
           size="sm"
           onClick={press(insertInterludeNow)}
@@ -681,7 +681,7 @@ export function LyricEditor({
           <MusicNote weight="fill" className="size-4" /> Interlude here
         </TipButton>
         <TipButton
-          tip="Same slot, but leave it untimed"
+          tip="Same place, but leave it untimed"
           variant="outline"
           size="sm"
           onClick={press(insertInterlude)}

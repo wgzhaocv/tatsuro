@@ -59,3 +59,17 @@ export async function getEditionShareLink(
   const href = slug ? `${base}/${slug}` : base;
   return `${href}?${AUTH_COOKIE_NAME}=${token}`;
 }
+
+/**
+ * Build the shareable link for a playlist share slug: the public /share/:slug
+ * viewer, gate ticket attached.
+ *
+ * Why an action for two lines of string work: the slug is minted client-side (the
+ * backend bearer token lives in localStorage, which only the browser can read),
+ * while the gate ticket can only be signed on the server — so this does exactly
+ * the part the client can't. See createPlaylistShareLink for the other half.
+ */
+export async function getPlaylistShareLink(slug: string): Promise<string> {
+  const token = await signToken();
+  return `/share/${slug}?${AUTH_COOKIE_NAME}=${token}`;
+}

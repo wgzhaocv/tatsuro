@@ -1,9 +1,7 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Suspense } from "react";
-import {
-  PlaylistDetail,
-  PlaylistDetailSkeleton,
-} from "@/components/playlists/playlist-detail";
+import { PlaylistDetail } from "@/components/playlists/playlist-detail";
+import { PlaylistDetailSkeleton } from "@/components/playlists/playlist-detail-skeleton";
 
 export async function generateMetadata({
   params,

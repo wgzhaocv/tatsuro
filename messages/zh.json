@@ -187,7 +187,22 @@
   "share": {
     "song": "分享歌曲",
     "album": "分享专辑",
-    "failed": "无法创建分享链接"
+    "failed": "无法创建分享链接",
+    "playlist": "分享歌单",
+    "stopSharing": "停止分享",
+    "stopped": "已停止分享，链接失效",
+    "loginTitle": "分享需要登录",
+    "loginBody": "分享链接由云端同步的歌单提供，所以需要账户。",
+    "likedSongsTitle": "{name}喜欢的歌曲",
+    "unknownOwner": "某位听众",
+    "sharedBy": "{name}分享的歌单",
+    "saveCopy": "保存到我的歌单",
+    "savedCopy": "已保存到你的歌单",
+    "open": "打开",
+    "unavailableTitle": "这个链接已失效。",
+    "unavailableBody": "歌单已停止分享或被删除。可以找分享给你的人要个新链接。",
+    "goHome": "首页",
+    "stopFailed": "无法停止分享"
   },
   "pins": {
     "pin": "置顶 {name}",
@@ -230,7 +245,9 @@
     "gateTitle": "需要密码",
     "gateDescription": "这是一个私享的山下达郎音乐库，输入密码后继续。",
     "more": "更多",
-    "moreDescription": "离线存储与收录状况。"
+    "moreDescription": "离线存储与收录状况。",
+    "sharedPlaylist": "分享的歌单",
+    "sharedPlaylistDescription": "有人分享的山下达郎歌单。"
   },
   "more": {
     "heading": "更多",

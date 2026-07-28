@@ -187,7 +187,22 @@
   "share": {
     "song": "Share song",
     "album": "Share album",
-    "failed": "Couldn't create a share link"
+    "failed": "Couldn't create a share link",
+    "playlist": "Share playlist",
+    "stopSharing": "Stop sharing",
+    "stopped": "Sharing stopped — the link no longer works",
+    "loginTitle": "Sign in to share",
+    "loginBody": "A share link is served from your synced copy of the playlist, so sharing needs an account.",
+    "likedSongsTitle": "{name}'s Liked Songs",
+    "unknownOwner": "A listener",
+    "sharedBy": "Shared by {name}",
+    "saveCopy": "Save to my playlists",
+    "savedCopy": "Saved to your playlists",
+    "open": "Open",
+    "unavailableTitle": "This link isn't available.",
+    "unavailableBody": "The playlist was unshared or deleted. Ask whoever sent it for a new link.",
+    "goHome": "Home",
+    "stopFailed": "Couldn't stop sharing"
   },
   "pins": {
     "pin": "Pin {name}",
@@ -230,7 +245,9 @@
     "gateTitle": "Password required",
     "gateDescription": "A private Tatsuro Yamashita library. Enter the password to continue.",
     "more": "More",
-    "moreDescription": "Offline storage and library status."
+    "moreDescription": "Offline storage and library status.",
+    "sharedPlaylist": "Shared playlist",
+    "sharedPlaylistDescription": "A Tatsuro Yamashita playlist someone shared with you."
   },
   "more": {
     "heading": "More",

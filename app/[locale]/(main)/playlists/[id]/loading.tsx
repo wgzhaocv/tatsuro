@@ -1,4 +1,4 @@
-import { PlaylistDetailSkeleton } from "@/components/playlists/playlist-detail";
+import { PlaylistDetailSkeleton } from "@/components/playlists/playlist-detail-skeleton";
 
 // Instant loading state for the /playlists/[id] segment. Next shows this the
 // moment a navigation into the detail starts — before the route bundle/RSC

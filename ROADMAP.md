@@ -108,6 +108,15 @@
 
 11. **歌曲片段分享卡 + 音乐短视频(前端生成)(2026-07-27 记,未排期,UI 待想)** — 站主想法:选一段歌曲,生成 ①**静态分享卡**(封面 + 歌词片段 + 曲名,Noon Postcard 明信片形态)②**音乐短视频**(片段音频 + 封面环境光/打轴歌词逐行点亮/波形),**制作过程全在前端**(零后端成本;Workers 跑不了 ffmpeg,前端本就是唯一合理位置)。**详细备忘(需求边界、技术管线、兼容阶梯、坑、开工顺序)见 [`design/片段分享卡与短视频.md`](./design/片段分享卡与短视频.md)**。一句话版:先做 Canvas 2D 静态卡(前置:`/stream/img` 加 CORS 头防 canvas taint),短视频首选 WebCodecs + mediabunny 出 mp4(不用 30MB 的 ffmpeg.wasm),音频离线解码不碰播放元素(iOS AirPlay 雷),老 Safari 降级 MediaRecorder → 只出静态卡。
 
+12. **歌单分享(链接 + 保存副本)(2026-07-28 落地 ✅)** — 登录用户给歌单生成**稳定分享链接**,收链接的人打开**实时**只读页(始终是当前内容,不是快照),可播放、可**一键保存为自己的歌单**;可撤回。产品决策(讨论后拍板):
+   - **实时而非快照**:分享的是"我在维护的这份歌单"这个活物,零数据复制;要固定就用 Copy。快照语义留给 #11 的片段分享。
+   - **Copy 不要求登录**:歌单本来就 local-first,`createPlaylistWithSongs` 直接落 localStorage,已连接账号的访客靠 store 订阅自动上云。重复 copy = 两份副本(同 starter mixes 语义)。
+   - **Follow/订阅**:方案设计完了但**故意不做** —— 它是最贵的一块(新 store 实体 + 改 sync 协议 + library 只读形态),价值却和"用户网络大小 × 歌主改单频率"成正比,而私享站两者都天然偏小;Copy 已覆盖 90% 真实场景(存一份就完事),剩下 10% 靠"他改了再发你一次链接"零成本解决。**触发条件**:分享上线后真被高频使用,再考虑。届时实现要点:搭 `/me/sync` 兄弟数组单向下行(像 pins/downloads),follower 端纯只读所以**不需要任何合并逻辑**——比设备同步更简单。
+   - **只有登录后能分享**:未登录的歌单只存在于 localStorage,服务器没有这份数据,结构上分不了;UI 给温和的登录引导而不是隐藏入口。
+   - **命名**:普通歌单用自己的名字,Liked 显示为「{owner} 喜欢的歌」(三语 `share.likedSongsTitle`,owner 取 Google profile 的 `users.name`,可空 → `share.unknownOwner` 兜底)。
+   - **落地**:后端 `migrations/0015_playlist_shares.sql`(`slug` PK + **部分唯一索引** `(user_id,playlist_id) WHERE revoked_at IS NULL` = "每歌单一条存活分享"的强制,并发创建竞态由它裁决;撤回 = `revoked_at` 墓碑,重新分享**换新 slug**,旧链接永久死)、`me.ts` 的 POST/DELETE(幂等)、公开 `src/routes/share.ts`(`GET /share/:slug?lang=`)+ `src/lib/{slug,names,song-info}.ts`(后两个是从 `music.ts` 抽出的,`/music/*` 输出保持逐字节一致)。前端 `lib/api/share.ts`(**刻意不 `'use cache'`**)、`lib/playlists/share.ts`、`components/playlists/share-playlist-menu.tsx`、`components/share/shared-playlist-view.tsx`(瘦只读页,不 fork playlist-detail)、`app/[locale]/(main)/share/[slug]/`。
+   - **坑(踩过/绕过的)**:①**`/share/*` 全部响应含 404 必须 `no-store`** —— Workers 前置缓存的 immutable 响应**purge 不掉**(只有 `wrangler deploy` 能刷),缓存一次就等于把某个瞬间的快照冻 30 天、撤回失效;现已收成路由中间件,不靠每个 handler 记得传。②**分享前必须 `await syncNow()`** —— 刚建/刚改的歌单还在 3s 防抖里,服务器不认识它,POST 会 404。③`?argot=` 门票只能服务端签(httpOnly secret),所以 slug 由客户端 fetch 拿、链接由 server action 拼。④骨架屏原先从 `"use client"` 的 playlist-detail 导入,把 owner-only 子图(share menu/account store/offline switch)塞进了**冷启动分享页**的首包 —— 已拆成 `playlist-detail-skeleton.tsx`(纯 markup,零 client JS)。⑤Liked 标题是**字典 chrome 不是内容**,`lang` 属性必须按 `kind` 门控,否则日文 owner 名会把整个中文/英文标题拽上日文字体栈。
+
 ## 阶段 4 — 上线
 
 - [x] 生产部署(2026-07)— **Vercel**(不是旧站的 Docker/opi 路子):`vercel.json` 固定 `regions: ["hnd1"]`(东京,贴近后端 Worker + 用户);`@vercel/analytics` + `@vercel/speed-insights` 已接入 `app/layout.tsx`。部署时需设 `NEXT_PUBLIC_SITE_URL`(OG/metadataBase,见 Backlog #7)

@@ -187,7 +187,22 @@
   "share": {
     "song": "曲をシェア",
     "album": "アルバムをシェア",
-    "failed": "共有リンクを作成できませんでした"
+    "failed": "共有リンクを作成できませんでした",
+    "playlist": "プレイリストをシェア",
+    "stopSharing": "共有を停止",
+    "stopped": "共有を停止しました。リンクは無効です",
+    "loginTitle": "シェアにはログインが必要です",
+    "loginBody": "共有リンクは同期されたプレイリストから配信されるため、アカウントが必要です。",
+    "likedSongsTitle": "{name}のお気に入り",
+    "unknownOwner": "あるリスナー",
+    "sharedBy": "{name}がシェア",
+    "saveCopy": "自分のプレイリストに保存",
+    "savedCopy": "プレイリストに保存しました",
+    "open": "開く",
+    "unavailableTitle": "このリンクは利用できません。",
+    "unavailableBody": "共有が停止されたか、プレイリストが削除されています。送った人に新しいリンクをもらってください。",
+    "goHome": "ホーム",
+    "stopFailed": "共有を停止できませんでした"
   },
   "pins": {
     "pin": "{name}をピン留め",
@@ -230,7 +245,9 @@
     "gateTitle": "パスワードが必要です",
     "gateDescription": "山下達郎のプライベートライブラリです。続けるにはパスワードを入力してください。",
     "more": "その他",
-    "moreDescription": "オフライン保存とライブラリの状況。"
+    "moreDescription": "オフライン保存とライブラリの状況。",
+    "sharedPlaylist": "共有プレイリスト",
+    "sharedPlaylistDescription": "誰かがシェアした山下達郎のプレイリスト。"
   },
   "more": {
     "heading": "その他",

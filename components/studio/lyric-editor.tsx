@@ -17,7 +17,7 @@ import {
 } from "@phosphor-icons/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { create } from "zustand";
+import { useStore } from "zustand";
 import { Scrubber } from "@/components/player/scrubber";
 import { Button } from "@/components/ui/button";
 import { TipButton } from "@/components/ui/tip-button";
@@ -38,37 +38,14 @@ import { songStreamUrl } from "@/lib/api/urls";
 import { formatDuration, formatTimecode } from "@/lib/format";
 import { isJapanese } from "@/lib/text";
 import { cn } from "@/lib/utils";
-
-// A line while it's being timed. startTime null = not yet stamped (serialized
-// as 0). Ids are internal, for stable React keys through text edits.
-type EditLine = {
-  id: number;
-  origin: string;
-  ja: string;
-  en: string;
-  startTime: number | null;
-};
-
-const emptyLine = (id: number): EditLine => ({
-  id,
-  origin: "",
-  ja: "",
-  en: "",
-  startTime: null,
-});
-
-// Playback position lives in its own store so ~4Hz timeupdate ticks re-render
-// only the leaf readouts that subscribe (the clock + seek bar), not the whole
-// editor and its line list — mirrors the player's useProgressStore split.
-const useStudioTime = create<{
-  time: number;
-  duration: number;
-  set: (time: number, duration: number) => void;
-}>((set) => ({
-  time: 0,
-  duration: 0,
-  set: (time, duration) => set({ time, duration }),
-}));
+import {
+  activeLineIndex,
+  createEditorStore,
+  type EditLine,
+  type EditorStore,
+  RATES,
+  round,
+} from "./editor-store";
 
 function tc(sec: number | null): string {
   return sec == null || sec < 0 ? "—:——" : formatTimecode(sec);
@@ -91,31 +68,11 @@ function parseTime(raw: string): number | null {
   return Number.isFinite(n) && n >= 0 ? n : null;
 }
 
-/** The line currently sounding (for a karaoke highlight): the last stamped line
- *  at or before `time`. Unlike currentLineIndex in lib/api/lyrics, this skips
- *  not-yet-stamped lines, so it works mid-timing. */
-function activeLineIndex(lines: EditLine[], time: number): number {
-  let active = -1;
-  for (let i = 0; i < lines.length; i++) {
-    const st = lines[i].startTime;
-    if (st == null) continue;
-    if (st <= time + 0.001) active = i;
-    else break;
-  }
-  return active;
-}
-
-const RATES = [0.5, 0.75, 1, 1.25, 1.5];
-
 // Whole-track timing corrections, in seconds: a coarse pass and a fine one.
 const SHIFTS = [-1, -0.1, 0.1, 1];
 
-// Stamps are compared and displayed to 2 decimals; rounding on every write
-// keeps repeated 0.1s shifts from drifting into 12.300000000000004.
-const round = (t: number) => Math.round(t * 1000) / 1000;
-
-// The content of an interlude/instrumental-break line — a bare note emoji.
-const INTERLUDE = "🎵";
+const verifiedToast = () =>
+  toast.success("Every line is timed — state set to verified.");
 
 /** MediaError codes in words. The operator needs to tell "the API is down"
  *  apart from "this song has no file on R2" without opening devtools. */
@@ -164,87 +121,66 @@ export function LyricEditor({
   onDirtyChange: (dirty: boolean) => void;
   onSaved: (id: string, state: LyricsState) => void;
 }) {
+  // One store per mount, and the editor remounts per song — so this is one
+  // store per timing session. Every callback below reads it through
+  // getState(), which is why none of them need a shadow ref to stay fresh.
+  const [store] = useState(() => createEditorStore(song.state));
+
   const audioRef = useRef<HTMLAudioElement>(null);
   const rowRefs = useRef<(HTMLLIElement | null)[]>([]);
   const inputRefs = useRef(new Map<number, HTMLInputElement>());
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [lines, setLines] = useState<EditLine[]>([]);
-  const [cursor, setCursor] = useState(0);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
-  // A line id to focus once rendered (a freshly inserted row).
-  const [focusId, setFocusId] = useState<number | null>(null);
-
-  const [isPlaying, setIsPlaying] = useState(false);
-  // The stream is buffering mid-play. Without this the transport looks
-  // identical to a broken one: button on Pause, playhead frozen, no reason.
-  const [stalled, setStalled] = useState(false);
-  const [rate, setRate] = useState(1);
-  // Default tap latency compensation: you hear a line, then react, so the
-  // press lands ~0.3s late — stamp that much earlier. Adjustable.
-  const [offsetMs, setOffsetMs] = useState(300);
-
-  const [state, setState] = useState<LyricsState>(song.state);
   const [saving, setSaving] = useState(false);
-  const [dirty, setDirty] = useState(false);
   const [showText, setShowText] = useState(false);
 
-  // Monotonic id source for new lines (reset per song — the editor remounts on
-  // key={song.id}).
-  const idRef = useRef(0);
-  const newId = useCallback(() => idRef.current++, []);
+  const lines = useStore(store, (s) => s.lines);
+  const cursor = useStore(store, (s) => s.cursor);
+  const state = useStore(store, (s) => s.lyricsState);
+  const dirty = useStore(store, (s) => s.dirty);
+  const isPlaying = useStore(store, (s) => s.isPlaying);
+  const stalled = useStore(store, (s) => s.stalled);
+  const rate = useStore(store, (s) => s.rate);
+  const offsetMs = useStore(store, (s) => s.offsetMs);
+  const focusId = useStore(store, (s) => s.focusId);
+  const scrollNonce = useStore(store, (s) => s.scrollNonce);
+  // Only when activeIndex crosses a boundary does the editor re-render — the
+  // ~4Hz ticks in between move the clock/seek-bar leaves, which subscribe to
+  // `time` themselves, not this component.
+  const activeIndex = useStore(store, (s) => activeLineIndex(s.lines, s.time));
 
-  // Live refs for the keydown handler (attached once, must not go stale).
-  const cursorRef = useRef(cursor);
-  cursorRef.current = cursor;
-  const linesRef = useRef(lines);
-  linesRef.current = lines;
-  const offsetRef = useRef(offsetMs);
-  offsetRef.current = offsetMs;
-  const stateRef = useRef(state);
-  stateRef.current = state;
-
-  // Set right before a cursor move that the operator didn't make with a click
-  // — see the scroll-into-view effect.
-  const scrollCursorRef = useRef(false);
-
-  // Only when activeIndex crosses a boundary does the editor re-render — ticks
-  // in between move the clock/seek-bar leaves, not this component.
-  const activeIndex = useStudioTime((s) => activeLineIndex(lines, s.time));
-
-  const markDirty = useCallback(() => {
-    setDirty(true);
-    onDirtyChange(true);
-  }, [onDirtyChange]);
+  useEffect(() => {
+    onDirtyChange(dirty);
+  }, [dirty, onDirtyChange]);
 
   // ── load lyrics + point the audio element at the stream ──
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
     setLoadError(false);
-    useStudioTime.getState().set(0, 0);
+    store.getState().resetProgress();
     fetchLyrics(song.id)
       .then((fetched) => {
         if (cancelled) return;
-        const mapped: EditLine[] = fetched.map((l) => ({
-          id: newId(),
-          origin: l.origin,
-          ja: l.ja ?? "",
-          en: l.en ?? "",
-          startTime: l.startTime > 0 ? l.startTime : null,
-        }));
-        setLines(mapped);
-        const firstUnstamped = mapped.findIndex((l) => l.startTime == null);
-        scrollCursorRef.current = true;
-        setCursor(firstUnstamped >= 0 ? firstUnstamped : 0);
+        const { newId, loadLines } = store.getState();
+        loadLines(
+          fetched.map((l) => ({
+            id: newId(),
+            origin: l.origin,
+            ja: l.ja ?? "",
+            en: l.en ?? "",
+            startTime: l.startTime > 0 ? l.startTime : null,
+          })),
+        );
       })
       .catch(() => !cancelled && setLoadError(true))
       .finally(() => !cancelled && setLoading(false));
     return () => {
       cancelled = true;
     };
-  }, [song.id, newId]);
+  }, [song.id, store]);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -270,7 +206,7 @@ export function LyricEditor({
       audio.pause();
       return;
     }
-    setStalled(false);
+    store.getState().setStalled(false);
     audio.play().catch((err: DOMException) => {
       // Switching songs pauses the outgoing element mid-play(), which rejects
       // the promise — expected teardown, not a failure worth reporting.
@@ -278,14 +214,14 @@ export function LyricEditor({
       // Anything else means the stream never started. play() fires `play`
       // before it fails, so isPlaying is already true and the button is
       // showing Pause on a track that isn't moving — put it back.
-      setIsPlaying(false);
-      setStalled(false);
+      store.getState().setPlaying(false);
+      store.getState().setStalled(false);
       // A broken stream rejects here *and* fires `error`; that handler names
       // the actual cause, so stay quiet and let it do the talking. This
       // message is for the rejections it can't explain — autoplay blocks.
       if (!audio.error) toast.error(`Couldn't play this track — ${err.name}.`);
     });
-  }, []);
+  }, [store]);
 
   const seek = useCallback((t: number) => {
     const audio = audioRef.current;
@@ -294,12 +230,19 @@ export function LyricEditor({
     audio.currentTime = Math.min(Math.max(0, t), max);
   }, []);
 
-  const bumpRate = useCallback((dir: number) => {
-    setRate((r) => {
-      const i = RATES.indexOf(r) + dir;
-      return RATES[Math.min(RATES.length - 1, Math.max(0, i))] ?? r;
-    });
-  }, []);
+  const bumpRate = useCallback(
+    (dir: number) => store.getState().bumpRate(dir),
+    [store],
+  );
+
+  /** The playhead, corrected for tap latency — the clock every stamp uses. */
+  const stampTime = useCallback(() => {
+    const audio = audioRef.current;
+    if (!audio) return null;
+    return round(
+      Math.max(0, audio.currentTime - store.getState().offsetMs / 1000),
+    );
+  }, [store]);
 
   // Return focus to the body after a click so Space/arrows reach the global
   // keydown handler instead of re-triggering the button.
@@ -311,222 +254,86 @@ export function LyricEditor({
     [],
   );
 
-  // ── editing ──
-  // Every change to the line list goes through here: it keeps linesRef in sync
-  // (the keydown handler and the callbacks below read it as the base for the
-  // next edit) and flags the editor dirty.
-  const commitLines = useCallback(
-    (next: EditLine[]) => {
-      linesRef.current = next;
-      setLines(next);
-      markDirty();
-    },
-    [markDirty],
-  );
-
-  // A commit that came from stamping. Once every line carries a time there's
-  // nothing left to hand-time, so the state promotes itself — no need to
-  // remember the dropdown after tapping in the last line.
-  const commitStamped = useCallback(
-    (next: EditLine[]) => {
-      commitLines(next);
-      if (
-        next.length > 0 &&
-        next.every((l) => l.startTime != null) &&
-        stateRef.current !== "verified"
-      ) {
-        setState("verified");
-        toast.success("Every line is timed — state set to verified.");
-      }
-    },
-    [commitLines],
-  );
-
+  // ── editing — the rules live in the store; these only bridge it to the
+  // audio element (which supplies the playhead and does the seeking) and to
+  // the toasts, which the store deliberately doesn't raise itself. ──
   const stampCursor = useCallback(() => {
-    const audio = audioRef.current;
-    if (!audio) return;
-    const i = cursorRef.current;
-    if (!linesRef.current[i]) return;
-    const t = round(Math.max(0, audio.currentTime - offsetRef.current / 1000));
-    commitStamped(
-      linesRef.current.map((l, idx) =>
-        idx === i ? { ...l, startTime: t } : l,
-      ),
-    );
-    scrollCursorRef.current = true;
-    setCursor((c) => Math.min(c + 1, Math.max(linesRef.current.length - 1, 0)));
-  }, [commitStamped]);
+    const t = stampTime();
+    if (t != null && store.getState().stampCursor(t)) verifiedToast();
+  }, [store, stampTime]);
 
   const undoStamp = useCallback(() => {
-    // Undo removes the *last* stamp, which always sits at cursor-1 (stamping
-    // advances the cursor). At the top there's nothing to undo — a no-op, so
-    // Backspace can't nuke line 0 or fake a dirty state on an empty song.
-    if (cursorRef.current <= 0) return;
-    const back = cursorRef.current - 1;
-    const prevStamp = linesRef.current[back - 1]?.startTime ?? null;
-    seek(prevStamp ?? 0);
-    scrollCursorRef.current = true;
-    setCursor(back);
-    commitLines(
-      linesRef.current.map((l, i) =>
-        i === back ? { ...l, startTime: null } : l,
-      ),
-    );
-  }, [commitLines, seek]);
+    const back = store.getState().undoStamp();
+    if (back != null) seek(back);
+  }, [store, seek]);
 
   const setLineTime = useCallback(
     (index: number, value: number | null) => {
-      const next = linesRef.current.map((l, i) =>
-        i === index
-          ? { ...l, startTime: value == null ? null : round(value) }
-          : l,
-      );
-      if (value == null) commitLines(next);
-      else commitStamped(next);
+      if (store.getState().setLineTime(index, value)) verifiedToast();
     },
-    [commitLines, commitStamped],
+    [store],
   );
 
   const setLineOrigin = useCallback(
-    (index: number, value: string) => {
-      commitLines(
-        linesRef.current.map((l, i) =>
-          i === index ? { ...l, origin: value } : l,
-        ),
-      );
-    },
-    [commitLines],
+    (index: number, value: string) =>
+      store.getState().setLineOrigin(index, value),
+    [store],
   );
 
   const nudge = useCallback(
-    (index: number, delta: number) => {
-      commitLines(
-        linesRef.current.map((l, i) =>
-          i === index
-            ? {
-                ...l,
-                startTime: round(Math.max(0, (l.startTime ?? 0) + delta)),
-              }
-            : l,
-        ),
-      );
-    },
-    [commitLines],
+    (index: number, delta: number) => store.getState().nudge(index, delta),
+    [store],
   );
 
-  // Slide the whole track. A negative shift is capped at the earliest stamp so
-  // the lines move as one block — clamping each line at 0 individually would
-  // quietly crush the spacing at the head of the song.
   const shiftAll = useCallback(
     (delta: number) => {
-      const stamps = linesRef.current
-        .map((l) => l.startTime)
-        .filter((t): t is number => t != null);
-      if (stamps.length === 0) return;
-      const d = delta < 0 ? Math.max(delta, -Math.min(...stamps)) : delta;
-      if (d === 0) {
+      if (!store.getState().shiftAll(delta)) {
         toast("The first stamp is already at 0:00 — can't shift earlier.");
-        return;
       }
-      commitLines(
-        linesRef.current.map((l) =>
-          l.startTime == null ? l : { ...l, startTime: round(l.startTime + d) },
-        ),
-      );
     },
-    [commitLines],
+    [store],
   );
 
   const stampHere = useCallback(
-    (index: number) =>
-      setLineTime(
-        index,
-        Math.max(
-          0,
-          (audioRef.current?.currentTime ?? 0) - offsetRef.current / 1000,
-        ),
-      ),
-    [setLineTime],
+    (index: number) => setLineTime(index, stampTime() ?? 0),
+    [setLineTime, stampTime],
   );
 
-  // Insert a line after `index` (−1 to prepend) and select it. A blank line
-  // focuses its field for immediate typing; a pre-filled one (interlude) just
-  // waits to be timed.
   const insertLineBelow = useCallback(
-    (index: number, content = "") => {
-      const id = newId();
-      // Clamp into the list (index can point past the end, or at -1 to prepend).
-      const at = Math.max(0, Math.min(index + 1, linesRef.current.length));
-      commitLines([
-        ...linesRef.current.slice(0, at),
-        { ...emptyLine(id), origin: content },
-        ...linesRef.current.slice(at),
-      ]);
-      setCursor(at);
-      if (!content) setFocusId(id);
-    },
-    [commitLines, newId],
-  );
-
-  // Both interlude buttons drop the 🎵 into the cursor's slot: the run is
-  // "Enter at the top of a line, I when that line ends", and Enter has already
-  // moved the cursor on, so the cursor's slot is exactly the gap after the
-  // line that just finished. The cursor rides down with the insertion and
-  // keeps pointing at the same lyric — the next one to stamp.
-  const insertInterludeAt = useCallback(
-    (startTime: number | null) => {
-      const at = cursorRef.current;
-      commitLines([
-        ...linesRef.current.slice(0, at),
-        { ...emptyLine(newId()), origin: INTERLUDE, startTime },
-        ...linesRef.current.slice(at),
-      ]);
-      setCursor(at + 1);
-    },
-    [commitLines, newId],
+    (index: number, content = "") =>
+      store.getState().insertLineBelow(index, content),
+    [store],
   );
 
   const insertInterlude = useCallback(
-    () => insertInterludeAt(null),
-    [insertInterludeAt],
+    () => store.getState().insertInterlude(null),
+    [store],
   );
 
   // The one you can hit without looking away from the music — already stamped
   // at the playhead, on the same offset-corrected clock Enter uses.
   const insertInterludeNow = useCallback(() => {
-    const audio = audioRef.current;
-    if (!audio) return;
-    insertInterludeAt(
-      round(Math.max(0, audio.currentTime - offsetRef.current / 1000)),
-    );
-  }, [insertInterludeAt]);
+    const t = stampTime();
+    if (t != null) store.getState().insertInterlude(t);
+  }, [store, stampTime]);
 
   const deleteLine = useCallback(
-    (index: number) => {
-      commitLines(linesRef.current.filter((_, i) => i !== index));
-      setCursor((c) => Math.min(c, Math.max(linesRef.current.length - 1, 0)));
-    },
-    [commitLines],
+    (index: number) => store.getState().deleteLine(index),
+    [store],
   );
 
   const selectAndSeek = useCallback(
     (index: number) => {
-      setCursor(index);
-      const st = linesRef.current[index]?.startTime;
-      if (st != null) seek(st);
+      const at = store.getState().selectLine(index);
+      if (at != null) seek(at);
     },
-    [seek],
+    [store, seek],
   );
 
-  const moveCursor = useCallback((delta: number) => {
-    scrollCursorRef.current = true;
-    setCursor((c) =>
-      Math.min(
-        Math.max(0, c + delta),
-        Math.max(linesRef.current.length - 1, 0),
-      ),
-    );
-  }, []);
+  const moveCursor = useCallback(
+    (delta: number) => store.getState().moveCursor(delta),
+    [store],
+  );
 
   // ── keyboard: attach once, at capture phase so the global player's window
   // handler (Space / arrows) never also fires. Bails while a field is focused. ──
@@ -565,22 +372,22 @@ export function LyricEditor({
     insertInterludeNow,
   ]);
 
-  // Keep the cursor line in view as it advances — but only when the cursor
-  // moved on its own (a stamp, an arrow key, loading a song). Clicking into a
-  // line also sets the cursor, and yanking that row to the middle out from
-  // under the pointer makes the list impossible to edit.
+  // Keep the cursor line in view as it advances. Only the store's own cursor
+  // moves bump scrollNonce — clicking a row doesn't, so the list never yanks
+  // that row to the middle out from under the pointer.
   useEffect(() => {
-    if (!scrollCursorRef.current) return;
-    scrollCursorRef.current = false;
-    rowRefs.current[cursor]?.scrollIntoView({ block: "center" });
-  }, [cursor]);
+    if (scrollNonce === 0) return;
+    rowRefs.current[store.getState().cursor]?.scrollIntoView({
+      block: "center",
+    });
+  }, [scrollNonce, store]);
 
   // Focus a freshly inserted line's text field, once it has rendered.
   useEffect(() => {
     if (focusId == null) return;
     inputRefs.current.get(focusId)?.focus();
-    setFocusId(null);
-  }, [focusId]);
+    store.getState().clearFocusId();
+  }, [focusId, store]);
 
   const timedCount = lines.filter((l) => l.startTime != null).length;
 
@@ -621,9 +428,7 @@ export function LyricEditor({
       onSaved(song.id, settled);
       // The backend may coerce the state (e.g. empty lyrics → 'none'); adopt
       // what it settled on so a re-save doesn't resend the stale value.
-      setState(settled);
-      setDirty(false);
-      onDirtyChange(false);
+      store.getState().markSaved(settled);
       toast.success(`Saved · ${settled}`);
     } catch (err) {
       if (err instanceof WrongPasswordError) {
@@ -634,7 +439,7 @@ export function LyricEditor({
     } finally {
       setSaving(false);
     }
-  }, [password, song.id, lines, state, onSaved, onDirtyChange]);
+  }, [password, song.id, lines, state, onSaved, store]);
 
   // ── export / import a full timed lyric file (copy timing between same-named
   // songs — live versions, reissues — instead of re-timing each by hand) ──
@@ -669,6 +474,7 @@ export function LyricEditor({
               ? parsed.lyrics
               : [];
           if (arr.length === 0) throw new Error("empty");
+          const { newId, replaceLines } = store.getState();
           const next: EditLine[] = arr.map((row) => {
             const origin = row.origin ?? row.lyrics?.origin ?? "";
             const ja = row.ja ?? row.lyrics?.ja ?? "";
@@ -685,9 +491,7 @@ export function LyricEditor({
               startTime: st,
             };
           });
-          setLines(next);
-          setCursor(0);
-          markDirty();
+          replaceLines(next);
           toast.success(`Imported ${next.length} lines — review and save.`);
         } catch {
           toast.error(
@@ -697,7 +501,7 @@ export function LyricEditor({
       };
       reader.readAsText(file);
     },
-    [markDirty, newId],
+    [store],
   );
 
   // ── bulk text import / edit ──
@@ -709,21 +513,20 @@ export function LyricEditor({
       // Drop a single trailing blank line (textarea artifact) but keep
       // intentional internal blanks (verse breaks).
       if (o.length > 1 && o[o.length - 1].trim() === "") o.pop();
-      const prev = linesRef.current;
+      const { lines: prev, newId, replaceLines } = store.getState();
       // Preserve id + timing by row position so fixing a typo doesn't re-time.
-      const next: EditLine[] = o.map((line, i) => ({
-        id: prev[i]?.id ?? newId(),
-        origin: line,
-        ja: (j[i] ?? "").trim(),
-        en: (e[i] ?? "").trim(),
-        startTime: prev[i]?.startTime ?? null,
-      }));
-      setLines(next);
-      setCursor(0);
+      replaceLines(
+        o.map((line, i) => ({
+          id: prev[i]?.id ?? newId(),
+          origin: line,
+          ja: (j[i] ?? "").trim(),
+          en: (e[i] ?? "").trim(),
+          startTime: prev[i]?.startTime ?? null,
+        })),
+      );
       setShowText(false);
-      markDirty();
     },
-    [markDirty, newId],
+    [store],
   );
 
   return (
@@ -734,31 +537,34 @@ export function LyricEditor({
         src={songStreamUrl(song.id)}
         preload="metadata"
         onLoadedMetadata={(e) =>
-          useStudioTime.getState().set(0, e.currentTarget.duration || 0)
+          store.getState().setProgress(0, e.currentTarget.duration || 0)
         }
         onTimeUpdate={(e) =>
-          useStudioTime
+          store
             .getState()
-            .set(e.currentTarget.currentTime, e.currentTarget.duration || 0)
+            .setProgress(
+              e.currentTarget.currentTime,
+              e.currentTarget.duration || 0,
+            )
         }
-        onPlay={() => setIsPlaying(true)}
+        onPlay={() => store.getState().setPlaying(true)}
         onPause={() => {
-          setIsPlaying(false);
-          setStalled(false);
+          store.getState().setPlaying(false);
+          store.getState().setStalled(false);
         }}
         onEnded={() => {
-          setIsPlaying(false);
-          setStalled(false);
+          store.getState().setPlaying(false);
+          store.getState().setStalled(false);
         }}
-        onWaiting={() => setStalled(true)}
-        onPlaying={() => setStalled(false)}
+        onWaiting={() => store.getState().setStalled(true)}
+        onPlaying={() => store.getState().setStalled(false)}
         // A failed load fires `error`, never `pause`, so isPlaying would sit
         // true forever: the button reads Pause, every press silently retries,
         // and nothing on screen says why. Reset it and name the reason.
         onError={(e) => {
-          setIsPlaying(false);
-          setStalled(false);
-          useStudioTime.getState().set(0, 0);
+          store.getState().setPlaying(false);
+          store.getState().setStalled(false);
+          store.getState().resetProgress();
           toast.error(
             `Stream failed — ${mediaErrorText(e.currentTarget.error)}.`,
           );
@@ -797,20 +603,20 @@ export function LyricEditor({
           <FastForward className="size-4" />
         </TipButton>
 
-        <Clock />
+        <Clock store={store} />
         {stalled && (
           <output className="shrink-0 text-muted-foreground text-xs">
             buffering…
           </output>
         )}
-        <SeekBar onSeek={seek} />
+        <SeekBar store={store} onSeek={seek} />
 
         <div className="flex items-center gap-1">
           {RATES.map((r) => (
             <button
               key={r}
               type="button"
-              onClick={press(() => setRate(r))}
+              onClick={press(() => store.getState().setRate(r))}
               className={cn(
                 "rounded-full px-2 py-1 text-xs tabular-nums transition-colors",
                 r === rate
@@ -829,7 +635,9 @@ export function LyricEditor({
             type="number"
             step={50}
             value={offsetMs}
-            onChange={(e) => setOffsetMs(Number(e.target.value) || 0)}
+            onChange={(e) =>
+              store.getState().setOffsetMs(Number(e.target.value) || 0)
+            }
             aria-label="Tap offset in milliseconds"
             className="h-7 w-16 rounded-md border border-border/70 bg-card px-2 text-right tabular-nums outline-none focus:border-ocean dark:focus:border-sky-bright"
           />
@@ -982,7 +790,7 @@ export function LyricEditor({
                       }}
                       value={line.origin}
                       onChange={(e) => setLineOrigin(i, e.target.value)}
-                      onFocus={() => setCursor(i)}
+                      onFocus={() => store.getState().selectLine(i)}
                       lang={isJapanese(line.origin) ? "ja" : undefined}
                       placeholder="(empty line)"
                       className={cn(
@@ -1069,10 +877,9 @@ export function LyricEditor({
           <span className="text-muted-foreground">State</span>
           <select
             value={state}
-            onChange={(e) => {
-              setState(e.target.value as LyricsState);
-              markDirty();
-            }}
+            onChange={(e) =>
+              store.getState().setLyricsState(e.target.value as LyricsState)
+            }
             className="h-9 rounded-md border border-border/70 bg-card px-2 text-foreground text-sm outline-none focus:border-ocean dark:focus:border-sky-bright"
           >
             {LYRICS_STATES.map((s) => (
@@ -1140,10 +947,11 @@ export function LyricEditor({
   );
 }
 
-/** Playhead clock — subscribes to the time store so only it ticks at ~4Hz. */
-function Clock() {
-  const time = useStudioTime((s) => s.time);
-  const duration = useStudioTime((s) => s.duration);
+/** Playhead clock — subscribes to the playhead alone, so only it re-renders
+ *  on the ~4Hz timeupdate ticks. */
+function Clock({ store }: { store: EditorStore }) {
+  const time = useStore(store, (s) => s.time);
+  const duration = useStore(store, (s) => s.duration);
   return (
     <span className="tabular-nums text-muted-foreground text-sm">
       {tc(time)}{" "}
@@ -1152,10 +960,16 @@ function Clock() {
   );
 }
 
-/** Seek bar — the shared Scrubber, driven by the time store. */
-function SeekBar({ onSeek }: { onSeek: (t: number) => void }) {
-  const time = useStudioTime((s) => s.time);
-  const duration = useStudioTime((s) => s.duration);
+/** Seek bar — the shared Scrubber, driven by the same playhead. */
+function SeekBar({
+  store,
+  onSeek,
+}: {
+  store: EditorStore;
+  onSeek: (t: number) => void;
+}) {
+  const time = useStore(store, (s) => s.time);
+  const duration = useStore(store, (s) => s.duration);
   return (
     <Scrubber
       label="Seek"

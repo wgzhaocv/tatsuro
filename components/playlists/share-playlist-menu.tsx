@@ -2,7 +2,12 @@
 
 import { CircleNotch, LinkBreak, ShareNetwork } from "@phosphor-icons/react";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import {
+  type ComponentType,
+  type ReactElement,
+  type ReactNode,
+  useState,
+} from "react";
 import { toast } from "sonner";
 import { GoogleIcon } from "@/components/account/google-icon";
 import { useShareLink } from "@/components/share/use-share";
@@ -17,11 +22,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Menu, MenuContent, MenuItem, MenuTrigger } from "@/components/ui/menu";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { TipTrigger } from "@/components/ui/tip-button";
 import { useIsConnected } from "@/lib/account/store";
 import {
   createPlaylistShareLink,
@@ -57,16 +58,32 @@ export function SharePlaylistMenu({
   );
 }
 
-/** The frosted round entry point. One spec for both branches — from the user's
- *  side it's the same button, and only what it opens differs. */
-function shareTriggerProps(label: string) {
-  return {
-    type: "button",
-    variant: "glass-ink",
-    size: "icon",
-    className: "size-11 rounded-full",
-    "aria-label": label,
-  } as const;
+/** The frosted round entry point. From the user's side both branches are the
+ *  same button and only what it opens differs, so the whole trigger — tooltip,
+ *  button, glyph — lives here and takes the opener as a component. */
+function ShareTrigger({
+  trigger: Trigger,
+}: {
+  trigger: ComponentType<{ render?: ReactElement; children?: ReactNode }>;
+}) {
+  const label = useTranslations("share")("playlist");
+  return (
+    <TipTrigger tip={label}>
+      <Trigger
+        render={
+          <Button
+            type="button"
+            variant="glass-ink"
+            size="icon"
+            className="size-11 rounded-full"
+            aria-label={label}
+          />
+        }
+      >
+        <ShareNetwork weight="bold" aria-hidden />
+      </Trigger>
+    </TipTrigger>
+  );
 }
 
 function ShareMenu({
@@ -102,18 +119,7 @@ function ShareMenu({
 
   return (
     <Menu open={open} onOpenChange={setOpen}>
-      <Tooltip>
-        <TooltipTrigger
-          render={
-            <MenuTrigger
-              render={<Button {...shareTriggerProps(t("playlist"))} />}
-            >
-              <ShareNetwork weight="bold" aria-hidden />
-            </MenuTrigger>
-          }
-        />
-        <TooltipContent>{t("playlist")}</TooltipContent>
-      </Tooltip>
+      <ShareTrigger trigger={MenuTrigger} />
       <MenuContent>
         {/* Each action disables the other while it runs. Both stay clickable
             otherwise, but overlapping them inverts the outcome: a Stop pressed
@@ -164,18 +170,7 @@ function ShareLoginButton() {
 
   return (
     <Dialog>
-      <Tooltip>
-        <TooltipTrigger
-          render={
-            <DialogTrigger
-              render={<Button {...shareTriggerProps(t("playlist"))} />}
-            >
-              <ShareNetwork weight="bold" aria-hidden />
-            </DialogTrigger>
-          }
-        />
-        <TooltipContent>{t("playlist")}</TooltipContent>
-      </Tooltip>
+      <ShareTrigger trigger={DialogTrigger} />
       <DialogContent className="gap-5">
         <DialogHeader>
           <DialogTitle>{t("loginTitle")}</DialogTitle>

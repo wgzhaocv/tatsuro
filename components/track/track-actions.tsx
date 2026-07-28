@@ -23,11 +23,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Menu, MenuContent, MenuItem, MenuTrigger } from "@/components/ui/menu";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { TipTrigger } from "@/components/ui/tip-button";
 import { useRouter } from "@/i18n/navigation";
 import type { Song } from "@/lib/api/types";
 import { jumpToSong } from "@/lib/player/highlight";
@@ -95,30 +91,25 @@ export function TrackActions({
       {!hideLike && <LikeButton song={song} />}
 
       <Menu open={menuOpen} onOpenChange={setMenuOpen}>
-        <Tooltip>
-          <TooltipTrigger
+        <TipTrigger tip={t("moreActions")}>
+          <MenuTrigger
             render={
-              <MenuTrigger
-                render={
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    aria-label={t("moreActions")}
-                    className="rounded-full"
-                  />
-                }
-              >
-                <DotsThreeVertical
-                  weight="bold"
-                  className="size-[18px] text-muted-foreground group-hover/button:text-foreground"
-                  aria-hidden
-                />
-              </MenuTrigger>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                aria-label={t("moreActions")}
+                className="rounded-full"
+              />
             }
-          />
-          <TooltipContent>{t("moreActions")}</TooltipContent>
-        </Tooltip>
+          >
+            <DotsThreeVertical
+              weight="bold"
+              className="size-[18px] text-muted-foreground group-hover/button:text-foreground"
+              aria-hidden
+            />
+          </MenuTrigger>
+        </TipTrigger>
         <MenuContent>
           <MenuItem onClick={queueNext}>
             <Queue weight="bold" aria-hidden />

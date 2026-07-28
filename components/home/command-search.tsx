@@ -10,7 +10,6 @@ import {
   useMemo,
   useState,
 } from "react";
-import { Button } from "@/components/ui/button";
 import {
   Command,
   CommandGroup,
@@ -24,11 +23,7 @@ import {
   DialogDescription,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { TipButton } from "@/components/ui/tip-button";
 import { useRouter } from "@/i18n/navigation";
 import { filterIndex, songTitle } from "@/lib/api/search";
 import { nameLang } from "@/lib/api/types";
@@ -93,29 +88,22 @@ export function CommandSearch() {
 
   return (
     <>
-      <Tooltip>
-        <TooltipTrigger
-          render={
-            <Button
-              type="button"
-              variant="glass"
-              size="icon"
-              onClick={() => setOpen(true)}
-              onPointerEnter={arm}
-              onFocus={arm}
-              aria-label={tn("search")}
-              className="size-11 rounded-full"
-            >
-              <MagnifyingGlassIcon
-                weight="bold"
-                className="size-[18px]"
-                aria-hidden
-              />
-            </Button>
-          }
+      <TipButton
+        tip={tn("search")}
+        type="button"
+        variant="glass"
+        size="icon"
+        onClick={() => setOpen(true)}
+        onPointerEnter={arm}
+        onFocus={arm}
+        className="size-11 rounded-full"
+      >
+        <MagnifyingGlassIcon
+          weight="bold"
+          className="size-[18px]"
+          aria-hidden
         />
-        <TooltipContent>{tn("search")}</TooltipContent>
-      </Tooltip>
+      </TipButton>
 
       <Dialog
         open={open}

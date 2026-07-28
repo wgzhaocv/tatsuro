@@ -4,8 +4,19 @@ import { Tooltip as TooltipPrimitive } from "@base-ui/react/tooltip";
 
 import { cn } from "@/lib/utils";
 
+/**
+ * `delay` is deliberately not 0. At 0, base-ui opens on `mouseenter` with no rest
+ * tracking, so a pointer merely crossing a trigger synchronously mounts the
+ * portal, runs positioning and installs an `autoUpdate` ResizeObserver — then
+ * tears it all down. Harmless for one-off chrome, but track rows carry a tooltip
+ * each, so scrolling a long list with the cursor parked in the ⋯ column would do
+ * that once per row. A rest delay makes a pass-over cost nothing, and base-ui's
+ * delay group still opens the *next* tooltip instantly once one is showing, so
+ * deliberate hovering stays immediate. 400ms is the low end of the ease-lazy
+ * range this project uses elsewhere.
+ */
 function TooltipProvider({
-  delay = 0,
+  delay = 400,
   ...props
 }: TooltipPrimitive.Provider.Props) {
   return (

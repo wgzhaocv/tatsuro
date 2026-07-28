@@ -4,11 +4,7 @@ import { FloppyDisk } from "@phosphor-icons/react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { TipTrigger } from "@/components/ui/tip-button";
 import type { Song } from "@/lib/api/types";
 import { useDownloadsStore, useIsOfflineEnabled } from "@/lib/downloads/store";
 import { cn } from "@/lib/utils";
@@ -22,7 +18,7 @@ import { cn } from "@/lib/utils";
  *
  * Compact by design — an icon + a small switch, no text label — so it sits at
  * the same footprint as the neighbouring share/pin buttons; the meaning rides
- * on the icon + aria/title. Frosted glass-ink to match those buttons over the
+ * on the icon + aria label + tooltip. Frosted glass-ink to match those buttons over the
  * bright cover wash. Shown on both album and playlist headers.
  *
  * A floppy ("keep this") rather than a down-arrow on purpose: the album header
@@ -69,29 +65,23 @@ export function OfflineSwitch({
   return (
     // The whole pill is the tooltip trigger, not just the switch: the floppy is
     // half the target and the part that needs explaining. The switch keeps the
-    // accessible name, so a screen reader gets it from the control itself.
-    <Tooltip>
-      <TooltipTrigger
-        render={
-          <div
-            className={cn(
-              "inline-flex h-9 items-center gap-2 rounded-full border border-white/70 bg-white/55 px-3 text-navy backdrop-blur-xs dark:border-white/20 dark:bg-dusk-navy/50 dark:text-foreground",
-              className,
-            )}
-          >
-            <FloppyDisk size={16} weight="bold" aria-hidden />
-            <Switch
-              size="sm"
-              checked={enabled}
-              onCheckedChange={toggle}
-              aria-label={t("keepOffline")}
-            />
-          </div>
-        }
-      />
-      <TooltipContent>
-        {enabled ? t("keepOfflineOn") : t("keepOffline")}
-      </TooltipContent>
-    </Tooltip>
+    // accessible name, so a screen reader gets it from the control itself — and
+    // one string feeds both, so the hover label can't drift from the name.
+    <TipTrigger tip={t("keepOffline")}>
+      <div
+        className={cn(
+          "inline-flex h-9 items-center gap-2 rounded-full border border-white/70 bg-white/55 px-3 text-navy backdrop-blur-xs dark:border-white/20 dark:bg-dusk-navy/50 dark:text-foreground",
+          className,
+        )}
+      >
+        <FloppyDisk size={16} weight="bold" aria-hidden />
+        <Switch
+          size="sm"
+          checked={enabled}
+          onCheckedChange={toggle}
+          aria-label={t("keepOffline")}
+        />
+      </div>
+    </TipTrigger>
   );
 }

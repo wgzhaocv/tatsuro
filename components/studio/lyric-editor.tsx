@@ -20,6 +20,7 @@ import { toast } from "sonner";
 import { create } from "zustand";
 import { Scrubber } from "@/components/player/scrubber";
 import { Button } from "@/components/ui/button";
+import { TipButton } from "@/components/ui/tip-button";
 import {
   Tooltip,
   TooltipContent,
@@ -37,7 +38,6 @@ import { songStreamUrl } from "@/lib/api/urls";
 import { formatDuration, formatTimecode } from "@/lib/format";
 import { isJapanese } from "@/lib/text";
 import { cn } from "@/lib/utils";
-import { TipButton } from "./tip-button";
 
 // A line while it's being timed. startTime null = not yet stamped (serialized
 // as 0). Ids are internal, for stable React keys through text edits.

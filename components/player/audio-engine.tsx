@@ -208,24 +208,33 @@ export function AudioEngine() {
     }, 400);
   };
 
+  // Point the element at a song (src + the bookkeeping that must ride along).
+  // Playing is the caller's decision.
+  const loadSong = useCallback(
+    (el: HTMLAudioElement, songId: string) => {
+      loadedSongId.current = songId;
+      lastSrcChangeRef.current = Date.now();
+      // A song change is a fresh playing intent — cancel a pending verdict.
+      if (yieldTimerRef.current) clearTimeout(yieldTimerRef.current);
+      if (guardTimerRef.current) clearTimeout(guardTimerRef.current);
+      setSuspended(false);
+      setIsYieldGuarding(false);
+      el.src = songStreamUrl(songId);
+      useProgressStore.getState().setProgress(0, 0);
+    },
+    [setSuspended],
+  );
+
   // ── src follows the current song ──
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio || !song) return;
     if (loadedSongId.current === song.id) return;
-    loadedSongId.current = song.id;
-    lastSrcChangeRef.current = Date.now();
-    // A song change is a fresh playing intent — cancel a pending verdict.
-    if (yieldTimerRef.current) clearTimeout(yieldTimerRef.current);
-    if (guardTimerRef.current) clearTimeout(guardTimerRef.current);
-    setSuspended(false);
-    setIsYieldGuarding(false);
-    audio.src = songStreamUrl(song.id);
-    useProgressStore.getState().setProgress(0, 0);
+    loadSong(audio, song.id);
     if (usePlayerStore.getState().isPlaying) {
       audio.play().catch(() => usePlayerStore.getState().pause());
     }
-  }, [song, setSuspended]);
+  }, [song, loadSong]);
 
   // ── play/pause follows the store (minus a suspended verdict window) ──
   useEffect(() => {
@@ -469,7 +478,27 @@ export function AudioEngine() {
         // failure chain, it never blacklists a song for the session.
         errorStreak.current = 0;
       }}
-      onEnded={() => usePlayerStore.getState().next(true)}
+      onEnded={(e) => {
+        const el = e.currentTarget;
+        usePlayerStore.getState().next(true);
+        // Advance the element HERE, inside the media event task — not via the
+        // store→render→effect round trip. iOS freezes a standalone (home
+        // screen) web app moments after its audio falls silent, so in the
+        // background that round trip never ran and playback died at every
+        // track boundary; a synchronous src+play() reads as a continuation of
+        // the same playback session and survives it. The src-follows effect
+        // still runs on the next render and no-ops (loadedSongId is current).
+        const s = usePlayerStore.getState();
+        if (!s.isPlaying || !s.current) return;
+        if (s.current.id === loadedSongId.current) {
+          // Wrapped back onto the very track that just ended (single-song
+          // queue on repeat-all): same src, just rewind and go again.
+          el.currentTime = 0;
+        } else {
+          loadSong(el, s.current.id);
+        }
+        el.play().catch(() => usePlayerStore.getState().pause());
+      }}
       onError={() => {
         const state = usePlayerStore.getState();
         if (!state.current) return;

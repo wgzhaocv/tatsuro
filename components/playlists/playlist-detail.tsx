@@ -1,6 +1,7 @@
 "use client";
 
 import { ArrowLeft } from "@phosphor-icons/react";
+import { useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo } from "react";
 import { toast } from "sonner";
@@ -39,8 +40,13 @@ import { SharePlaylistMenu } from "./share-playlist-menu";
  * the frosted tracklist sheet. Client-rendered off the persisted store; a
  * missing id (bad link, or a just-deleted list) bounces back to the index once
  * hydrated.
+ *
+ * Reads the id off the URL rather than taking it as a prop: the route's server
+ * component then never touches the dynamic param, which is what keeps its shell
+ * fully prerendered (see page.tsx).
  */
-export function PlaylistDetail({ id }: { id: string }) {
+export function PlaylistDetail() {
+  const { id } = useParams<{ id: string }>();
   const t = useTranslations("playlists");
   const tRoot = useTranslations();
   const hydrated = useHasHydrated();
@@ -97,9 +103,9 @@ export function PlaylistDetail({ id }: { id: string }) {
     .join(" · ");
 
   // Loading (store not yet rehydrated) or about to redirect (no such playlist):
-  // show one skeleton for the whole load so nothing flashes blank. The same
-  // component backs the route's Suspense fallback (page.tsx), so the server-
-  // streamed hole and the client hydration phase render identically.
+  // show one skeleton for the whole load so nothing flashes blank. This branch
+  // is also what the route's prerendered shell contains, and what loading.tsx
+  // shows, so prerender, navigation and hydration all render the same shape.
   if (!hydrated || !playlist) return <PlaylistDetailSkeleton />;
 
   return (

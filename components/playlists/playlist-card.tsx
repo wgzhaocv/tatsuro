@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { HoverPrefetchLink } from "@/components/ui/hover-prefetch-link";
+import { Link } from "@/components/ui/link";
 import type { Playlist } from "@/lib/playlists/types";
 import { isJapanese } from "@/lib/text";
 import { PlaylistCover } from "./playlist-cover";
@@ -13,6 +13,11 @@ import { PlaylistCover } from "./playlist-cover";
  * becomes the postcard (square cover, name below) that matches the album grid,
  * with the hover-lift. Liked shows its localized name; user playlists show the
  * typed name.
+ *
+ * Plain <Link> (prefetch on sight), not HoverPrefetchLink like the album/MV
+ * cards: a library holds a handful of playlists, not hundreds of releases, so
+ * prefetching what's on screen costs a few KB, and hover-armed prefetch never
+ * lands in time for a tap — see hover-prefetch-link.tsx.
  */
 export function PlaylistCard({ playlist }: { playlist: Playlist }) {
   const t = useTranslations("playlists");
@@ -20,7 +25,7 @@ export function PlaylistCard({ playlist }: { playlist: Playlist }) {
   const isJa = playlist.kind === "user" && isJapanese(name);
 
   return (
-    <HoverPrefetchLink
+    <Link
       href={`/playlists/${playlist.id}`}
       aria-label={name}
       className="group flex items-center gap-3 rounded-xl p-2 outline-none transition duration-300 ease-lazy active:scale-[0.98] max-sm:hover:bg-navy/[0.05] max-sm:active:bg-navy/[0.09] dark:max-sm:hover:bg-white/[0.06] dark:max-sm:active:bg-white/[0.10] sm:block sm:rounded-2xl sm:p-0"
@@ -42,6 +47,6 @@ export function PlaylistCard({ playlist }: { playlist: Playlist }) {
           {t("songCount", { n: playlist.entries.length })}
         </p>
       </div>
-    </HoverPrefetchLink>
+    </Link>
   );
 }

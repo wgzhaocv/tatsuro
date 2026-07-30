@@ -63,6 +63,8 @@
 
 **建议修法**:可选——移动端对视口内前 N 张(如首屏 6 张)保留 `prefetch={null}`;或维持现状(合理)。
 
+**已处理(歌单)**:歌单卡改回普通 `Link`(进视口即预取)——列表只有个位数条目,预取代价可忽略,实测点击→绘制 199ms → 22ms。专辑(上百张)/MV 网格仍走 `HoverPrefetchLink`,上面这条建议对它们依然成立。同时 `/playlists/[id]` 不再读服务端 `params`(fallback 参数会让 `await params` 悬挂,把整页推成运行时洞),shell 现在完全预渲染。
+
 ### D6 · MediaSession 封面绕过 SW 封面缓存 —— 低
 
 **证据**:`audio-engine.tsx:244-246` artwork 用裸 `coverUrl()` 后端直链,而 SW 封面缓存只匹配 `/_next/image?url=…/stream/img/…`(`app/sw.ts:46-49`)。

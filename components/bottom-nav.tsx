@@ -167,6 +167,10 @@ export function BottomNavShell({ activePath }: { activePath: string | null }) {
               <li key={s.key} className="flex-1">
                 <Link
                   href={s.href}
+                  // At this section's root the tab only scrolls to top (below),
+                  // so there's nothing to prefetch. Sub-pages still navigate up
+                  // to the root, and keep the prefetch.
+                  prefetch={activePath === s.href ? false : undefined}
                   aria-current={active ? "page" : undefined}
                   onClick={(e) => {
                     // Exactly at this section's root → the tab becomes a

@@ -4,7 +4,7 @@ import { DownloadSimpleIcon, PlayIcon } from "@phosphor-icons/react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { buttonVariants } from "@/components/ui/button";
-import { HoverPrefetchLink } from "@/components/ui/hover-prefetch-link";
+import { Link } from "@/components/ui/link";
 import type { Mv } from "@/lib/api/types";
 import { mvDownloadUrl } from "@/lib/api/urls";
 import { formatDuration, formatFileSize } from "@/lib/format";
@@ -16,12 +16,18 @@ import { cn } from "@/lib/utils";
  * One video: a 16:9 thumbnail postcard linking to its watch screen
  * (/mv/:id), plus a download control. Download stays a plain GET the
  * browser handles, same contract as before.
+ *
+ * Plain <Link> like the playlist cards, not HoverPrefetchLink: the catalog is
+ * 13 videos and /mv/[id] is prerendered per id (generateStaticParams), so the
+ * on-sight prefetch of what's in the viewport is a CDN hit of a static payload
+ * — cheaper here than for a playlist, and it's what makes the first tap on a
+ * phone instant (hover never fires there; see hover-prefetch-link.tsx).
  */
 export function MvCard({ mv }: { mv: Mv }) {
   const t = useTranslations("mv");
   return (
     <article>
-      <HoverPrefetchLink
+      <Link
         href={`/mv/${mv.id}`}
         aria-label={t("playNamed", { name: mv.name })}
         className="group/play relative block aspect-video overflow-hidden rounded-[14px] bg-navy shadow-postcard focus-visible:outline-none"
@@ -46,7 +52,7 @@ export function MvCard({ mv }: { mv: Mv }) {
             {formatDuration(mv.duration)}
           </span>
         )}
-      </HoverPrefetchLink>
+      </Link>
 
       <div className="mt-3 flex items-center justify-between gap-3">
         <div className="min-w-0">

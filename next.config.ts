@@ -23,6 +23,12 @@ const nextConfig: NextConfig = {
   // ~1500 modules, which dev/build otherwise parse in full and tree-shaking
   // has to unpick (Next's built-in optimize list doesn't cover phosphor).
   experimental: {
+    // Segment cache: key a fulfilled entry by which params the response
+    // actually varies on, not by the exact pathname. The playlist detail's
+    // segments don't read the id at all (see playlists/[id]/page.tsx), so one
+    // prefetch then serves every card in the library instead of each card
+    // pulling its own byte-identical copy.
+    varyParams: true,
     optimizePackageImports: [
       "@phosphor-icons/react",
       "@phosphor-icons/react/dist/ssr",

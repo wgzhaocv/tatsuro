@@ -63,7 +63,13 @@
 
 **建议修法**:可选——移动端对视口内前 N 张(如首屏 6 张)保留 `prefetch={null}`;或维持现状(合理)。
 
-**已处理(歌单)**:歌单卡改回普通 `Link`(进视口即预取)——列表只有个位数条目,预取代价可忽略,实测点击→绘制 199ms → 22ms。专辑(上百张)/MV 网格仍走 `HoverPrefetchLink`,上面这条建议对它们依然成立。同时 `/playlists/[id]` 不再读服务端 `params`(fallback 参数会让 `await params` 悬挂,把整页推成运行时洞),shell 现在完全预渲染。
+**已处理**:歌单卡 + MV 卡改回普通 `Link`(进视口即预取),实测点击→绘制 199ms → 13-23ms;专辑网格(上百张 + pins 水合重挂)保留 `HoverPrefetchLink`,上面那条建议只对它还成立。配套三项:
+
+1. `/playlists/[id]` 不再读服务端 `params`——fallback 参数会让 `await params` **整体悬挂**(`makeHangingParams` 遍历整个对象,只读 `locale` 也一样),把整页推成运行时洞;现在 shell(骨架 + 标题)完全预渲染、所有 id 共用,标题由 section layout 给。
+2. `experimental.varyParams: true`:segment cache 按"响应真正依赖的参数"建键。歌单详情的 segment 完全不读 id,于是一次预取服务全部卡片——实测 6 张卡 28 请求/33.8KB → **16 请求/19.5KB**(每多一张卡 4 请求 → 1 请求)。已验证专辑/MV/歌单详情各三个不同 id 的导航内容都正确(不会串页),share 失效链接也正常。
+3. 导航不再预取"当前所在的那一屏"(`home-nav.tsx` 的 isCurrent、`bottom-nav.tsx` 在 section 根只做回顶的 tab),省掉 4-5 个请求。
+
+MV 网格的代价要知道:1280px 视口下 12 张卡预取 = 42 请求 / 88KB 解压后(都是静态页,边缘 HIT;手机窄视口一次只预取可见的几张)。
 
 ### D6 · MediaSession 封面绕过 SW 封面缓存 —— 低
 

@@ -71,6 +71,8 @@ export function HomeNav({
               <Link
                 key={s.key}
                 href={s.href}
+                // Nothing to prefetch for the screen you're looking at.
+                prefetch={isCurrent ? false : undefined}
                 aria-current={isCurrent ? "page" : undefined}
                 className={
                   isCurrent

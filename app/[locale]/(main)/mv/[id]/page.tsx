@@ -24,9 +24,9 @@ export async function generateMetadata({
 }) {
   const { id } = await params;
   const mv = await findMv(id);
-  return {
-    title: mv ? `${mv.name} — Tatsuro Yamashita` : "Tatsuro Yamashita",
-  };
+  // Bare title: the root layout's template appends "— {ARTIST}" (spelling it
+  // out here rendered the artist twice). No mv → inherit the site defaults.
+  return mv ? { title: mv.name } : {};
 }
 
 export default async function MvWatchPage({

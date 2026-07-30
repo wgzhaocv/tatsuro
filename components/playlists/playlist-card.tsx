@@ -15,9 +15,12 @@ import { PlaylistCover } from "./playlist-cover";
  * typed name.
  *
  * Plain <Link> (prefetch on sight), not HoverPrefetchLink like the album/MV
- * cards: a library holds a handful of playlists, not hundreds of releases, so
- * prefetching what's on screen costs a few KB, and hover-armed prefetch never
- * lands in time for a tap — see hover-prefetch-link.tsx.
+ * cards: hover-armed prefetch never lands in time for a tap (see
+ * hover-prefetch-link.tsx), and a library is a handful of playlists, not the
+ * album grid's hundreds. It isn't free — the segment cache keys per URL, so
+ * each visible card pulls its own copy of the same id-independent payload
+ * (~11KB over 4 requests: _tree, the loading skeleton, __PAGE__, _head); the
+ * layout segments above it are fetched once for the whole grid.
  */
 export function PlaylistCard({ playlist }: { playlist: Playlist }) {
   const t = useTranslations("playlists");

@@ -23,7 +23,6 @@ const MISSING: {
   year: number;
   type: keyof typeof TYPE_KEY;
 }[] = [
-  { album: "SONGS", artist: "Sugar Babe", year: 1975, type: "band" },
   {
     album: "Niagara Triangle Vol.1",
     artist: "大瀧詠一・伊藤銀次・山下達郎",

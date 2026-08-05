@@ -6,6 +6,7 @@
 |---|---|
 | `importer.py` | 批量导入器:FLAC→opus 256k(多核并行)、生成 id/encoded_filename、传 R2、灌 D1。`plan` 出计划、`apply` 执行 |
 | `add_covers.py` | 封面工具:下载/上传封面到 R2 + 回填 `cover_front_id` |
+| `add_songs_50th.py` | 单发行导入器(多碟范例):素材已就绪时只做 staging→R2→D1。`plan`/`apply` |
 
 ## 批次记录
 
@@ -75,6 +76,18 @@
 - **D1**:只改变了的字段——6 首 `songs.duration`(5 首因错位而变)+ `albums.zip_size`(38026144→39011142)。id/结构/封面全不动。
 - **刷缓存**:`wrangler deploy` 冲边缘(唯一有效)。验证:6 首 `/stream/new_play` 200 且 content-length 逐首=新本地字节,`/music/edition_zip` 200/39011142/`PK`。
 - ⚠️ 客户端 immutable 残留:URL(=id)没变,已在本地缓存过这 6 首的浏览器 30 天内仍会放旧音频,硬刷即可(私站刚上线一天,基本只有站主自己碰过)。**前端时长显示**走 Next `'use cache'`,需按下方 ② 清 Vercel Data Cache 才更新(音频播放本身直连后端,已全局修好)。
+
+### batch-05 · SUGAR BABE — Songs 50周年 — 2026-08-06 ✅
+
+站主买的 **50th Anniversary Edition 2CD**(WPCL-13642/3),本机光驱抓轨全流程。脚本 `add_songs_50th.py`(plan/apply;素材本会话已备好,脚本只做 staging + 灌库)。
+
+- **抓轨**:macOS AudioCD 挂载读 AIFF(xld 的 brew shim 已坏,XLD.app 不在)→ FLAC `-8`。**33 首逐轨 PCM MD5 与源比特一致**;碟1 19 轨 + 碟2 14 轨,轨长与光盘 TOC 吻合。
+- **曲目**:MusicBrainz `fd974fbf`(19+14 碟型 + 目录号对上)取得,再由站主照实体碟逐首校对。**未采纳 MB 的两处**:`こめか雨`→`こぬか雨`(MB 错字)、碟2 五首拉丁曲名改回全大写。碟1 `夏の終りに`、`ためいきばかり` 经站主复核确认 MB 正确。
+- **入库**:`category='studio'`(库无 artist 字段,Sugar Babe 作品当普通发行加)、release/edition id=`7967059579672931`、碟2 album id=`7889313128154420`;`edition_label='2025 · 50th Anniversary'`、`edition_year=2025`;碟1 `recording=studio`/`disc_title='1975 Original Edition'`,碟2 `recording=live`/`disc_title='Tatsuro Yamashita Sings Sugar Babe Live'`。releases 34→35,songs 538→571。**year=1975 使其排到 sort=1**(Circus Town 起全部后移)。
+- **派生**:opus 256k(实测 251k)33 首 + aac192 zip(212.4 MB,front 内嵌)。**只有 front 封面,无 back**(未找到图)。本地库 `~/Downloads/tatsuro-flac/1975 - Songs [2025 · 50th Anniversary]/`,含 `opus/CD1`、`opus/CD2`。
+- **腾空间**:上传前 R2 已满(10.00 GB/10 GB),按站主指示**完整删除两支最大 MV**——`SPARKLE (MV 2023)`(mv_04)、`踊ろよ、フィッシュ`(mv_11),各 3 个对象(mp4+webm+thumb)共 6 个 + 2 行 D1,释放 ~688 MB。**源片本地俱在**(`~/Downloads/video_dl_h264/*.mp4`、`~/Downloads/tatsuro_webm_av1/mv_{04,11}.webm`,字节数与 R2 记录一致),缩略图需重截。MV 13→11。
+- **验证**:D1 19/14 曲、sort 35 值无冲突、无重复 enc;`/music/releases` 35 条且 Songs 居首;流播/zip/封面均 200 且**字节数与本地逐一精确相等**(24108295 / 222669200 / 89391)。
+- ⚠️ **单位坑**:`r2_size.py` 的 `b/1024³` 是 **GiB** 但标签写 GB,而 CF 免费额度 10 GB 是**十进制**。故此前 README 记的「9.32 GB / 剩 0.68GB」实为 9.32 GiB = **10.01 GB**,当时已压线而非尚有余量。本批后约 **9.83 GB / 10 GB**(余 ~170 MB)。
 
 ## 补数据后怎么让前端刷新(缓存两层,踩过大坑,务必按此做)
 

@@ -5,7 +5,7 @@
 - ✅ A 面已可通过已收专辑/单曲播放
 - ❌ 非专辑单曲,内容不在任何已收发行里(真缺口)
 - ⬜ 仅收在未收录专辑里(补那张专辑即解决)
-- ⚠️ 早期,来自 Sugar Babe《Songs》/ Niagara Triangle,A 面多半在已收精选里,待核
+- ⚠️ 早期,来自 Niagara Triangle,A 面多半在已收精选里,待核
 
 ---
 
@@ -25,7 +25,7 @@
 
 | 状态 | 年 | A 面 | 归属 |
 |:--:|--:|---|---|
-| ⚠️ | 1975 | Down Town | *Songs*(Sugar Babe,非个人专辑) |
+| ✅ | 1975 | Down Town | *Songs*(Sugar Babe,非个人专辑)—— 2026-08 收 50 周年版,碟1-02 |
 | ⚠️ | 1976 | 幸せにさよなら | *Niagara Triangle Vol.1* |
 | ✅ | 1979 | Bomber | Go Ahead! |
 | ✅ | 1979 | Let's Dance Baby | Moonglow / Go Ahead! |
@@ -87,5 +87,5 @@
 
 - **A 面可播** — 绝大多数,通过已收专辑/单曲覆盖。
 - **真缺口仅剩在途的 2 项** — **オノマトペISLAND(2025)** 与 **Love Can Go the Distance(需 OTSC3)** 均已购在途;到货后单曲级 100% 齐。
-- **早期存疑 3 首** — Down Town 系 / 幸せにさよなら,来自 Sugar Babe《Songs》/ Niagara Triangle;A 面多半在已收精选(Come Along / Opus / Treasures)里,核对曲目即可。
+- **早期存疑** — Down Town 系已解决(2026-08 收 Sugar Babe《Songs》50 周年版,原盘曲全在);仅剩 **幸せにさよなら**(*Niagara Triangle Vol.1*,未收),A 面多半在已收精选(Come Along / Opus / Treasures)里,核对曲目即可。
 - 单曲 B 面别版/现场价值另计,本表只看 A 面可播性。

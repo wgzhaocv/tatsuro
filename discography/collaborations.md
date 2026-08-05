@@ -6,9 +6,10 @@
 |:--:|---|--:|---|
 | ✅ | **Pacific**(GT) | 1978 | 与**细野晴臣 / 铃木茂**;concept 盘。2026-07 导入,后端归 `studio` |
 | ❌ | **Niagara Triangle Vol.1** | 1976 | 与**伊藤银次 / 大泷咏一**(Niagara 厂牌企划) |
-| ❌ | Sugar Babe **《SONGS》** | 1975 | 达郎 solo 前的乐队;名曲《Down Town》出处 |
+| ✅ | Sugar Babe **《SONGS》** | 1975 | 达郎 solo 前的乐队;名曲《Down Town》出处。2026-08 以 50 周年版导入,后端归 `studio` |
 | ❌ | 　└ SONGS -30th Anniversary Edition- | 2005 | 30 周年重制 |
 | ❌ | 　└ SONGS -40th Anniversary Ultimate Edition- | 2015 | 40 周年终极重制(扩充) |
+| ✅ | 　└ Songs (50th Anniversary Edition) | 2025 | 2CD(WPCL-13642/3):原盘 11 + Demo 4 + Live 4 / 达郎翻唱 Sugar Babe 现场 14。**已收的就是这版** |
 
 ## 消歧义(容易被算成达郎的,其实不是)
 
@@ -18,4 +19,5 @@
 ## 收不收?
 
 - **Pacific** 已收(当合作盘留在 `studio`)。
-- **Niagara Triangle Vol.1 / Sugar Babe SONGS** 要不要纳入,取决于你想不想把收藏范围扩到「乐队/合作期」。想收的话丢文件过来,按合作盘导入(`category` 可用 `studio` 或另设值)。
+- **Sugar Babe SONGS** 已收(2026-08,50 周年 2CD 实体抓轨;同样留在 `studio`)。⚠️ 库里没有 artist 字段,所以前端会把它署成 Tatsuro Yamashita——想正确区分乐队作品得先给 schema 加 artist 列。
+- **Niagara Triangle Vol.1** 仍未收。想收的话丢文件过来,按合作盘导入(`category` 可用 `studio` 或另设值)。

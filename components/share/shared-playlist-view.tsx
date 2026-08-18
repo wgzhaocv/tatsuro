@@ -114,7 +114,7 @@ export function SharedPlaylistView({
         <Link
           href="/"
           className={cn(
-            buttonVariants({ variant: "glass" }),
+            buttonVariants({ variant: "glass-ink" }),
             "h-11 rounded-full pr-4 pl-3",
           )}
         >

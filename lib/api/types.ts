@@ -186,6 +186,9 @@ export type SearchSong = {
   album: string;
   /** Disc coverFrontId → coverUrl() */
   cover: string;
+  /** 1 when this is a karaoke / instrumental backing track (vocals stripped);
+   *  absent otherwise. "Shuffle all" skips these. See yamashita-api migration 0016. */
+  k?: 1;
 };
 
 export type SearchIndex = { albums: SearchAlbum[]; songs: SearchSong[] };

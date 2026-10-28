@@ -39,7 +39,8 @@
     "albumsEmpty": "该筛选下没有内容。",
     "mvEmpty": "还没有音乐视频。",
     "albumCount": "{n, plural, other {# 张专辑}}",
-    "videoCount": "{n, plural, other {# 个视频}}"
+    "videoCount": "{n, plural, other {# 个视频}}",
+    "shuffleAll": "随机播放全部"
   },
   "album": {
     "edition": "版本",

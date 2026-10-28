@@ -14,7 +14,13 @@ const API = process.env.NEXT_PUBLIC_API_URL;
  *  immutable Cache-Control means one real download per browser per 30 days.
  *  Language-neutral (raw ja + en), so a single cache entry serves every locale. */
 export function fetchSearchIndex(): Promise<SearchIndex> {
-  return fetchJson<SearchIndex>(`${API}/music/search-index`, "search index");
+  // ?v=2: the response is served `immutable` for 30d, so a browser that cached
+  // the v1 index (no karaoke `k` flag) would keep it until it expired. Bumping
+  // the URL forces a fresh fetch — the flag is what "shuffle all" filters on.
+  return fetchJson<SearchIndex>(
+    `${API}/music/search-index?v=2`,
+    "search index",
+  );
 }
 
 /** Fold + trim to a comparable form (see foldForSearch): a query in any

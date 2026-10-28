@@ -8,6 +8,7 @@ import { AlbumFilters, type FilterKey } from "./album-filters";
 import { AlbumGrid } from "./album-grid";
 import { CommandSearch } from "./command-search";
 import { HomeNav } from "./home-nav";
+import { ShuffleAllButton } from "./shuffle-all-button";
 
 /**
  * Home foreground: owns the category filter and composes the pieces (nav,
@@ -60,7 +61,13 @@ export function AlbumBrowser({ albums }: { albums: Album[] }) {
               {range && ` · ${range}`}
             </p>
           </div>
-          <AlbumFilters value={filter} onChange={setFilter} />
+          {/* One wrapping toolbar: Shuffle-all + the filter chips (hoisted here
+              via the fieldset's display:contents) share rows, so the button
+              never claims a line of its own on narrow screens. */}
+          <div className="flex min-w-0 flex-wrap items-center gap-2 sm:justify-end">
+            <ShuffleAllButton />
+            <AlbumFilters value={filter} onChange={setFilter} />
+          </div>
         </div>
       </div>
 

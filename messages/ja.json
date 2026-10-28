@@ -39,7 +39,8 @@
     "albumsEmpty": "この絞り込みに該当するものはありません。",
     "mvEmpty": "ミュージックビデオはまだありません。",
     "albumCount": "{n, plural, other {#枚のアルバム}}",
-    "videoCount": "{n, plural, other {#本の動画}}"
+    "videoCount": "{n, plural, other {#本の動画}}",
+    "shuffleAll": "すべてシャッフル"
   },
   "album": {
     "edition": "エディション",

@@ -21,8 +21,12 @@ export function AlbumFilters({
   onChange: (value: FilterKey) => void;
 }) {
   const t = useTranslations("filters");
+  // display:contents — the chips hoist into the parent toolbar's flex-wrap so
+  // they share one wrapping row with the Shuffle-all button (which stays a
+  // sibling, not a member of this filter group). The fieldset + legend keep
+  // grouping the chips for a11y.
   return (
-    <fieldset className="m-0 flex min-w-0 flex-wrap gap-2 border-0 p-0 sm:justify-end">
+    <fieldset className="contents">
       <legend className="sr-only">{t("legend")}</legend>
       {FILTERS.map((f) => {
         const selected = value === f.key;

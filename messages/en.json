@@ -39,7 +39,8 @@
     "albumsEmpty": "Nothing here for this filter.",
     "mvEmpty": "No music videos yet.",
     "albumCount": "{n, plural, one {# album} other {# albums}}",
-    "videoCount": "{n, plural, one {# video} other {# videos}}"
+    "videoCount": "{n, plural, one {# video} other {# videos}}",
+    "shuffleAll": "Shuffle all"
   },
   "album": {
     "edition": "Edition",

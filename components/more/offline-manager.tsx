@@ -10,7 +10,6 @@ import {
 import { useTranslations } from "next-intl";
 import { type ReactNode, useState } from "react";
 import { toast } from "sonner";
-import { GlassPanel } from "@/components/glass-panel";
 import { cacheDotClass } from "@/components/track/cache-dot";
 import { Button } from "@/components/ui/button";
 import {
@@ -109,7 +108,7 @@ export function OfflineManager() {
   if (!ready) return <StorageSkeleton title={t("storageTitle")} />;
 
   return (
-    <GlassPanel className="rounded-[20px] p-5 shadow-postcard sm:p-6">
+    <section>
       <div className="flex items-center gap-2">
         <h2 className="font-display font-semibold text-foreground text-xl">
           {t("storageTitle")}
@@ -279,7 +278,7 @@ export function OfflineManager() {
           <LegendRow state="active">{t("legendActive")}</LegendRow>
         </div>
       </Section>
-    </GlassPanel>
+    </section>
   );
 }
 
@@ -288,7 +287,7 @@ export function OfflineManager() {
  *  reduced-motion. */
 function StorageSkeleton({ title }: { title: string }) {
   return (
-    <GlassPanel className="rounded-[20px] p-5 shadow-postcard sm:p-6">
+    <section>
       <h2 className="font-display font-semibold text-foreground text-xl">
         {title}
       </h2>
@@ -307,7 +306,7 @@ function StorageSkeleton({ title }: { title: string }) {
           </div>
         ))}
       </div>
-    </GlassPanel>
+    </section>
   );
 }
 

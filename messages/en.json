@@ -255,6 +255,7 @@
     "missingTitle": "Not in the library",
     "typeBand": "Band",
     "typeCollab": "Collaboration",
+    "typeLive": "Live",
     "storageTitle": "Offline storage",
     "saved": "Saved offline",
     "playback": "Playback cache",

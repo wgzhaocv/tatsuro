@@ -1,11 +1,10 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { GlassPanel } from "@/components/glass-panel";
 
 /**
- * What the library still doesn't hold — the band-era / collaboration records and
- * the long-tail best-of compilations that aren't in yet (the seven main
+ * What the library still doesn't hold — the band-era / collaboration records,
+ * the long-tail best-of compilations, and new releases that aren't in yet (the seven main
  * compilations and the whole solo catalogue are complete; see
  * discography/compilations.md, collaborations.md). Just the list: title, artist,
  * year, and a type tag — no prose. Static: a small, hand-kept set.
@@ -14,6 +13,7 @@ const TYPE_KEY = {
   band: "typeBand",
   collab: "typeCollab",
   comp: "typeComp",
+  live: "typeLive",
 } as const;
 
 const MISSING: {
@@ -37,13 +37,15 @@ const MISSING: {
   { album: "Best Pack II", year: 1990, type: "comp" },
   { album: "Tatsuro Songs From L.A.", year: 1990, type: "comp" },
   { album: "Tatsuro Songs From L.A. 2", year: 1991, type: "comp" },
+  // Out 2026-10-14 (3CD standard / 4CD first press) — add as a Release once ripped.
+  { album: "JOY 2", year: 2026, type: "live" },
 ];
 
 export function MissingAlbums() {
   const t = useTranslations("more");
 
   return (
-    <GlassPanel className="rounded-[20px] p-5 shadow-postcard sm:p-6">
+    <section>
       <h2 className="font-display font-semibold text-foreground text-xl">
         {t("missingTitle")}
       </h2>
@@ -78,6 +80,6 @@ export function MissingAlbums() {
           </li>
         ))}
       </ul>
-    </GlassPanel>
+    </section>
   );
 }

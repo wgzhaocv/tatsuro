@@ -26,7 +26,7 @@
 
 ### 存疑 / 已核实排除
 
-- **Joy 2**:官网 + 日文维基均**未列为已发售** → 官方 JOY 2 **从未发行**。二手市场的"JOY2 LIVE CD"(点点数字封面、天价)是**私盤/盗版**,非官方,别收(详见 [collaborations.md](./collaborations.md))。官方只有 JOY(1989),已收。
+- **Joy 2**:官方《JOY 2》**2026-10-14 发售**(3CD,初回 4CD)→ 新缺口,见 [live-albums.md](./live-albums.md)。二手市场早年的"JOY2 LIVE CD"(点点数字封面、天价)是**私盤/盗版**,与官方盘无关,别收(详见 [collaborations.md](./collaborations.md))。
 - **Tatsuro from Niagara**:官网 / 日文维基**都没列** → 从缺口降级为**存疑**(至多极冷门条目,可不追)。
 - **SOUVENIR(2000)**:是**竹内玛利亚**的现场盘,不算达郎 solo。
 - **精选集长尾**:合辑类另有大量冷门再版盒装 / 廉价 best,本目录只跟踪主要精选。

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { getAnalyser } from "@/lib/player/analyser";
+import { getAnalyser, SPECTRUM_MEDIA } from "@/lib/player/analyser";
 import { usePlayerStore } from "@/lib/player/store";
 import { useWindowActive } from "@/lib/use-window-active";
 import { cn, prefersReducedMotion } from "@/lib/utils";
@@ -31,7 +31,7 @@ export function Spectrum({ className }: { className?: string }) {
   // would spin an invisible 60fps rAF behind the display:none.
   const [isDesktop, setIsDesktop] = useState(false);
   useEffect(() => {
-    const mq = window.matchMedia("(min-width: 1024px)");
+    const mq = window.matchMedia(SPECTRUM_MEDIA);
     const update = () => setIsDesktop(mq.matches);
     update();
     mq.addEventListener("change", update);

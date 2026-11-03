@@ -200,7 +200,9 @@
   }
   /* Ambient motion vocabulary — sea light: slow, tiny, nearly imperceptible.
      (breathe was removed: an infinite loop nobody can perceive still burns
-     GPU forever — ambient loops must be visible to earn their power draw.) */
+     GPU forever — ambient loops must be visible to earn their power draw.
+     Pause them when the window isn't active (useWindowActive), and never put
+     a transition on a value that updates faster than the transition runs.) */
   @keyframes glint {
     0%,
     100% {

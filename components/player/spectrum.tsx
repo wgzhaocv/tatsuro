@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { getAnalyser } from "@/lib/player/analyser";
 import { usePlayerStore } from "@/lib/player/store";
+import { useWindowActive } from "@/lib/use-window-active";
 import { cn, prefersReducedMotion } from "@/lib/utils";
 
 // Shallow-water palette (decorative only — Deep Water Rule): the bars carry
@@ -15,14 +16,16 @@ const BARS = 96;
 
 /**
  * A frequency spectrum that breathes with the music: rounded bars fed by the
- * engine's AnalyserNode, drawn on canvas at display resolution. Purely
+ * engine's AnalyserNode, drawn on canvas. Purely
  * decorative — it fades out (CSS) when paused and doesn't run at all under
  * prefers-reduced-motion, below the lg breakpoint (where it's also hidden by
- * CSS), or when Web Audio is unavailable.
+ * CSS), while the window is in the background, or when Web Audio is
+ * unavailable.
  */
 export function Spectrum({ className }: { className?: string }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const isPlaying = usePlayerStore((s) => s.isPlaying);
+  const windowActive = useWindowActive();
 
   // The strip is desktop-only; the draw loop must know that too, or phones
   // would spin an invisible 60fps rAF behind the display:none.
@@ -36,13 +39,13 @@ export function Spectrum({ className }: { className?: string }) {
   }, []);
 
   useEffect(() => {
-    if (!isPlaying || !isDesktop || prefersReducedMotion()) return;
+    if (!isPlaying || !isDesktop || !windowActive || prefersReducedMotion())
+      return;
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
     let data: Uint8Array<ArrayBuffer> | null = null;
     // Per-frame constants, built once (and the gradient again on resize).
     let gradient: CanvasGradient | null = null;
@@ -76,9 +79,12 @@ export function Spectrum({ className }: { className?: string }) {
       const width = canvas.clientWidth;
       const height = canvas.clientHeight;
       if (width === 0 || height === 0) return;
-      if (canvas.width !== width * dpr || canvas.height !== height * dpr) {
-        canvas.width = width * dpr;
-        canvas.height = height * dpr;
+      // 1x backing store even on retina (no devicePixelRatio): soft,
+      // 60%-opacity decorative bars look the same, for a quarter of the
+      // pixels to raster and upload every frame.
+      if (canvas.width !== width || canvas.height !== height) {
+        canvas.width = width;
+        canvas.height = height;
         gradient = null;
       }
       if (!gradient) {
@@ -104,12 +110,14 @@ export function Spectrum({ className }: { className?: string }) {
       }
       analyser.getByteFrequencyData(data);
 
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.clearRect(0, 0, width, height);
       ctx.fillStyle = gradient;
 
       const gap = 4;
       const barWidth = (width - gap * (BARS - 1)) / BARS;
+      // One path, one fill: all bars share the gradient, so 96 separate
+      // fill() calls were 96 raster passes for the same result.
+      ctx.beginPath();
       for (let i = 0; i < BARS; i++) {
         const [from, to] = binRanges[i];
         let peak = 0;
@@ -122,14 +130,13 @@ export function Spectrum({ className }: { className?: string }) {
         shown[i] += (level - shown[i]) * (level > shown[i] ? 0.7 : 0.23);
         const barHeight = Math.max(2, shown[i] * height);
         const x = i * (barWidth + gap);
-        ctx.beginPath();
         ctx.roundRect(x, height - barHeight, barWidth, barHeight, barWidth / 2);
-        ctx.fill();
       }
+      ctx.fill();
     };
     draw();
     return () => cancelAnimationFrame(raf);
-  }, [isPlaying, isDesktop]);
+  }, [isPlaying, isDesktop, windowActive]);
 
   return (
     <canvas

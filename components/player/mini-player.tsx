@@ -19,6 +19,7 @@ import {
 } from "@/lib/player/store";
 import { useDominantColor } from "@/lib/player/use-dominant-color";
 import { isJapanese } from "@/lib/text";
+import { useWindowActive } from "@/lib/use-window-active";
 import { cn } from "@/lib/utils";
 
 /**
@@ -36,8 +37,12 @@ export function MiniPlayer() {
   const next = usePlayerStore((s) => s.next);
   const prev = usePlayerStore((s) => s.prev);
   const setExpanded = usePlayerStore((s) => s.setExpanded);
+  const expanded = usePlayerStore((s) => s.expanded);
   const contextLabel = usePlayerStore((s) => s.contextLabel);
+  const windowActive = useWindowActive();
   const t = useTranslations("player");
+  // Spin only while visible: not under the full player, not in the background.
+  const spinning = isPlaying && !expanded && windowActive;
 
   const subline = song?.albumName ?? contextLabel ?? "";
   // The bar wears a faint cast of the current cover — the same colour trick
@@ -96,13 +101,14 @@ export function MiniPlayer() {
             // hover wash gets equal breathing room on all sides.
             className="group -ml-1.5 flex min-w-0 flex-1 items-center gap-3 rounded-xl py-1.5 pr-2 pl-1.5 text-left outline-none transition-colors duration-300 ease-lazy hover:bg-navy/[0.04] focus-visible:ring-2 focus-visible:ring-ring/50 dark:hover:bg-white/[0.05]"
           >
-            {/* The cover turns like a record while playing; pausing freezes it
-              in place via animation-play-state (no snap back to 0°). Round so
-              the turn reads as a disc rather than a tumbling square. */}
+            {/* The cover turns like a record while playing (and visible —
+              see `spinning`); stopping freezes it in place via
+              animation-play-state (no snap back to 0°). Round so the turn
+              reads as a disc rather than a tumbling square. */}
             <span
               className={cn(
                 "relative block size-11 shrink-0 animate-spin-slow overflow-hidden rounded-full bg-secondary",
-                isPlaying
+                spinning
                   ? "[animation-play-state:running]"
                   : "[animation-play-state:paused]",
               )}
@@ -193,13 +199,13 @@ function MiniProgress() {
   // Hug the very top edge, but inset horizontally past the card's rounded
   // corners (radius ~36px) so the line never rides into the curve — the played
   // fill starts cleanly at the left of the straight edge, with a rounded cap.
-  // scaleX, not width: a 4Hz-updated width under a 300ms transition kept this
-  // line in layout+paint for the whole of playback; a transform stays on the
-  // compositor (the cap's rounding distortion is invisible at 3px).
+  // scaleX, not width: no layout or paint per tick (the cap's rounding
+  // distortion is invisible at 3px). No transition: a 300ms ease under ~4Hz
+  // ticks never settles, holding the compositor at 60fps all playback.
   return (
     <div aria-hidden className="absolute inset-x-10 top-0 z-10 h-[3px]">
       <div
-        className="h-full w-full origin-left rounded-full bg-[image:var(--gradient-action)] transition-transform duration-300 ease-linear"
+        className="h-full w-full origin-left rounded-full bg-[image:var(--gradient-action)]"
         style={{ transform: `scaleX(${percent / 100})` }}
       />
     </div>

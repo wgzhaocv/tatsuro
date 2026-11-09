@@ -346,9 +346,13 @@ export function LyricEditor({
       " ": togglePlay,
       Enter: stampCursor,
       Backspace: undoStamp,
+      // biome-ignore lint/correctness/noComponentHookFactories: key name, not a component
       ArrowUp: () => moveCursor(-1),
+      // biome-ignore lint/correctness/noComponentHookFactories: key name, not a component
       ArrowDown: () => moveCursor(1),
+      // biome-ignore lint/correctness/noComponentHookFactories: key name, not a component
       ArrowLeft: () => seek((audioRef.current?.currentTime ?? 0) - 3),
+      // biome-ignore lint/correctness/noComponentHookFactories: key name, not a component
       ArrowRight: () => seek((audioRef.current?.currentTime ?? 0) + 3),
       "[": () => bumpRate(-1),
       "]": () => bumpRate(1),

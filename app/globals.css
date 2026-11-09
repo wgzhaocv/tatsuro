@@ -49,13 +49,19 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 
   /* ── The Noon Postcard · brand palette (DESIGN.md is canonical) ── */
-  --color-ocean: oklch(0.673 0.115 216.8); /* #1CA7C4 Ocean Cyan — decorative shallows */
+  --color-ocean: oklch(
+    0.673 0.115 216.8
+  ); /* #1CA7C4 Ocean Cyan — decorative shallows */
   --color-turquoise: oklch(0.726 0.122 179.2); /* #2FBFA8 */
   --color-coral: oklch(0.753 0.155 42); /* #FF8A5B */
   /* Deep Water Rule: surfaces/glyphs that carry information use these AA-verified deeps */
   --color-ocean-deep: oklch(0.555 0.097 216.8); /* #0C8097 — white text 4.6:1 */
-  --color-turquoise-deep: oklch(0.55 0.098 179.2); /* #0A8473 — white text 4.6:1 */
-  --color-coral-ink: oklch(0.543 0.14 42); /* #B04E23 — coral as text/icon on light, ≥4.5:1 */
+  --color-turquoise-deep: oklch(
+    0.55 0.098 179.2
+  ); /* #0A8473 — white text 4.6:1 */
+  --color-coral-ink: oklch(
+    0.543 0.14 42
+  ); /* #B04E23 — coral as text/icon on light, ≥4.5:1 */
   --color-peach: oklch(0.836 0.092 34); /* #FFB4A2 */
   --color-sun: oklch(0.89 0.137 89.2); /* #FFD666 */
   --color-dawn-gold: oklch(0.881 0.117 81.4); /* #FFD07A */
@@ -63,7 +69,9 @@
   --color-sky-bright: oklch(0.775 0.106 215.1); /* #59C7E0 */
   --color-cobalt: oklch(0.444 0.123 253.1); /* #145495 deep anchor */
   --color-navy: oklch(0.331 0.065 237.5); /* #0B3A53 text, never pure black */
-  --color-ink-mist: oklch(0.526 0.051 232); /* #4C7083 muted floor — ≥4.5:1 even on --muted */
+  --color-ink-mist: oklch(
+    0.526 0.051 232
+  ); /* #4C7083 muted floor — ≥4.5:1 even on --muted */
   --color-sea-glass: oklch(0.964 0.016 172.6); /* #E9F7F2 */
   --color-shell: oklch(0.977 0.02 77.3); /* #FFF6E9 */
   --color-dusk-navy: oklch(0.263 0.046 250); /* #12263A */

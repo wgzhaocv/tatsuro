@@ -1,4 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <title>Tatsuro</title>
   <!-- Wordmark monogram: a slender Futura-style T (thin strokes, tall stem —
        matches the dusk app-icon tile in app/icons/tile.tsx and apple-icon.tsx).
        No tile: theme-adaptive near-black navy (#0B3A53, the design system's

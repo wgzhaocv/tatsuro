@@ -1,0 +1,36 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": [
+    "typescript",
+    "unicorn",
+    "oxc",
+    "import",
+    "react",
+    "jsx-a11y",
+    "nextjs"
+  ],
+  "categories": {
+    "correctness": "error",
+    "suspicious": "error"
+  },
+  "env": {
+    "browser": true,
+    "node": true,
+    "es2024": true
+  },
+  "rules": {
+    // New JSX transform — React never needs to be in scope.
+    "react/react-in-jsx-scope": "off",
+    // Hooks rules the old biome setup enforced.
+    "react/exhaustive-deps": "error",
+    "react/no-array-index-key": "error",
+    // Stylesheet side-effect imports (app/layout.tsx → globals.css).
+    "import/no-unassigned-import": ["error", { "allow": ["**/*.css"] }]
+  },
+  "ignorePatterns": [
+    ".next/**",
+    "node_modules/**",
+    ".impeccable/**",
+    "design/**"
+  ]
+}

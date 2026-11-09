@@ -72,6 +72,15 @@ export function BottomNav() {
   return <BottomNavShell activePath={pathname} />;
 }
 
+// Tapping the tab you're already on scrolls the page to the top — the
+// standard mobile tab-bar gesture. PageScroll owns the window offset, so we
+// drive window here too; honour the reduced-motion switch (a JS smooth-scroll
+// isn't caught by the global CSS kill-switch).
+function scrollToTop() {
+  const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  window.scrollTo({ top: 0, behavior: reduce ? "auto" : "smooth" });
+}
+
 /**
  * The bar itself. With a real `activePath` it renders live locale-aware Links
  * and lights the current tab. With `activePath === null` it renders as the
@@ -84,17 +93,6 @@ export function BottomNavShell({ activePath }: { activePath: string | null }) {
   const t = useTranslations("nav");
   const videoStage = usePlayerStore((s) => s.videoStage);
   if (videoStage) return null;
-
-  // Tapping the tab you're already on scrolls the page to the top — the
-  // standard mobile tab-bar gesture. PageScroll owns the window offset, so we
-  // drive window here too; honour the reduced-motion switch (a JS smooth-scroll
-  // isn't caught by the global CSS kill-switch).
-  const scrollToTop = () => {
-    const reduce = window.matchMedia(
-      "(prefers-reduced-motion: reduce)",
-    ).matches;
-    window.scrollTo({ top: 0, behavior: reduce ? "auto" : "smooth" });
-  };
 
   return (
     <>

@@ -254,7 +254,7 @@ function coverCard({
       }}
     >
       {/* ambient: the cover blown up + blurred to fill the frame */}
-      {/* biome-ignore lint/performance/noImgElement: satori renders raw <img> */}
+      {/* oxlint-disable-next-line nextjs/no-img-element -- satori renders raw <img> */}
       <img
         src={cover}
         width={1400}
@@ -305,7 +305,7 @@ function coverCard({
             boxShadow: "0 26px 50px -24px rgba(11,58,83,0.65)",
           }}
         >
-          {/* biome-ignore lint/performance/noImgElement: satori renders raw <img> */}
+          {/* oxlint-disable-next-line nextjs/no-img-element -- satori renders raw <img> */}
           <img
             src={cover}
             width={452}

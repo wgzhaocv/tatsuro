@@ -28,6 +28,7 @@ const serwist = new Serwist({
   // visitor megabytes for zero hits. Keep code and fonts; drop images.
   // Serwist's activate cleanup also evicts the photos already precached on
   // existing installs once they leave this list.
+  // oxlint-disable-next-line no-underscore-dangle -- name injected by Serwist
   precacheEntries: (self.__SW_MANIFEST ?? []).filter((entry) => {
     const url = typeof entry === "string" ? entry : entry.url;
     return !/\.(?:jpe?g|png|webp|avif|gif)(?:\?|$)/i.test(url);

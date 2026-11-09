@@ -23,13 +23,11 @@ import {
 } from "@/components/ui/dialog";
 import { Menu, MenuContent, MenuItem, MenuTrigger } from "@/components/ui/menu";
 import { TipTrigger } from "@/components/ui/tip-button";
-import { useIsConnected } from "@/lib/account/store";
+import { startGoogleLogin, useIsConnected } from "@/lib/account/store";
 import {
   createPlaylistShareLink,
   revokePlaylistShare,
 } from "@/lib/playlists/share";
-
-const API = process.env.NEXT_PUBLIC_API_URL;
 
 /**
  * Share entry for the playlist header, beside the offline switch. Shown whether or
@@ -162,12 +160,6 @@ function ShareLoginButton() {
   const t = useTranslations("share");
   const ta = useTranslations("account");
 
-  const connect = () => {
-    // Hand the Worker where to return us (this page); it 302s back with #token.
-    const redirect = encodeURIComponent(window.location.href);
-    window.location.href = `${API}/auth/google/login?redirect=${redirect}`;
-  };
-
   return (
     <Dialog>
       <ShareTrigger trigger={DialogTrigger} />
@@ -180,7 +172,7 @@ function ShareLoginButton() {
           <DialogClose render={<Button type="button" variant="outline" />}>
             {ta("notNow")}
           </DialogClose>
-          <Button type="button" variant="cta" onClick={connect}>
+          <Button type="button" variant="cta" onClick={startGoogleLogin}>
             <GoogleIcon className="size-[18px]" />
             {ta("continueWithGoogle")}
           </Button>

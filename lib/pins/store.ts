@@ -109,7 +109,7 @@ export function usePinnedIds(): string[] {
     useShallow((s) =>
       s.pins
         .filter((p) => !p.deletedAt)
-        .sort((a, b) => b.pinnedAt - a.pinnedAt)
+        .toSorted((a, b) => b.pinnedAt - a.pinnedAt)
         .map((p) => p.albumId),
     ),
   );

@@ -114,7 +114,7 @@ function makeLiked(): Playlist {
 function forDisplay(playlists: Playlist[]): Playlist[] {
   return playlists
     .filter((p) => !p.deletedAt)
-    .sort((a, b) => {
+    .toSorted((a, b) => {
       if (a.kind === "liked") return -1;
       if (b.kind === "liked") return 1;
       return b.createdAt - a.createdAt;
@@ -366,7 +366,7 @@ export const usePlaylistStore = create<PlaylistsState>()(
             ...(r.deletedAt != null && { deletedAt: r.deletedAt }),
             ...(removed.length > 0 && { removed }),
             entries: live
-              .sort((a, b) => a.position - b.position)
+              .toSorted((a, b) => a.position - b.position)
               .map((s) => {
                 const song = known.get(s.songId);
                 if (!song) stubbed.push(s.songId);

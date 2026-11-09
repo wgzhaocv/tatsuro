@@ -26,7 +26,7 @@ type ApiLyricsResponse = { lyrics?: WireLyricLine[] };
  *  unstamped line serializes to startTime 0; blank translations to null. */
 export function toWire(line: LyricLine): WireLyricLine {
   return {
-    startTime: line.startTime > 0 ? line.startTime : 0,
+    startTime: Math.max(line.startTime, 0),
     lyrics: {
       origin: line.origin,
       ja: line.ja?.trim() ? line.ja : null,

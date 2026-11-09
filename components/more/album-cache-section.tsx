@@ -43,7 +43,7 @@ export function AlbumCacheSection({
   // Resolve cached song ids → albums whenever the cached set changes. Keying on
   // the joined string (song ids never contain commas) means the effect only
   // refires when the set actually changes, not on every identical re-measure.
-  const key = Object.keys(songBytes).sort().join(",");
+  const key = Object.keys(songBytes).toSorted().join(",");
   const [albums, setAlbums] = useState<CachedAlbum[]>(() =>
     key === lastKey ? lastAlbums : [],
   );
@@ -54,11 +54,12 @@ export function AlbumCacheSection({
     intents.filter((i) => !i.deletedAt && i.kind === "album").map((i) => i.id),
   );
 
+  if (key === "" && albums.length > 0) setAlbums([]);
+
   useEffect(() => {
     if (key === "") {
       lastAlbums = [];
       lastKey = "";
-      setAlbums([]);
       return;
     }
     let live = true;

@@ -117,3 +117,10 @@ export function useAccountUser(): AccountUser | null {
 export function useSyncStatus(): SyncStatus {
   return useAccountStore((s) => s.status);
 }
+
+/** Start Google sign-in: hand the Worker where to return us (this page); it
+ *  302s back with #token. */
+export function startGoogleLogin(): void {
+  const redirect = encodeURIComponent(window.location.href);
+  window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/auth/google/login?redirect=${redirect}`;
+}

@@ -49,7 +49,7 @@ export async function EditionView({
 
   const trackCount = edition.discs.reduce((n, d) => n + d.tracks.length, 0);
   const seconds = edition.discs.reduce(
-    (s, d) => s + d.tracks.reduce((t, tr) => t + (tr.duration ?? 0), 0),
+    (s, d) => s + d.tracks.reduce((sum, tr) => sum + (tr.duration ?? 0), 0),
     0,
   );
   const totalLabel = durationLabel(t, seconds);
@@ -65,12 +65,9 @@ export async function EditionView({
     .join(" · ");
 
   const queueSongs = editionQueueSongs(album, edition);
-  let offset = 0;
-  const discStarts = edition.discs.map((disc) => {
-    const start = offset;
-    offset += disc.tracks.length;
-    return start;
-  });
+  const discStarts = edition.discs.map((_, i) =>
+    edition.discs.slice(0, i).reduce((n, d) => n + d.tracks.length, 0),
+  );
   const queueLabel =
     hasEditions && edition.year != null
       ? `${album.name} (${edition.year})`

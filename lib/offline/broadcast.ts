@@ -21,5 +21,6 @@ export function postCacheEvent(
   url: string,
   reason?: string,
 ): void {
+  // oxlint-disable-next-line unicorn/require-post-message-target-origin -- BroadcastChannel.postMessage takes no targetOrigin
   channel(channelName).postMessage({ type, data: { url, reason } });
 }

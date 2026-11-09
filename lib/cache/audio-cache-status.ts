@@ -53,7 +53,7 @@ function listen(
 ): void {
   try {
     const bc = new BroadcastChannel(channelName);
-    bc.onmessage = (event: MessageEvent) => {
+    bc.addEventListener("message", (event: MessageEvent) => {
       const { type, data } = (event.data ?? {}) as {
         type?: string;
         data?: { url?: string };
@@ -71,7 +71,7 @@ function listen(
       else if (type === removeType) urls.delete(url);
       else return;
       emit();
-    };
+    });
   } catch {
     // No BroadcastChannel — the seed is still a one-shot snapshot.
   }

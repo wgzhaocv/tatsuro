@@ -29,12 +29,12 @@ let dbPromise: Promise<IDBDatabase> | null = null;
 function initDB(): Promise<IDBDatabase> {
   dbPromise ??= new Promise((resolve, reject) => {
     const request = indexedDB.open(DB_NAME, DB_VERSION);
-    request.onerror = () => {
+    request.addEventListener("error", () => {
       dbPromise = null;
       reject(request.error);
-    };
-    request.onsuccess = () => resolve(request.result);
-    request.onupgradeneeded = (event) => {
+    });
+    request.addEventListener("success", () => resolve(request.result));
+    request.addEventListener("upgradeneeded", (event) => {
       const db = (event.target as IDBOpenDBRequest).result;
       if (!db.objectStoreNames.contains(STORE_NAME)) {
         db.createObjectStore(STORE_NAME, { keyPath: "url" });
@@ -42,7 +42,7 @@ function initDB(): Promise<IDBDatabase> {
       if (!db.objectStoreNames.contains(ENTRIES_STORE)) {
         db.createObjectStore(ENTRIES_STORE, { keyPath: "url" });
       }
-    };
+    });
   });
   return dbPromise;
 }
@@ -130,8 +130,10 @@ export async function getAllEntries(): Promise<CacheEntry[]> {
       .objectStore(ENTRIES_STORE);
     return await new Promise((resolve) => {
       const request = store.getAll();
-      request.onsuccess = () => resolve((request.result as CacheEntry[]) || []);
-      request.onerror = () => resolve([]);
+      request.addEventListener("success", () =>
+        resolve((request.result as CacheEntry[]) || []),
+      );
+      request.addEventListener("error", () => resolve([]));
     });
   } catch {
     return [];
@@ -200,8 +202,8 @@ export async function getAllAccessTimes(): Promise<
       .objectStore(STORE_NAME);
     return await new Promise((resolve) => {
       const request = store.getAll();
-      request.onsuccess = () => resolve(request.result || []);
-      request.onerror = () => resolve([]);
+      request.addEventListener("success", () => resolve(request.result || []));
+      request.addEventListener("error", () => resolve([]));
     });
   } catch {
     return [];

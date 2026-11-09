@@ -50,7 +50,7 @@ export async function cachedAlbums(songIds: string[]): Promise<CachedAlbum[]> {
     row.songIds.push(id);
   }
 
-  return [...byEdition.values()].sort(
+  return [...byEdition.values()].toSorted(
     (a, b) => b.songIds.length - a.songIds.length,
   );
 }

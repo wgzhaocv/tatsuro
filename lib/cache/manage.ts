@@ -173,7 +173,7 @@ function savedSources(downloadSizes: Map<string, number>): SavedSource[] {
       bytes,
     });
   }
-  return out.sort((a, b) => b.bytes - a.bytes);
+  return out.toSorted((a, b) => b.bytes - a.bytes);
 }
 
 /** navigator.storage.estimate(), 0/0 when unavailable (older Safari). */
@@ -237,20 +237,21 @@ async function runMeasure(): Promise<CacheUsage> {
 let inFlightMeasure: Promise<CacheUsage> | null = null;
 let remeasureQueued = false;
 
+async function measureCycle(): Promise<CacheUsage> {
+  let result = await runMeasure();
+  while (remeasureQueued) {
+    remeasureQueued = false;
+    result = await runMeasure();
+  }
+  return result;
+}
+
 function measure(): Promise<CacheUsage> {
   if (inFlightMeasure) {
     remeasureQueued = true;
     return inFlightMeasure;
   }
-  const cycle = async () => {
-    let result = await runMeasure();
-    while (remeasureQueued) {
-      remeasureQueued = false;
-      result = await runMeasure();
-    }
-    return result;
-  };
-  inFlightMeasure = cycle().finally(() => {
+  inFlightMeasure = measureCycle().finally(() => {
     inFlightMeasure = null;
   });
   return inFlightMeasure;
@@ -484,6 +485,7 @@ export function useCacheUsage(): CacheUsage & {
       const persisted = loadPersistedUsage();
       if (persisted) {
         lastUsage = persisted;
+        // oxlint-disable-next-line react/set-state-in-effect -- post-hydration read of browser storage (an external system); reading it during render would mismatch the server HTML
         setUsage(persisted);
       }
     }
@@ -496,7 +498,7 @@ export function useCacheUsage(): CacheUsage & {
     try {
       for (const name of [AUDIO_EVENTS_CHANNEL, DOWNLOAD_EVENTS_CHANNEL]) {
         const bc = new BroadcastChannel(name);
-        bc.onmessage = schedule;
+        bc.addEventListener("message", schedule);
         channels.push(bc);
       }
     } catch {

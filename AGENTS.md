@@ -29,9 +29,10 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 ```bash
 bun run dev          # dev server (localhost:3000)
 bun run build        # production build
-bun run lint         # biome check(不是 eslint)
-bun run format       # biome format --write
-bunx biome check --write <file>   # 修单个文件的 lint/格式
+bun run lint         # oxlint(配置 .oxlintrc.json;不是 eslint/biome)
+bun run format       # oxfmt(配置 .oxfmtrc.json;md 与 design/ 不格式化)
+bun run typecheck    # tsrs --noEmit --fast(Oxc 的 Rust 版 tsc;build 前置也跑它)
+bunx oxlint --fix <file> && bunx oxfmt <file>   # 修单个文件的 lint/格式
 bunx shadcn add <component>       # 装 shadcn 组件
 ```
 
@@ -42,7 +43,7 @@ bunx shadcn add <component>       # 装 shadcn 组件
 - **Tailwind v4,CSS-first**:没有 tailwind.config;所有 token 在 `app/globals.css` 的 `@theme inline` 块里。**`@theme inline` 的品牌 token(如 `--color-ocean`)在运行时不存在对应 CSS 变量**——用工具类(`bg-ocean`)或字面 hex;但 `--gradient-*` 定义在 `:root`,是真运行时变量,可以 `var()` 引用。
 - **shadcn 是 base-maia 风格,底层是 @base-ui/react(不是 Radix)**;图标库是 @phosphor-icons/react(不是 lucide)。
 - 语义 token(`--primary` 等)已喂入海边色板:shadcn 组件默认长在系统上,`Button` default 变体天生 AA 达标,别自己发明按钮样式。
-- biome 有针对 `app/globals.css` 的 override(允许 reduced-motion 块的 `!important`);`.impeccable/hook.cache.json` 已 gitignore。
+- 工具链全走 Oxc:oxlint(correctness + suspicious 全开为 error,含 React 编译器规则 set-state-in-effect / refs / immutability)、oxfmt、tsrs 类型检查。`typescript` 包仍保留——Next 要求它存在、编辑器用它,但不参与检查。真要压规则用 `// oxlint-disable-next-line <rule> -- 理由`,理由必写。`.impeccable/hook.cache.json` 已 gitignore。
 - 设计检查 hook 会扫描 UI 文件的字面颜色:**色板外的颜色会被标记**。新增颜色必须先进 `DESIGN.md` frontmatter + `.impeccable/design.json`,再进代码。
 
 ## 设计系统硬规则(写代码时会踩的)

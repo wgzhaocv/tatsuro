@@ -99,6 +99,7 @@ export function PlaylistNameDialog({
             // defaultValue change (base-ui warns otherwise).
             key={initialName}
             name="name"
+            // oxlint-disable-next-line jsx-a11y/no-autofocus -- sole field of a modal the user just opened
             autoFocus
             required
             defaultValue={initialName}

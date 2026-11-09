@@ -127,7 +127,7 @@ async function promote(
 ): Promise<boolean> {
   try {
     let resp = await auto.match(url, { ignoreVary: true });
-    if (!resp || resp.status !== 200) return false;
+    if (resp?.status !== 200) return false;
     const size = sizeOf(resp);
     try {
       await dl.put(url, resp);
@@ -247,17 +247,18 @@ async function downloadOne(id: string, dl: Cache, auto: Cache) {
   }
 }
 
+// Yield to playback: only one downloader while a song is streaming.
+const poolCap = () => (usePlayerStore.getState().isPlaying ? 1 : 2);
+
 function runPool(queue: string[], dl: Cache, auto: Cache): Promise<void> {
   return new Promise((resolve) => {
     let active = 0;
-    // Yield to playback: only one downloader while a song is streaming.
-    const cap = () => (usePlayerStore.getState().isPlaying ? 1 : 2);
     const pump = () => {
       if (queue.length === 0 && active === 0) {
         resolve();
         return;
       }
-      while (queue.length > 0 && active < cap()) {
+      while (queue.length > 0 && active < poolCap()) {
         const id = queue.shift() as string;
         active++;
         downloadOne(id, dl, auto).finally(() => {

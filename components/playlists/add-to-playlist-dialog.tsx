@@ -152,6 +152,7 @@ export function AddToPlaylistBody({ song }: { song: Song }) {
         >
           <Input
             name="name"
+            // oxlint-disable-next-line jsx-a11y/no-autofocus -- sole field of a modal the user just opened
             autoFocus
             required
             maxLength={MAX_NAME}

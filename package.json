@@ -4,10 +4,12 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "tsc --noEmit && next build",
+    "build": "tsrs --noEmit --fast && next build",
     "start": "next start",
-    "lint": "biome check",
-    "format": "biome format --write"
+    "lint": "oxlint",
+    "format": "oxfmt",
+    "typecheck": "tsrs --noEmit --fast",
+    "format:check": "oxfmt --check"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",
@@ -32,15 +34,20 @@
     "zustand": "^5.1.0"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.6.6",
     "@tailwindcss/postcss": "^4.3.5",
     "@types/node": "^26.6.6",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
-    "@typescript/native-preview": "^7.0.0-dev.20260707.2",
     "esbuild": "^0.28.2",
+    "oxfmt": "^0.77.0",
+    "oxlint": "^1.92.0",
     "tailwindcss": "^4.3.5",
+    "tsrs": "^0.23.0-ts7.1.0-beta",
     "typescript": "7.0.2"
+  },
+  "overrides": {
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0"
   },
   "ignoreScripts": [
     "sharp",
@@ -50,9 +57,5 @@
     "esbuild",
     "sharp",
     "unrs-resolver"
-  ],
-  "overrides": {
-    "@types/react": "19.3.0",
-    "@types/react-dom": "19.3.0"
-  }
+  ]
 }

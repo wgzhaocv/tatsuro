@@ -374,10 +374,11 @@ function SeekBar() {
   const [committed, setCommitted] = useState<number | null>(null);
   const commitTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => {
-    if (committed === null) return;
-    if (Math.abs(currentTime - committed) < 0.35) setCommitted(null);
-  }, [currentTime, committed]);
+  // Playback caught up with the committed seek → release it (adjusted during
+  // render, the playhead is already in this render's props).
+  if (committed !== null && Math.abs(currentTime - committed) < 0.35) {
+    setCommitted(null);
+  }
 
   useEffect(
     () => () => {

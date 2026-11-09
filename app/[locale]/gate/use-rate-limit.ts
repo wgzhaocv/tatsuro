@@ -56,6 +56,7 @@ export function useRateLimit() {
 
   // resume a cooldown left over from a previous visit
   useEffect(() => {
+    // oxlint-disable-next-line react/set-state-in-effect -- post-hydration read of browser storage (an external system); reading it during render would mismatch the server HTML
     checkRateLimit();
   }, [checkRateLimit]);
 

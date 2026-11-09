@@ -181,7 +181,7 @@ export function createEditorStore(lyricsState: LyricsState) {
         const firstUnstamped = lines.findIndex((l) => l.startTime == null);
         set({
           lines,
-          cursor: firstUnstamped >= 0 ? firstUnstamped : 0,
+          cursor: Math.max(firstUnstamped, 0),
           dirty: false,
           scrollNonce: get().scrollNonce + 1,
         });

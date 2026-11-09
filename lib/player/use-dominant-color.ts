@@ -32,16 +32,20 @@ export function useDominantColor(
     src ? (cache.get(src) ?? null) : null,
   );
 
+  // New src: clear (no src) or take the cached tint right away; an uncached
+  // src keeps the previous tint until the read below lands.
+  const [prevSrc, setPrevSrc] = useState(src);
+  if (prevSrc !== src) {
+    setPrevSrc(src);
+    if (!src) setColor(null);
+    else {
+      const cached = cache.get(src);
+      if (cached) setColor(cached);
+    }
+  }
+
   useEffect(() => {
-    if (!src) {
-      setColor(null);
-      return;
-    }
-    const cached = cache.get(src);
-    if (cached) {
-      setColor(cached);
-      return;
-    }
+    if (!src || cache.has(src)) return;
     // SSR / older browsers: leave the tint off rather than throw.
     if (
       typeof createImageBitmap !== "function" ||

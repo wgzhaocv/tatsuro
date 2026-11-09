@@ -63,7 +63,7 @@ export function LyricsPanel({
     >
       <ul className="space-y-4 px-6">
         {lines.map((line, i) => (
-          // biome-ignore lint/suspicious/noArrayIndexKey: static list, lines have no ids
+          // oxlint-disable-next-line react/no-array-index-key -- static list, lines have no ids
           <li key={i}>
             <LineText line={line} state="plain" />
           </li>
@@ -86,7 +86,9 @@ function SyncedLyrics({
     currentLineIndex(lines, s.currentTime),
   );
   const currentRef = useRef(current);
-  currentRef.current = current;
+  useEffect(() => {
+    currentRef.current = current;
+  }, [current]);
 
   const listRef = useRef<HTMLOListElement>(null);
   const rowRefs = useRef<(HTMLLIElement | null)[]>([]);
@@ -150,7 +152,7 @@ function SyncedLyrics({
     >
       {lines.map((line, i) => (
         <li
-          // biome-ignore lint/suspicious/noArrayIndexKey: static list, lines have no ids
+          // oxlint-disable-next-line react/no-array-index-key -- static list, lines have no ids
           key={i}
           ref={(el) => {
             rowRefs.current[i] = el;

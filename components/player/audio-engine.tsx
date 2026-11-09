@@ -135,11 +135,15 @@ export function AudioEngine() {
     [],
   );
 
-  // A user-initiated resume (any entry point) lifts the guard mute at once.
+  // A user-initiated resume (any entry point) lifts the guard mute at once:
+  // the flag drops during render, the pending guard timer in the effect.
+  const [wasPlaying, setWasPlaying] = useState(isPlaying);
+  if (wasPlaying !== isPlaying) {
+    setWasPlaying(isPlaying);
+    if (isPlaying) setIsYieldGuarding(false);
+  }
   useEffect(() => {
-    if (!isPlaying) return;
-    if (guardTimerRef.current) clearTimeout(guardTimerRef.current);
-    setIsYieldGuarding(false);
+    if (isPlaying && guardTimerRef.current) clearTimeout(guardTimerRef.current);
   }, [isPlaying]);
 
   // play() failed (stream connection gone stale after a long suspend):
@@ -252,9 +256,8 @@ export function AudioEngine() {
   // isPlaying says play but the element is still paused after 300ms (silent
   // play() failure, stale stream) → actively recover. Re-armed on every song
   // change too — a track-boundary stall happens while isPlaying never flips.
-  // biome-ignore lint/correctness/useExhaustiveDependencies: `song` re-arms the watchdog, it isn't read
   useEffect(() => {
-    if (!isPlaying) return;
+    if (!isPlaying || !song) return;
     const el = audioRef.current;
     if (!el) return;
     const timer = setTimeout(() => {
@@ -391,11 +394,11 @@ export function AudioEngine() {
     tabIdRef.current ??= Math.random().toString(36).slice(2);
     const channel = new BroadcastChannel("tatsuro-player");
     channelRef.current = channel;
-    channel.onmessage = (e) => {
+    channel.addEventListener("message", (e) => {
       if (e.data?.type === "claim" && e.data.id !== tabIdRef.current) {
         usePlayerStore.getState().pause();
       }
-    };
+    });
     return () => {
       channelRef.current = null;
       channel.close();
@@ -403,7 +406,7 @@ export function AudioEngine() {
   }, []);
 
   return (
-    // biome-ignore lint/a11y/useMediaCaption: music streams have no captions
+    // oxlint-disable-next-line jsx-a11y/media-has-caption -- music streams have no captions
     <audio
       ref={audioRef}
       preload="metadata"

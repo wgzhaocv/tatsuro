@@ -30,7 +30,7 @@ export function AlbumBrowser({ albums }: { albums: Album[] }) {
     const rank = new Map(pinnedIds.map((id, i) => [id, i]));
     const pinned = filtered
       .filter((a) => rank.has(a.id))
-      .sort((a, b) => (rank.get(a.id) ?? 0) - (rank.get(b.id) ?? 0));
+      .toSorted((a, b) => (rank.get(a.id) ?? 0) - (rank.get(b.id) ?? 0));
     return [...pinned, ...filtered.filter((a) => !rank.has(a.id))];
   }, [albums, filter, pinnedIds]);
 

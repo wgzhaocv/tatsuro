@@ -108,7 +108,7 @@ export function MvWatch({ mv }: { mv: Mv }) {
           className="w-full shrink-0 overflow-hidden rounded-[14px] bg-navy shadow-postcard sm:rounded-[20px]"
           style={{ maxWidth: `calc((100dvh - 16rem) * ${ratio})` }}
         >
-          {/* biome-ignore lint/a11y/useMediaCaption: MVs have no caption track. */}
+          {/* oxlint-disable-next-line jsx-a11y/media-has-caption -- MVs have no caption track. */}
           <video
             ref={videoRef}
             src={mv.streamUrl}

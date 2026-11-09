@@ -110,6 +110,13 @@ const isEditableTarget = (t: EventTarget | null) =>
     t.tagName === "BUTTON" ||
     t.isContentEditable);
 
+/** Toolbar click: drop focus first so Space/Enter go back to the editor's own
+ *  shortcuts instead of re-pressing the button, then run the action. */
+function blurThen(e: React.MouseEvent<HTMLElement>, fn: () => void) {
+  e.currentTarget.blur();
+  fn();
+}
+
 export function LyricEditor({
   song,
   password,
@@ -161,9 +168,9 @@ export function LyricEditor({
 
   // ── load lyrics + point the audio element at the stream ──
   useEffect(() => {
+    // The editor remounts per song (key={song.id}), so loading/loadError
+    // already start at true/false — nothing to reset here.
     let cancelled = false;
-    setLoading(true);
-    setLoadError(false);
     store.getState().resetProgress();
     fetchLyrics(song.id)
       .then((fetched) => {
@@ -250,14 +257,6 @@ export function LyricEditor({
 
   // Return focus to the body after a click so Space/arrows reach the global
   // keydown handler instead of re-triggering the button.
-  const press = useCallback(
-    (fn: () => void) => (e: React.MouseEvent<HTMLElement>) => {
-      e.currentTarget.blur();
-      fn();
-    },
-    [],
-  );
-
   // ── editing — the rules live in the store; these only bridge it to the
   // audio element (which supplies the playhead and does the seeking) and to
   // the toasts, which the store deliberately doesn't raise itself. ──
@@ -346,13 +345,9 @@ export function LyricEditor({
       " ": togglePlay,
       Enter: stampCursor,
       Backspace: undoStamp,
-      // biome-ignore lint/correctness/noComponentHookFactories: key name, not a component
       ArrowUp: () => moveCursor(-1),
-      // biome-ignore lint/correctness/noComponentHookFactories: key name, not a component
       ArrowDown: () => moveCursor(1),
-      // biome-ignore lint/correctness/noComponentHookFactories: key name, not a component
       ArrowLeft: () => seek((audioRef.current?.currentTime ?? 0) - 3),
-      // biome-ignore lint/correctness/noComponentHookFactories: key name, not a component
       ArrowRight: () => seek((audioRef.current?.currentTime ?? 0) + 3),
       "[": () => bumpRate(-1),
       "]": () => bumpRate(1),
@@ -473,7 +468,7 @@ export function LyricEditor({
   const importFile = useCallback(
     (file: File) => {
       const reader = new FileReader();
-      reader.onload = () => {
+      reader.addEventListener("load", () => {
         try {
           const parsed = JSON.parse(String(reader.result));
           const arr: ImportRow[] = Array.isArray(parsed)
@@ -506,7 +501,7 @@ export function LyricEditor({
             "Couldn't read that file — expected exported lyrics JSON.",
           );
         }
-      };
+      });
       reader.readAsText(file);
     },
     [store],
@@ -539,7 +534,7 @@ export function LyricEditor({
 
   return (
     <div className="flex h-full flex-col">
-      {/* biome-ignore lint/a11y/useMediaCaption: admin scrubbing tool, no captions */}
+      {/* oxlint-disable-next-line jsx-a11y/media-has-caption -- admin scrubbing tool, no captions */}
       <audio
         ref={audioRef}
         src={songStreamUrl(song.id)}
@@ -635,7 +630,7 @@ export function LyricEditor({
           tip={isPlaying ? "Pause (Space)" : "Play (Space)"}
           variant="action"
           size="icon-lg"
-          onClick={press(togglePlay)}
+          onClick={(e) => blurThen(e, togglePlay)}
         >
           {isPlaying ? (
             <Pause weight="fill" className="size-5" />
@@ -647,7 +642,9 @@ export function LyricEditor({
           tip="Back 3s (←)"
           variant="ghost"
           size="icon"
-          onClick={press(() => seek((audioRef.current?.currentTime ?? 0) - 3))}
+          onClick={(e) =>
+            blurThen(e, () => seek((audioRef.current?.currentTime ?? 0) - 3))
+          }
         >
           <Rewind className="size-4" />
         </TipButton>
@@ -655,7 +652,9 @@ export function LyricEditor({
           tip="Forward 3s (→)"
           variant="ghost"
           size="icon"
-          onClick={press(() => seek((audioRef.current?.currentTime ?? 0) + 3))}
+          onClick={(e) =>
+            blurThen(e, () => seek((audioRef.current?.currentTime ?? 0) + 3))
+          }
         >
           <FastForward className="size-4" />
         </TipButton>
@@ -673,7 +672,7 @@ export function LyricEditor({
             <button
               key={r}
               type="button"
-              onClick={press(() => store.getState().setRate(r))}
+              onClick={(e) => blurThen(e, () => store.getState().setRate(r))}
               className={cn(
                 "rounded-full px-2 py-1 text-xs tabular-nums transition-colors",
                 r === rate
@@ -733,7 +732,7 @@ export function LyricEditor({
           tip="Drop a 🎵 after the line you just timed, stamped at the playhead (I)"
           variant="action"
           size="sm"
-          onClick={press(insertInterludeNow)}
+          onClick={(e) => blurThen(e, insertInterludeNow)}
         >
           <MusicNote weight="fill" className="size-4" /> Interlude here
         </TipButton>
@@ -741,7 +740,7 @@ export function LyricEditor({
           tip="Same place, but leave it untimed"
           variant="outline"
           size="sm"
-          onClick={press(insertInterlude)}
+          onClick={(e) => blurThen(e, insertInterlude)}
         >
           <MusicNote className="size-4" /> Untimed
         </TipButton>
@@ -760,7 +759,7 @@ export function LyricEditor({
               size="xs"
               className="tabular-nums"
               disabled={timedCount === 0}
-              onClick={press(() => shiftAll(d))}
+              onClick={(e) => blurThen(e, () => shiftAll(d))}
             >
               {d > 0 ? `+${d}` : d}s
             </TipButton>
@@ -811,7 +810,7 @@ export function LyricEditor({
                       render={
                         <button
                           type="button"
-                          onClick={press(() => selectAndSeek(i))}
+                          onClick={(e) => blurThen(e, () => selectAndSeek(i))}
                           onDoubleClick={() => {
                             const entered = window.prompt(
                               "Timestamp (m:ss.cc or seconds), blank to clear:",
@@ -949,7 +948,7 @@ export function LyricEditor({
 
         <Button
           variant="ghost"
-          onClick={press(undoStamp)}
+          onClick={(e) => blurThen(e, undoStamp)}
           className="text-muted-foreground"
         >
           <ArrowUUpLeft className="size-4" /> Undo stamp
@@ -994,7 +993,7 @@ export function LyricEditor({
           // clickable and explains itself (handleSave toasts), rather than
           // sitting dead with no hint.
           disabled={saving}
-          onClick={press(handleSave)}
+          onClick={(e) => blurThen(e, handleSave)}
         >
           <FloppyDisk weight="fill" className="size-4" />
           {saving ? "Saving…" : "Save"}
@@ -1104,13 +1103,18 @@ function TextEditor({
   const [ja, setJa] = useState("");
   const [en, setEn] = useState("");
 
-  // Refill the drafts from the current lines each time the panel opens.
-  useEffect(() => {
-    if (!open) return;
-    setOrigin(lines.map((l) => l.origin).join("\n"));
-    setJa(lines.map((l) => l.ja).join("\n"));
-    setEn(lines.map((l) => l.en).join("\n"));
-  }, [open, lines]);
+  // Refill the drafts from the current lines each time the panel opens (and
+  // when the lines change while it's open) — adjusted during render, not in
+  // an effect, so the panel never paints a stale draft first.
+  const [synced, setSynced] = useState({ open: false, lines });
+  if (synced.open !== open || synced.lines !== lines) {
+    setSynced({ open, lines });
+    if (open) {
+      setOrigin(lines.map((l) => l.origin).join("\n"));
+      setJa(lines.map((l) => l.ja).join("\n"));
+      setEn(lines.map((l) => l.en).join("\n"));
+    }
+  }
 
   return (
     <div className="mt-4 px-2 sm:px-0">

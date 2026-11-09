@@ -36,6 +36,7 @@ export function CacheDot({ songId }: { songId: string }) {
 
   return (
     <span
+      // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- CSS-drawn dot, no image source to put in an <img>
       role="img"
       aria-label={state === "active" ? t("downloaded") : t("auto")}
       className={cn("shrink-0 rounded-full", cacheDotClass(state))}

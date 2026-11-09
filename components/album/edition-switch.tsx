@@ -21,7 +21,7 @@ export async function EditionSwitch({
 }) {
   const t = await getTranslations({ locale, namespace: "album" });
   const def = defaultEdition(album);
-  const chips = [...album.editions].sort(
+  const chips = [...album.editions].toSorted(
     (a, b) => (b.year ?? 0) - (a.year ?? 0),
   );
 

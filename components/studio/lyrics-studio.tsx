@@ -36,6 +36,7 @@ export function LyricsStudio() {
   }, []);
 
   useEffect(() => {
+    // oxlint-disable-next-line react/set-state-in-effect -- post-hydration read of browser storage (an external system); reading it during render would mismatch the server HTML
     setPassword(sessionStorage.getItem(PW_KEY) ?? "");
   }, []);
 
@@ -56,9 +57,18 @@ export function LyricsStudio() {
     }
   }, []);
 
+  // First load: loading/error already start at true/false, so only the async
+  // results set state here (load() resets them for manual retries).
   useEffect(() => {
-    load();
-  }, [load]);
+    let live = true;
+    fetchLyricsStatus()
+      .then((res) => live && setSongs(res))
+      .catch(() => live && setError(true))
+      .finally(() => live && setLoading(false));
+    return () => {
+      live = false;
+    };
+  }, []);
 
   const selectSong = useCallback((id: string) => {
     if (dirtyRef.current) {

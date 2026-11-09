@@ -245,26 +245,27 @@ function playlistEditStamp(playlists: { updatedAt: number }[]): number {
  *  unsubscribe. Skips changes made by our own adopt/hydrate, pre-hydration
  *  writes (the bootstrap's explicit first syncNow covers those), and no-ops
  *  without a token. */
+function triggerAutoSync(): void {
+  if (applyingRemote) return; // our own adopt writing back — not a user edit
+  if (!useAccountStore.getState().token) return;
+  scheduleSync();
+}
+
 export function startAutoSync(): () => void {
-  const trigger = () => {
-    if (applyingRemote) return; // our own adopt writing back — not a user edit
-    if (!useAccountStore.getState().token) return;
-    scheduleSync();
-  };
   const unsubPlaylists = usePlaylistStore.subscribe((state, prev) => {
     if (!state.hasHydrated) return;
     if (
       playlistEditStamp(state.playlists) !== playlistEditStamp(prev.playlists)
     )
-      trigger();
+      triggerAutoSync();
   });
   const unsubPins = usePinStore.subscribe((state, prev) => {
     if (!state.hasHydrated) return;
-    if (state.pins !== prev.pins) trigger();
+    if (state.pins !== prev.pins) triggerAutoSync();
   });
   const unsubDownloads = useDownloadsStore.subscribe((state, prev) => {
     if (!state.hasHydrated) return;
-    if (state.intents !== prev.intents) trigger();
+    if (state.intents !== prev.intents) triggerAutoSync();
   });
   return () => {
     unsubPlaylists();

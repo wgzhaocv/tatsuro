@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { GoogleIcon } from "@/components/account/google-icon";
 import { Button } from "@/components/ui/button";
+import { startGoogleLogin } from "@/lib/account/store";
 import {
   Dialog,
   DialogClose,
@@ -26,8 +27,6 @@ import {
   useIsConnected,
   useSyncStatus,
 } from "@/lib/account/store";
-
-const API = process.env.NEXT_PUBLIC_API_URL;
 
 /**
  * Account entry in the browse-screen top rail (beside LanguageSwitcher /
@@ -82,7 +81,7 @@ function ConnectedGlyph({ user }: { user: AccountUser | null }) {
     return (
       // Google avatar — a small third-party photo, so a plain img (no next
       // optimizer/remotePatterns) is the right tool; no-referrer avoids 403s.
-      // biome-ignore lint/performance/noImgElement: tiny remote avatar, not app art
+      // oxlint-disable-next-line nextjs/no-img-element -- tiny remote avatar, not app art
       <img
         src={user.picture}
         alt=""
@@ -98,12 +97,6 @@ function ConnectedGlyph({ user }: { user: AccountUser | null }) {
 function DisconnectedBody() {
   const t = useTranslations("account");
 
-  const connect = () => {
-    // Hand the Worker where to return us (this page); it 302s back with #token.
-    const redirect = encodeURIComponent(window.location.href);
-    window.location.href = `${API}/auth/google/login?redirect=${redirect}`;
-  };
-
   return (
     <>
       <DialogHeader>
@@ -114,7 +107,7 @@ function DisconnectedBody() {
         <DialogClose render={<Button type="button" variant="outline" />}>
           {t("notNow")}
         </DialogClose>
-        <Button type="button" variant="cta" onClick={connect}>
+        <Button type="button" variant="cta" onClick={startGoogleLogin}>
           <GoogleIcon className="size-[18px]" />
           {t("continueWithGoogle")}
         </Button>

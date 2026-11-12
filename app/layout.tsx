@@ -3,6 +3,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import type { Metadata, Viewport } from "next";
 import { Inter, Jost, Quicksand } from "next/font/google";
 import "./globals.css";
+import { ClarityAnalytics } from "@/components/clarity";
 import { DownloadsReconciler } from "@/components/downloads/downloads-reconciler";
 import { AudioEngine } from "@/components/player/audio-engine";
 import { QueryProvider } from "@/components/query-provider";
@@ -111,6 +112,9 @@ export default function RootLayout({
               Vercel, so dev/self-host stay clean. */}
           <Analytics />
           <SpeedInsights />
+          {/* Session recordings + heatmaps. Above [locale] so a language
+              switch doesn't re-run init. */}
+          <ClarityAnalytics />
           {/* Top-center clears the bottom chrome (mobile tab bar + mini
               player); the offset drops it below the page header. mobileOffset
               is separate — sonner uses it under 600px. */}
